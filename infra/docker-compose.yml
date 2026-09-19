@@ -1,0 +1,18 @@
+services:
+  auth-service:
+    build:
+      context: ../services/auth-service
+    ports:
+      - "${AUTH_SERVICE_PORT:-8001}:8000"
+
+  content-service:
+    build:
+      context: ../services/content-service
+    ports:
+      - "${CONTENT_SERVICE_PORT:-8002}:8000"
+
+  narration-service:
+    build:
+      context: ../services/narration-service
+    ports:
+      - "${NARRATION_SERVICE_PORT:-8003}:8000"

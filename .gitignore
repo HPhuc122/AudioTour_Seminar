@@ -1,0 +1,47 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node / React Native
+node_modules/
+dist/
+build/
+.expo/
+.expo-shared/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+coverage/
+logs/
+
+# Python tooling and package artifacts
+.mypy_cache/
+*.egg-info/
+
+# Runtime uploads and generated audio
+uploads/
+media/
+generated-audio/
+*.mp3
+*.wav
+*.ogg
+
+# Keep intentionally versioned audio assets
+!assets/audio/**/*.mp3
+!assets/audio/**/*.wav
+!assets/audio/**/*.ogg
