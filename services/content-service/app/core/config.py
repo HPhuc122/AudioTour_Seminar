@@ -18,6 +18,7 @@ class SqlServerSettings:
     media_root: str = os.getenv("MEDIA_ROOT", os.getcwd())
     public_web_base_url: str = os.getenv("PUBLIC_WEB_BASE_URL", "http://localhost:5173")
     open_route_service_api_key: str = os.getenv("ORS_API_KEY", "")
+    jwt_secret: str = os.getenv("JWT_SECRET", "replace-this-development-secret")
 
 
 settings = SqlServerSettings()
