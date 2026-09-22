@@ -2,17 +2,23 @@ services:
   auth-service:
     build:
       context: ../services/auth-service
+    env_file:
+      - ../.env
     ports:
       - "${AUTH_SERVICE_PORT:-8001}:8000"
 
   content-service:
     build:
       context: ../services/content-service
+    env_file:
+      - ../.env
     ports:
       - "${CONTENT_SERVICE_PORT:-8002}:8000"
 
   narration-service:
     build:
       context: ../services/narration-service
+    env_file:
+      - ../.env
     ports:
       - "${NARRATION_SERVICE_PORT:-8003}:8000"
