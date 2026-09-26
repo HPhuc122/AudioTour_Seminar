@@ -1,0 +1,10 @@
+{
+  "description": "Transform prompts into engaging content effortlessly, catering to writers and marketers seeking to enhance creativity and productivity.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
