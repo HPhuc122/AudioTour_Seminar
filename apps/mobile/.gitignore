@@ -1,8 +1,10 @@
 node_modules/
 dist/
+dist-android/
 build/
 .cache/
 .env*
+!.env.example
 .vite/
 vite.config.*.timestamp-*
 *.tsbuildinfo
