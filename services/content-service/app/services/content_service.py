@@ -150,8 +150,14 @@ class ContentService:
 
     def resolve_qr(self, code: str) -> dict:
         qr = self.get_qr_by_code(code)
-        target_type = "poi" if qr.get("poiId") else "tour"
-        return {**qr, "targetType": target_type, "targetId": qr.get("poiId") or qr.get("tourId")}
+        if qr.get("poiId"):
+            return {**qr, "targetType": "poi", "targetId": qr["poiId"]}
+        if qr.get("tourId"):
+            return {**qr, "targetType": "tour", "targetId": qr["tourId"]}
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="QR code does not target a tour or POI",
+        )
 
     def list_packages(self) -> list[dict]:
         base_url = settings.public_web_base_url.rstrip("/")
