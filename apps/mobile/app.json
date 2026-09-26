@@ -6,7 +6,13 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "plugins": [
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép AudioTour sử dụng camera để quét mã QR."
+        }
+      ]
     ]
   }
 }
