@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "AudioTour",
+    "slug": "audiotour",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-localization"
+    ]
+  }
+}
