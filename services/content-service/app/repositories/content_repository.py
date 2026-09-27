@@ -118,6 +118,11 @@ class ContentRepository:
                COALESCE(pt.Description, ptvi.Description, p.Description) AS description,
                p.Latitude AS latitude, p.Longitude AS longitude, p.RadiusMeters AS radiusMeters,
                p.Priority AS priority, p.ImageUrl AS imageUrl, p.Category AS category,
+               (SELECT TOP 1 m.Id FROM MediaFiles m
+                WHERE m.PoiId = p.Id AND m.FileType = 'image'
+                  AND m.ApprovalStatus = 'Approved' AND m.IsDeleted = 0
+                ORDER BY CASE WHEN m.ImageCategory = 'Highlight' THEN 0 ELSE 1 END,
+                         m.UploadedAt DESC, m.Id DESC) AS thumbnailImageId,
                p.CooldownSeconds AS cooldownSeconds, p.MinDwellSeconds AS minDwellSeconds
         FROM POIs p
         LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s
@@ -183,7 +188,7 @@ class ContentRepository:
                ContentType AS contentType, FileSize AS fileSize, ImageCategory AS imageCategory
         FROM MediaFiles
         WHERE PoiId = %s AND FileType = 'image' AND ApprovalStatus = 'Approved' AND IsDeleted = 0
-        ORDER BY UploadedAt DESC
+        ORDER BY CASE WHEN ImageCategory = 'Highlight' THEN 0 ELSE 1 END, UploadedAt DESC, Id DESC
         """
         return self._fetchall(query, (poi_id,))
 
@@ -207,6 +212,16 @@ class ContentRepository:
         WHERE q.Code = %s AND q.IsActive = 1 AND q.DeletedAt IS NULL
         """
         return self._fetchone(query, (code,))
+
+    def get_target_qr(self, target_type: str, target_id: int) -> dict | None:
+        # Only exact targets qualify; a tour QR must not also resolve to a POI.
+        target_filter = "PoiId = %s" if target_type == "poi" else "TourId = %s AND PoiId IS NULL"
+        return self._fetchone(f"""
+            SELECT TOP 1 Code AS code, RequiresPayment AS requiresPayment
+            FROM QRLocations
+            WHERE {target_filter} AND IsActive = 1 AND DeletedAt IS NULL
+            ORDER BY RequiresPayment ASC, Id ASC
+        """, (target_id,))
 
     def list_public_packages(self) -> list[dict]:
         query = """
