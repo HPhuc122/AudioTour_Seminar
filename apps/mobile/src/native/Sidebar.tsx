@@ -7,6 +7,8 @@ type SidebarProps = {
   onClose: () => void;
   onNavigate: (section: AppSection) => void;
   onOpenQr: () => void;
+  onOpenLanguage: () => void;
+  languageLabel: string;
   visible: boolean;
 };
 
@@ -16,7 +18,7 @@ const items: Array<{ id: AppSection; label: string; icon: string }> = [
   { id: "tours", label: "Tour", icon: "◎" },
 ];
 
-export function Sidebar({ activeSection, onClose, onNavigate, onOpenQr, visible }: SidebarProps) {
+export function Sidebar({ activeSection, onClose, onNavigate, onOpenQr, onOpenLanguage, languageLabel, visible }: SidebarProps) {
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
       <View style={styles.overlay}>
@@ -32,6 +34,10 @@ export function Sidebar({ activeSection, onClose, onNavigate, onOpenQr, visible 
             ))}
             <Pressable onPress={onOpenQr} style={styles.item}>
               <Text style={styles.icon}>▦</Text><Text style={styles.label}>Quét QR</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Ngôn ngữ: ${languageLabel}`} onPress={onOpenLanguage} style={styles.item}>
+              <Text style={styles.icon}>◎</Text>
+              <View style={{ flex: 1 }}><Text style={styles.label}>Ngôn ngữ</Text><Text style={styles.caption}>{languageLabel}</Text></View>
             </Pressable>
           </View>
         </View>

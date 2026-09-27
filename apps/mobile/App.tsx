@@ -1,11 +1,12 @@
 import { StatusBar } from "expo-status-bar"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   ActivityIndicator,
   Button,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -55,6 +56,10 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false)
   const [languages, setLanguages] = useState<ApiLanguage[]>([])
+  const catalogRequest = useRef(0)
+  const detailRequest = useRef(0)
+  const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false)
+  const [languagePickerError, setLanguagePickerError] = useState<string | null>(null)
   const [languageCode, setLanguageCode] = useState<string | null>(null)
   const [pendingQrVisit, setPendingQrVisit] = useState<PendingQrVisit | null>(
     null,
@@ -102,6 +107,7 @@ export default function App() {
   }, [languageCode])
 
   const loadCatalog = async (selectedLanguage: string) => {
+    const request = ++catalogRequest.current
     setIsLoading(true)
     setError(null)
     try {
@@ -110,6 +116,7 @@ export default function App() {
         audioTourApi.listTours(selectedLanguage),
         loadPaidAccessSession(),
       ])
+      if (request !== catalogRequest.current) return
       setPois(poiPage.items)
       setPoiTotal(poiPage.total)
       setTours(tourItems)
@@ -117,6 +124,7 @@ export default function App() {
         const validation = await audioTourApi.validateGuestAccess(
           paidSession.accessToken,
         )
+        if (request !== catalogRequest.current) return
         if (validation.isValid)
           setPaidAccessRemainingSeconds(validation.remainingSeconds)
         else {
@@ -125,17 +133,19 @@ export default function App() {
         }
       } else setPaidAccessRemainingSeconds(null)
     } catch (reason) {
+      if (request !== catalogRequest.current) return
       setError(
         reason instanceof Error
           ? reason.message
           : "Không thể tải nội dung công khai.",
       )
     } finally {
-      setIsLoading(false)
+      if (request === catalogRequest.current) setIsLoading(false)
     }
   }
 
   const clearDetail = () => {
+    detailRequest.current++
     setDetail(null)
     setDestination(null)
     setCatalogDetailKind(null)
@@ -145,6 +155,7 @@ export default function App() {
 
   const openSection = (section: AppSection) => {
     clearDetail()
+    setIsLoading(false)
     setMapTarget(null)
     setDetailFromMap(false)
     setActiveSection(section)
@@ -153,6 +164,7 @@ export default function App() {
 
   const openCatalogDetail = async (kind: CatalogDetailKind, id: number, fromMap = false) => {
     if (!languageCode) return
+    const request = ++detailRequest.current
     setIsLoading(true)
     setError(null)
     try {
@@ -160,15 +172,17 @@ export default function App() {
         kind === "poi"
           ? await audioTourApi.getPoi(id, languageCode)
           : await audioTourApi.getTour(id, languageCode)
+      if (request !== detailRequest.current) return
       setDetail(target)
       setDetailFromMap(fromMap)
       setCatalogDetailKind(kind)
     } catch (reason) {
+      if (request !== detailRequest.current) return
       setError(
         reason instanceof Error ? reason.message : "Không thể mở chi tiết.",
       )
     } finally {
-      setIsLoading(false)
+      if (request === detailRequest.current) setIsLoading(false)
     }
   }
 
@@ -177,6 +191,7 @@ export default function App() {
     languageCode: string,
     scannedQrCode: string,
   ) => {
+    const request = ++detailRequest.current
     setIsLoading(true)
 
     setError(null)
@@ -189,6 +204,7 @@ export default function App() {
           ? await audioTourApi.getPoi(visit.destination.id, languageCode)
           : await audioTourApi.getTour(visit.destination.id, languageCode)
 
+      if (request !== detailRequest.current) return
       setDestination(visit.destination)
 
       setAudioEntryAction(visit.audioEntryAction)
@@ -198,11 +214,12 @@ export default function App() {
       setCatalogDetailKind(null)
       setPendingQrVisit(null)
     } catch (reason) {
+      if (request !== detailRequest.current) return
       setError(
         reason instanceof Error ? reason.message : "Không thể mở nội dung QR.",
       )
     } finally {
-      setIsLoading(false)
+      if (request === detailRequest.current) setIsLoading(false)
     }
   }
 
@@ -211,17 +228,17 @@ export default function App() {
     setIsLoading(true)
     setError(null)
     clearDetail()
+    const request = detailRequest.current
 
     try {
       const [target, availableLanguages] = await Promise.all([
         audioTourApi.resolveQr(code),
         audioTourApi.getLanguages(),
       ])
-      const selectedLanguage =
-        languageCode ??
-        resolveDeviceLanguage(
-          availableLanguages.map((language) => language.code),
-        )
+      if (request !== detailRequest.current) return
+      const selectedLanguage = languageCode && availableLanguages.some((language) => language.code === languageCode)
+        ? languageCode
+        : resolveDeviceLanguage(availableLanguages.map((language) => language.code))
 
       if (selectedLanguage) {
         await openResolvedTarget(target, selectedLanguage, code)
@@ -229,11 +246,12 @@ export default function App() {
         setPendingQrVisit({ code, target, languages: availableLanguages })
       }
     } catch (reason) {
+      if (request !== detailRequest.current) return
       setError(
         reason instanceof Error ? reason.message : "Không thể xử lý mã QR.",
       )
     } finally {
-      setIsLoading(false)
+      if (request === detailRequest.current) setIsLoading(false)
     }
   }
 
@@ -242,8 +260,31 @@ export default function App() {
     setIsQrScannerOpen(true)
   }
 
+  const chooseLanguage = (code: string) => {
+    const pending = pendingQrVisit
+    setIsLanguagePickerOpen(false)
+    setLanguagePickerError(null)
+    setPendingQrVisit(null)
+    if (code !== languageCode) {
+      catalogRequest.current++
+      clearDetail()
+      setMapTarget(null)
+      setDetailFromMap(false)
+      setPois([])
+      setTours([])
+      setPoiTotal(0)
+      setLanguageCode(code)
+    }
+    if (pending) void openResolvedTarget(pending.target, code, pending.code)
+  }
+  const closeLanguagePicker = () => {
+    setIsLanguagePickerOpen(false)
+    setPendingQrVisit(null)
+    setLanguagePickerError(null)
+  }
+  const currentLanguage = languages.find((language) => language.code === languageCode)
   const showLanguagePicker =
-    (!languageCode && languages.length > 0) || Boolean(pendingQrVisit)
+    isLanguagePickerOpen || (!languageCode && languages.length > 0) || Boolean(pendingQrVisit)
 
   const detailKind =
     catalogDetailKind ?? (destination?.screen === "poi-detail" ? "poi" : "tour")
@@ -282,11 +323,11 @@ export default function App() {
         poiTotal={poiTotal}
         tourTotal={tours.length}
       >
-        {languageCode && <MapPanel pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onDetail={(id) => void openCatalogDetail("poi", id, true)} />}
+        {languageCode && <MapPanel key={languageCode} pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onDetail={(id) => void openCatalogDetail("poi", id, true)} />}
       </DashboardScreen>
     ) : (
       <CatalogListScreen
-        key={activeSection}
+        key={`${activeSection}:${languageCode}`}
         languageCode={languageCode ?? ""}
         isLoading={isLoading}
         kind={activeSection === "pois" ? "poi" : "tour"}
@@ -318,6 +359,8 @@ export default function App() {
           onClose={() => setIsSidebarOpen(false)}
           onNavigate={openSection}
           onOpenQr={openQr}
+          languageLabel={currentLanguage?.nativeName || currentLanguage?.name || languageCode || "Chưa chọn"}
+          onOpenLanguage={() => { setIsSidebarOpen(false); setLanguagePickerError(null); setIsLanguagePickerOpen(true) }}
           visible={isSidebarOpen}
         />
         <Modal
@@ -337,9 +380,7 @@ export default function App() {
         </Modal>
         <Modal
           animationType="slide"
-          onRequestClose={() =>
-            pendingQrVisit ? setPendingQrVisit(null) : undefined
-          }
+          onRequestClose={closeLanguagePicker}
           visible={showLanguagePicker}
         >
           <SafeAreaView
@@ -350,35 +391,38 @@ export default function App() {
               Chọn ngôn ngữ
             </Text>
             <Text style={styles.languageDescription}>
-              Ngôn ngữ thiết bị chưa có trong nội dung này.
+              {isLanguagePickerOpen
+                ? "Đổi ngôn ngữ nội dung và audio cho lần sử dụng này. Lần khởi động app sau sẽ dùng ngôn ngữ điện thoại."
+                : "Ngôn ngữ thiết bị chưa có trong nội dung này. Hãy chọn ngôn ngữ để tiếp tục."}
             </Text>
+            {languagePickerError && <Text accessibilityRole="alert" style={styles.error}>{languagePickerError}</Text>}
+            {isLanguagePickerOpen && <Button title="Dùng ngôn ngữ điện thoại" onPress={() => {
+              const code = resolveDeviceLanguage(languages.map((language) => language.code))
+              if (code) chooseLanguage(code)
+              else setLanguagePickerError("Ngôn ngữ điện thoại chưa được hỗ trợ. Hãy chọn một ngôn ngữ bên dưới.")
+            }} />}
+            <ScrollView>
             {(pendingQrVisit?.languages ?? languages).map((language) => (
               <Pressable
                 accessibilityRole="button"
                 key={language.code}
-                onPress={() => {
-                  setLanguageCode(language.code)
-                  if (pendingQrVisit)
-                    void openResolvedTarget(
-                      pendingQrVisit.target,
-                      language.code,
-                      pendingQrVisit.code,
-                    )
-                }}
-                style={styles.languageOption}
+                accessibilityState={{ selected: language.code === languageCode }}
+                onPress={() => chooseLanguage(language.code)}
+                style={[styles.languageOption, language.code === languageCode && styles.selectedLanguage]}
               >
                 <Text style={styles.languageName}>
                   {language.nativeName || language.name}
                 </Text>
-                <Text style={styles.languageCode}>{language.code}</Text>
+                <Text style={styles.languageCode}>{language.code === languageCode ? "✓ " : ""}{language.code}</Text>
               </Pressable>
             ))}
-            {pendingQrVisit && (
+            </ScrollView>
+            {(pendingQrVisit || isLanguagePickerOpen) && (
               <View style={styles.closeLanguageButton}>
                 <Button
                   color="#456253"
                   title="Đóng"
-                  onPress={() => setPendingQrVisit(null)}
+                  onPress={closeLanguagePicker}
                 />
               </View>
             )}
@@ -391,6 +435,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  selectedLanguage: { borderColor: "#15803D", backgroundColor: "#DCFCE7" },
   screen: {
     flex: 1,
 
