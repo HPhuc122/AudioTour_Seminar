@@ -1,5 +1,5 @@
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Button, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { audioTourApi } from "./api";
@@ -40,7 +40,14 @@ function AudioPlayer({ session }: { session: AudioSession }) {
     { updateInterval: 250 },
   );
   const status = useAudioPlayerStatus(player);
+  const hasAutoPlayed = useRef(false);
   const duration = status.duration || session.track.durationSeconds || 0;
+
+  useEffect(() => {
+    if (!status.isLoaded || status.error || hasAutoPlayed.current) return;
+    hasAutoPlayed.current = true;
+    player.play();
+  }, [player, status.error, status.isLoaded]);
 
   const togglePlayback = async () => {
     if (status.playing) {
@@ -80,6 +87,7 @@ export function PoiDetailScreen({
   const [audioSession, setAudioSession] = useState<AudioSession | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [isStartingAudio, setIsStartingAudio] = useState(false);
+  const hasRequestedAutoStart = useRef(false);
   const description = poi.description || poi.shortDescription || "Nội dung giới thiệu đang được cập nhật.";
   const shouldCollapse = description.length > 150;
   const visibleDescription = shouldCollapse && !isDescriptionExpanded
@@ -106,6 +114,12 @@ export function PoiDetailScreen({
       setIsStartingAudio(false);
     }
   };
+
+  useEffect(() => {
+    if (audioEntryAction !== "start-guest-access" || !primaryTrack || hasRequestedAutoStart.current) return;
+    hasRequestedAutoStart.current = true;
+    void startAudio();
+  }, [audioEntryAction, primaryTrack]);
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
@@ -162,16 +176,16 @@ export function PoiDetailScreen({
                   <Text style={styles.lockIcon}>{audioEntryAction === "show-payment" ? "🔒" : "▶"}</Text>
                   <View style={styles.lockText}>
                     <Text style={styles.lockTitle}>
-                      {audioEntryAction === "show-payment" ? "Cần mở khóa audio" : "Audio miễn phí"}
+                      {audioEntryAction === "show-payment" ? "Cần mở khóa audio" : "Đang chuẩn bị audio"}
                     </Text>
                     <Text style={styles.lockDescription}>
                       {audioEntryAction === "show-payment"
                         ? "Bạn vẫn xem được địa điểm; bước thanh toán chỉ áp dụng khi nghe audio."
-                        : "Bắt đầu phiên nghe dành cho khách vãng lai."}
+                        : "Audio sẽ tự động phát ngay khi phiên khách được tạo."}
                     </Text>
-                    {audioEntryAction === "start-guest-access" && (
+                    {audioEntryAction === "start-guest-access" && audioError && !isStartingAudio && (
                       <View style={styles.startAudioButton}>
-                        <Button disabled={isStartingAudio} title="Bắt đầu nghe" onPress={() => void startAudio()} />
+                        <Button title="Thử lại" onPress={() => void startAudio()} />
                       </View>
                     )}
                   </View>
