@@ -4,9 +4,12 @@ import { ActivityIndicator, Button, Modal, Pressable, StyleSheet, Text, View } f
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { QrScanner } from "./src/native/QrScanner";
-import { ApiLanguage, ApiQrTarget, audioTourApi, PublicTargetDetail } from "./src/native/api";
+import { PoiDetailScreen } from "./src/native/PoiDetailScreen";
+import { audioTourApi } from "./src/native/api";
+import type { ApiLanguage, ApiQrTarget, PublicTargetDetail } from "./src/native/api";
 import { resolveDeviceLanguage } from "./src/native/languageResolution";
-import { createQrVisit, PublicDetailDestination } from "./src/native/qrFlow";
+import { createQrVisit } from "./src/native/qrFlow";
+import type { AudioEntryAction, PublicDetailDestination } from "./src/native/qrFlow";
 
 type PendingQrVisit = {
   target: ApiQrTarget;
@@ -18,6 +21,7 @@ export default function App() {
   const [pendingQrVisit, setPendingQrVisit] = useState<PendingQrVisit | null>(null);
   const [destination, setDestination] = useState<PublicDetailDestination | null>(null);
   const [detail, setDetail] = useState<PublicTargetDetail | null>(null);
+  const [audioEntryAction, setAudioEntryAction] = useState<AudioEntryAction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,6 +35,7 @@ export default function App() {
         ? await audioTourApi.getPoi(visit.destination.id, languageCode)
         : await audioTourApi.getTour(visit.destination.id, languageCode);
       setDestination(visit.destination);
+      setAudioEntryAction(visit.audioEntryAction);
       setDetail(targetDetail);
       setPendingQrVisit(null);
     } catch (reason) {
@@ -46,6 +51,7 @@ export default function App() {
     setError(null);
     setDestination(null);
     setDetail(null);
+    setAudioEntryAction(null);
 
     try {
       const [target, languages] = await Promise.all([audioTourApi.resolveQr(code), audioTourApi.getLanguages()]);
@@ -66,7 +72,20 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.screen} edges={["top", "right", "bottom", "left"]}>
-        <View style={styles.content}>
+        {detail && destination?.screen === "poi-detail" && audioEntryAction ? (
+          <PoiDetailScreen
+            audioEntryAction={audioEntryAction}
+            languageCode={destination.languageCode}
+            onScanAnother={() => {
+              setDetail(null);
+              setDestination(null);
+              setAudioEntryAction(null);
+              setIsQrScannerOpen(true);
+            }}
+            poi={detail}
+          />
+        ) : (
+          <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.title}>
             AudioTour
           </Text>
@@ -84,7 +103,8 @@ export default function App() {
               <Text style={styles.languageLabel}>Ngôn ngữ: {destination.languageCode}</Text>
             </View>
           )}
-        </View>
+          </View>
+        )}
         <Modal animationType="slide" onRequestClose={() => setIsQrScannerOpen(false)} visible={isQrScannerOpen}>
           <SafeAreaView style={styles.modalScreen} edges={["top", "right", "bottom", "left"]}>
             <QrScanner onClose={() => setIsQrScannerOpen(false)} onCodeScanned={handleQrCodeScanned} />
