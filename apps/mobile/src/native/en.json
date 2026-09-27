@@ -132,5 +132,11 @@
   "Nội dung chưa có cấu hình quyền nghe. Vui lòng liên hệ điểm tham quan.": "Audio access is not configured for this content. Please contact the attraction.",
   "Thiếu EXPO_PUBLIC_API_BASE_URL. Hãy cấu hình URL API trước khi quét QR.": "The API URL is not configured. Configure it before scanning a QR code.",
   "Không thể tải dữ liệu từ AudioTour.": "Unable to load data from AudioTour.",
-  "Tìm đường quá lâu. Kiểm tra kết nối và thử lại.": "Finding a route took too long. Check your connection and try again."
+  "Tìm đường quá lâu. Kiểm tra kết nối và thử lại.": "Finding a route took too long. Check your connection and try again.",
+  "Dashboard": "Dashboard",
+  "POI": "POI",
+  "Tour": "Tour",
+  "TOUR": "TOUR",
+  "Tour: {0}": "Tour: {0}",
+  "Chạm POI hoặc bản đồ để chọn {0}.": "Tap a POI or the map to select {0}."
 }

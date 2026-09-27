@@ -34,7 +34,7 @@ export function CatalogDetailScreen({
       {kind === "poi" && (
         <PoiImages images={detail.images} name={detail.name} />
       )}
-      <Text style={styles.kind}>{kind === "poi" ? "POI" : "TOUR"}</Text>
+      <Text style={styles.kind}>{t(kind === "poi" ? "POI" : "TOUR")}</Text>
       <Text accessibilityRole="header" style={styles.title}>
         {detail.name}
       </Text>
