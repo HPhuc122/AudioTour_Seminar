@@ -153,7 +153,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data
 }
 
+async function requestRoute(path: string, init?: RequestInit): Promise<MapRoute> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try { return await request<MapRoute>(path, { ...init, signal: controller.signal }); }
+  catch (reason) {
+    if (controller.signal.aborted) throw new Error("Tìm đường quá lâu. Kiểm tra kết nối và thử lại.");
+    throw reason;
+  } finally { clearTimeout(timeout); }
+}
+
 export const audioTourApi = {
+  getDirections: (points: MapPoint[], mode: TravelMode) => requestRoute("/api/v1/public/routes/directions", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ points: points.map(({ latitude, longitude }) => ({ latitude, longitude })), mode }),
+  }),
+  getTourRoute: (id: number, mode: TravelMode) => requestRoute(`/api/v1/public/routes/tours/${id}?mode=${mode}`),
   getImageUrl: (id: number) =>
     `${getBaseUrl()}/api/v1/public/media/images/${id}`,
   startTargetAccess: (targetType: "poi" | "tour", targetId: number) =>
@@ -231,3 +245,13 @@ export const audioTourApi = {
       headers: { "X-Guest-Access-Token": accessToken },
     }),
 }
+
+export type MapPoint = { latitude: number; longitude: number };
+export type TravelMode = "walking" | "driving";
+export type MapRoute = {
+  mode: TravelMode;
+  routeDistanceMeters: number;
+  durationSeconds: number;
+  latLngs: MapPoint[];
+  attribution: string;
+};

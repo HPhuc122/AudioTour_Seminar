@@ -21,7 +21,13 @@
           "recordAudioAndroid": false
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      ["expo-location", {
+        "locationWhenInUsePermission": "Cho phép AudioTour hiển thị vị trí và tìm đường khi bạn dùng bản đồ.",
+        "isIosBackgroundLocationEnabled": false,
+        "isAndroidBackgroundLocationEnabled": false,
+        "isAndroidForegroundServiceEnabled": false
+      }]
     ]
   }
 }

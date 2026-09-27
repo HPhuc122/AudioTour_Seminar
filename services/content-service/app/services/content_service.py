@@ -9,6 +9,7 @@ from fastapi import HTTPException, status
 
 from app.core.config import settings
 from app.repositories.content_repository import ContentRepository
+from app.services.routing_service import RoutingService
 
 
 class ContentService:
@@ -288,5 +289,11 @@ class ContentService:
         return radius * 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h))
 
     def _route_result(self, origin: dict, target: dict) -> dict:
-        distance = self._distance(origin, target)
-        return {"fromPoiId": origin["id"], "toPoiId": target["id"], "directDistanceMeters": distance, "routeDistanceMeters": distance, "durationSeconds": distance / 1.2, "latLngs": [{"latitude": origin["latitude"], "longitude": origin["longitude"]}, {"latitude": target["latitude"], "longitude": target["longitude"]}]}
+        return {**RoutingService().calculate([origin, target], "walking"),
+                "fromPoiId": origin["id"], "toPoiId": target["id"],
+                "directDistanceMeters": self._distance(origin, target)}
+
+    def route_tour(self, tour_id: int, mode: str) -> dict:
+        tour = self.get_tour(tour_id, "vi")
+        stops = sorted(tour.get("pois", []), key=lambda p: p.get("orderIndex") or 0)
+        return {**RoutingService().calculate(stops, mode), "tourId": tour_id}
