@@ -57,9 +57,9 @@ export class AudioTourApiClient {
     return this.request<void>("/api/v1/auth/register-device", { method: "POST", body: JSON.stringify({ deviceId, platform, appVersion, osVersion }) });
   }
 
-  getTours(lang = "vi") { return this.request<Tour[]>(this.query("/api/v1/public/tours", { lang })); }
+  getTours(lang = "vi", name?: string) { return this.request<Tour[]>(this.query("/api/v1/public/tours", { lang, name })); }
   getTour(id: number, lang = "vi") { return this.request<Tour>(this.query(`/api/v1/public/tours/${id}`, { lang })); }
-  getPois(params: { lang?: string; page?: number; pageSize?: number; search?: string; category?: string } = {}) { return this.request<{ items: Poi[]; page: number; pageSize: number; total: number }>(this.query("/api/v1/public/pois", { lang: params.lang ?? "vi", page: params.page, pageSize: params.pageSize, search: params.search, category: params.category })); }
+  getPois(params: { lang?: string; page?: number; pageSize?: number; search?: string; name?: string; category?: string } = {}) { return this.request<{ items: Poi[]; page: number; pageSize: number; total: number }>(this.query("/api/v1/public/pois", { lang: params.lang ?? "vi", page: params.page, pageSize: params.pageSize, search: params.search, name: params.name, category: params.category })); }
   getPoi(id: number, lang = "vi") { return this.request<Poi>(this.query(`/api/v1/public/pois/${id}`, { lang })); }
 
   getQrByCode(code: string) { return this.request<QrLocation>(`/api/v1/qr/code/${encodeURIComponent(code)}`); }

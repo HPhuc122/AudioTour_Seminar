@@ -15,8 +15,8 @@ def ok(data=None, message: str = "Success"):
 
 
 @router.get("/api/v1/public/tours")
-def list_tours(lang: str = Query(default="vi")):
-    return ok(service.list_tours(lang))
+def list_tours(lang: str = Query(default="vi"), name: str | None = Query(default=None, max_length=200)):
+    return ok(service.list_tours(lang, name))
 
 
 @router.get("/api/v1/public/tours/{tour_id}")
@@ -29,10 +29,11 @@ def list_pois(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, alias="pageSize", ge=1, le=100),
     search: str | None = Query(default=None),
+    name: str | None = Query(default=None, max_length=200),
     category: str | None = Query(default=None),
     lang: str = Query(default="vi"),
 ):
-    return ok(service.list_pois(lang, page, page_size, search, category))
+    return ok(service.list_pois(lang, page, page_size, search, category, name))
 
 
 @router.get("/api/v1/public/pois/{poi_id}")

@@ -16,8 +16,8 @@ class ContentService:
     def __init__(self, repository: ContentRepository | None = None) -> None:
         self._repository = repository or ContentRepository()
 
-    def list_tours(self, language: str) -> list[dict]:
-        return self._repository.list_public_tours(self._lang(language))
+    def list_tours(self, language: str, name: str | None = None) -> list[dict]:
+        return self._repository.list_public_tours(self._lang(language), name)
 
     def get_tour(self, tour_id: int, language: str) -> dict:
         tour = self._repository.get_public_tour(tour_id, self._lang(language))
@@ -25,10 +25,10 @@ class ContentService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found")
         return tour
 
-    def list_pois(self, language: str, page: int = 1, page_size: int = 20, search: str | None = None, category: str | None = None) -> dict:
+    def list_pois(self, language: str, page: int = 1, page_size: int = 20, search: str | None = None, category: str | None = None, name: str | None = None) -> dict:
         page = max(page, 1)
         page_size = min(max(page_size, 1), 100)
-        return self._repository.list_public_pois(self._lang(language), page, page_size, search, category)
+        return self._repository.list_public_pois(self._lang(language), page, page_size, search, category, name)
 
     def get_poi(self, poi_id: int, language: str) -> dict:
         poi = self._repository.get_public_poi(poi_id, self._lang(language))

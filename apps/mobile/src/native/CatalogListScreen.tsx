@@ -1,15 +1,19 @@
+import { useEffect, useState } from "react"
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
+  Button,
   View,
 } from "react-native"
-import type { PublicPoiSummary, PublicTourSummary } from "./api"
+import { audioTourApi, type PublicPoiSummary, type PublicTourSummary } from "./api"
 import { PoiImage } from "./PoiImages"
 
 type Props = {
+  languageCode: string
   isLoading: boolean
   kind: "poi" | "tour"
   onMenu: () => void
@@ -19,6 +23,7 @@ type Props = {
 }
 
 export function CatalogListScreen({
+  languageCode,
   isLoading,
   kind,
   onMenu,
@@ -26,7 +31,45 @@ export function CatalogListScreen({
   pois,
   tours,
 }: Props) {
-  const entries = kind === "poi" ? pois : tours
+  const [query, setQuery] = useState("")
+  const [retry, setRetry] = useState(0)
+  const [result, setResult] = useState<{
+    key: string
+    entries: (PublicPoiSummary | PublicTourSummary)[]
+    error?: string
+  } | null>(null)
+  const term = query.trim()
+  const searchKey = JSON.stringify([kind, languageCode, term, retry])
+  const searching = Boolean(term) && result?.key !== searchKey
+  const searchError = term && result?.key === searchKey ? result.error : undefined
+  const entries = term ? (result?.key === searchKey ? result.entries : []) : (kind === "poi" ? pois : tours)
+  useEffect(() => {
+    if (!term || !languageCode) return
+    let cancelled = false
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          let matches: (PublicPoiSummary | PublicTourSummary)[]
+          if (kind === "tour") {
+            matches = await audioTourApi.listTours(languageCode, term)
+          } else {
+            const first = await audioTourApi.listPois(languageCode, term)
+            matches = [...first.items]
+            for (let page = 2; matches.length < first.total; page++) {
+              if (cancelled) return
+              const next = await audioTourApi.listPois(languageCode, term, page)
+              if (!next.items.length) break
+              matches.push(...next.items)
+            }
+          }
+          if (!cancelled) setResult({ key: searchKey, entries: matches })
+        } catch (reason) {
+          if (!cancelled) setResult({ key: searchKey, entries: [], error: reason instanceof Error ? reason.message : "Không thể tìm kiếm. Vui lòng thử lại." })
+        }
+      })()
+    }, 300)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [term, languageCode, kind, searchKey])
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
@@ -37,12 +80,27 @@ export function CatalogListScreen({
           {kind === "poi" ? "Danh sách POI" : "Danh sách Tour"}
         </Text>
       </View>
-      {isLoading ? (
+      <View style={styles.searchBox}>
+        <TextInput
+          accessibilityLabel={kind === "poi" ? "Tìm POI theo tên" : "Tìm Tour theo tên"}
+          placeholder={kind === "poi" ? "Tìm POI theo tên…" : "Tìm Tour theo tên…"}
+          placeholderTextColor="#6B8777"
+          value={query}
+          onChangeText={setQuery}
+          maxLength={200}
+          returnKeyType="search"
+          autoCorrect={false}
+          style={styles.searchInput}
+        />
+        {query.length > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Xóa từ khóa" onPress={() => setQuery("")} style={styles.clearSearch}><Text style={styles.clearText}>×</Text></Pressable>}
+      </View>
+      {searchError ? <View style={styles.searchNotice}><Text accessibilityRole="alert" style={styles.error}>{searchError}</Text><Button title="Thử lại" onPress={() => setRetry((value) => value + 1)}/></View> : null}
+      {isLoading || searching ? (
         <ActivityIndicator color="#15803D" style={styles.loading} />
       ) : (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={styles.list}>
           {entries.length === 0 ? (
-            <Text style={styles.empty}>Chưa có nội dung công khai.</Text>
+            <Text style={styles.empty}>{searchError ? "" : term ? `Không tìm thấy ${kind === "poi" ? "POI" : "Tour"} có tên chứa “${term}”.` : "Chưa có nội dung công khai."}</Text>
           ) : (
             entries.map((entry) => (
               <Pressable
@@ -89,6 +147,12 @@ export function CatalogListScreen({
 }
 
 const styles = StyleSheet.create({
+  searchBox: { flexDirection: "row", alignItems: "center", marginHorizontal: 18, marginBottom: 14, borderWidth: 1, borderColor: "#C8EAD8", borderRadius: 12, backgroundColor: "white" },
+  searchInput: { flex: 1, minWidth: 0, padding: 12, fontSize: 16, color: "#173B2A" },
+  clearSearch: { width: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
+  clearText: { fontSize: 26, color: "#456253" },
+  searchNotice: { paddingHorizontal: 18, marginBottom: 8 },
+  error: { color: "#B42318" },
   thumbnail: { width: 88, height: 96, borderRadius: 12, overflow: "hidden" },
   screen: { backgroundColor: "#F7FDF9", flex: 1 },
   header: {
