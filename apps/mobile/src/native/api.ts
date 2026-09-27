@@ -137,20 +137,38 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${getBaseUrl()}${path}`, init)
-
-  const body = (await response.json()) as ApiEnvelope<T> & { detail?: string }
-
-  if (!response.ok || !body.success) {
-    throw new ApiError(
-      typeof body.detail === "string"
-        ? body.detail
-        : body.message || "Không thể tải dữ liệu từ AudioTour.",
-      response.status,
-    )
+  const url = `${getBaseUrl()}${path}`
+  const controller = new AbortController()
+  let timedOut = false
+  const abort = () => controller.abort()
+  if (init?.signal?.aborted) abort()
+  else init?.signal?.addEventListener("abort", abort, { once: true })
+  const timeout = setTimeout(() => { timedOut = true; controller.abort() }, 30000)
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal })
+    let body: ApiEnvelope<T> & { detail?: string }
+    try {
+      body = await response.json()
+    } catch {
+      throw new ApiError("Máy chủ trả dữ liệu không hợp lệ. Vui lòng thử lại.", response.status)
+    }
+    if (!body || typeof body !== "object")
+      throw new ApiError("Máy chủ trả dữ liệu không hợp lệ. Vui lòng thử lại.", response.status)
+    if (!response.ok || !body.success) {
+      throw new ApiError(
+        typeof body.detail === "string" ? body.detail : body.message || "Không thể tải dữ liệu từ AudioTour.",
+        response.status,
+      )
+    }
+    return body.data
+  } catch (reason) {
+    if (timedOut) throw new Error("Kết nối quá lâu. Kiểm tra mạng và thử lại.")
+    if (init?.signal?.aborted || reason instanceof ApiError) throw reason
+    throw new Error("Không kết nối được máy chủ. Kiểm tra mạng và thử lại.")
+  } finally {
+    clearTimeout(timeout)
+    init?.signal?.removeEventListener("abort", abort)
   }
-
-  return body.data
 }
 
 async function requestRoute(path: string, init?: RequestInit): Promise<MapRoute> {

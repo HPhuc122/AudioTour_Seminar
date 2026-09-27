@@ -138,5 +138,9 @@
   "Tour": "Tour",
   "TOUR": "TOUR",
   "Tour: {0}": "Tour: {0}",
-  "Chạm POI hoặc bản đồ để chọn {0}.": "Tap a POI or the map to select {0}."
+  "Chạm POI hoặc bản đồ để chọn {0}.": "Tap a POI or the map to select {0}.",
+  "Máy chủ trả dữ liệu không hợp lệ. Vui lòng thử lại.": "The server returned invalid data. Please try again.",
+  "Kết nối quá lâu. Kiểm tra mạng và thử lại.": "The connection timed out. Check your network and try again.",
+  "Không kết nối được máy chủ. Kiểm tra mạng và thử lại.": "Unable to connect to the server. Check your network and try again.",
+  "Chưa có ngôn ngữ khả dụng. Vui lòng thử lại sau.": "No languages are available. Please try again later."
 }

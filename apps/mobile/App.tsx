@@ -57,6 +57,9 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false)
   const [languages, setLanguages] = useState<ApiLanguage[]>([])
+  const languageRequest = useRef(0)
+  const errorSource = useRef<"languages" | "catalog" | "detail" | null>(null)
+  const retryAction = useRef<(() => Promise<void>) | null>(null)
   const catalogRequest = useRef(0)
   const detailRequest = useRef(0)
   const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false)
@@ -82,26 +85,36 @@ export default function App() {
   const [qrCode, setQrCode] = useState<string | null>(null)
 
   const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [loadingLanguages, setLoadingLanguages] = useState(false)
+  const [loadingCatalog, setLoadingCatalog] = useState(false)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+  const isLoading = loadingLanguages || loadingCatalog || loadingDetail
   const [mapTarget, setMapTarget] = useState<MapTarget | null>(null)
   const [detailFromMap, setDetailFromMap] = useState(false)
 
+  const loadLanguages = async () => {
+    const request = ++languageRequest.current
+    setLoadingLanguages(true)
+    setError(null)
+    retryAction.current = null
+    try {
+      const availableLanguages = await audioTourApi.getLanguages()
+      if (request !== languageRequest.current) return
+      if (!availableLanguages.length) throw new Error("Chưa có ngôn ngữ khả dụng. Vui lòng thử lại sau.")
+      setLanguages(availableLanguages)
+      setLanguageCode(resolveDeviceLanguage(availableLanguages.map((language) => language.code)))
+    } catch (reason) {
+      if (request !== languageRequest.current) return
+      errorSource.current = "languages"
+      retryAction.current = loadLanguages
+      setError(reason instanceof Error ? reason.message : "Không thể tải ngôn ngữ.")
+    } finally {
+      if (request === languageRequest.current) setLoadingLanguages(false)
+    }
+  }
   useEffect(() => {
-    void (async () => {
-      try {
-        const availableLanguages = await audioTourApi.getLanguages()
-        setLanguages(availableLanguages)
-        setLanguageCode(
-          resolveDeviceLanguage(
-            availableLanguages.map((language) => language.code),
-          ),
-        )
-      } catch (reason) {
-        setError(
-          reason instanceof Error ? reason.message : t("Không thể tải ngôn ngữ."),
-        )
-      }
-    })()
+    void loadLanguages()
+    return () => { languageRequest.current++; catalogRequest.current++; detailRequest.current++ }
   }, [])
 
   useEffect(() => {
@@ -110,7 +123,7 @@ export default function App() {
 
   const loadCatalog = async (selectedLanguage: string) => {
     const request = ++catalogRequest.current
-    setIsLoading(true)
+    setLoadingCatalog(true)
     setError(null)
     try {
       const [poiPage, tourItems, paidSession] = await Promise.all([
@@ -131,23 +144,32 @@ export default function App() {
           setPaidAccessRemainingSeconds(validation.remainingSeconds)
         else {
           await clearPaidAccessSession()
+          if (request !== catalogRequest.current) return
           setPaidAccessRemainingSeconds(null)
         }
       } else setPaidAccessRemainingSeconds(null)
     } catch (reason) {
       if (request !== catalogRequest.current) return
+      errorSource.current = "catalog"
+      retryAction.current = () => loadCatalog(selectedLanguage)
       setError(
         reason instanceof Error
           ? reason.message
           : t("Không thể tải nội dung công khai."),
       )
     } finally {
-      if (request === catalogRequest.current) setIsLoading(false)
+      if (request === catalogRequest.current) setLoadingCatalog(false)
     }
   }
 
   const clearDetail = () => {
     detailRequest.current++
+    setLoadingDetail(false)
+    if (errorSource.current === "detail") {
+      retryAction.current = null
+      setError(null)
+      errorSource.current = null
+    }
     setDetail(null)
     setDestination(null)
     setCatalogDetailKind(null)
@@ -157,7 +179,6 @@ export default function App() {
 
   const openSection = (section: AppSection) => {
     clearDetail()
-    setIsLoading(false)
     setMapTarget(null)
     setDetailFromMap(false)
     setActiveSection(section)
@@ -167,7 +188,7 @@ export default function App() {
   const openCatalogDetail = async (kind: CatalogDetailKind, id: number, fromMap = false) => {
     if (!languageCode) return
     const request = ++detailRequest.current
-    setIsLoading(true)
+    setLoadingDetail(true)
     setError(null)
     try {
       const target =
@@ -180,11 +201,13 @@ export default function App() {
       setCatalogDetailKind(kind)
     } catch (reason) {
       if (request !== detailRequest.current) return
+      errorSource.current = "detail"
+      retryAction.current = () => openCatalogDetail(kind, id, fromMap)
       setError(
         reason instanceof Error ? reason.message : t("Không thể mở chi tiết."),
       )
     } finally {
-      if (request === detailRequest.current) setIsLoading(false)
+      if (request === detailRequest.current) setLoadingDetail(false)
     }
   }
 
@@ -194,7 +217,7 @@ export default function App() {
     scannedQrCode: string,
   ) => {
     const request = ++detailRequest.current
-    setIsLoading(true)
+    setLoadingDetail(true)
 
     setError(null)
 
@@ -217,19 +240,21 @@ export default function App() {
       setPendingQrVisit(null)
     } catch (reason) {
       if (request !== detailRequest.current) return
+      errorSource.current = "detail"
+      retryAction.current = () => openResolvedTarget(target, languageCode, scannedQrCode)
       setError(
         reason instanceof Error ? reason.message : t("Không thể mở nội dung QR."),
       )
     } finally {
-      if (request === detailRequest.current) setIsLoading(false)
+      if (request === detailRequest.current) setLoadingDetail(false)
     }
   }
 
   const handleQrCodeScanned = async (code: string) => {
     setIsQrScannerOpen(false)
-    setIsLoading(true)
-    setError(null)
     clearDetail()
+    setLoadingDetail(true)
+    setError(null)
     const request = detailRequest.current
 
     try {
@@ -249,11 +274,13 @@ export default function App() {
       }
     } catch (reason) {
       if (request !== detailRequest.current) return
+      errorSource.current = "detail"
+      retryAction.current = () => handleQrCodeScanned(code)
       setError(
         reason instanceof Error ? reason.message : t("Không thể xử lý mã QR."),
       )
     } finally {
-      if (request === detailRequest.current) setIsLoading(false)
+      if (request === detailRequest.current) setLoadingDetail(false)
     }
   }
 
@@ -354,6 +381,7 @@ export default function App() {
             <Text accessibilityRole="alert" style={styles.error}>
               {t(error)}
             </Text>
+            {retryAction.current && <Button title={t("Thử lại")} disabled={isLoading} onPress={() => void retryAction.current?.()} />}
           </View>
         )}
         <Sidebar
@@ -396,6 +424,12 @@ export default function App() {
                 ? t("Đổi ngôn ngữ nội dung và audio cho lần sử dụng này. Lần khởi động app sau sẽ dùng ngôn ngữ điện thoại.")
                 : t("Ngôn ngữ thiết bị chưa có trong nội dung này. Hãy chọn ngôn ngữ để tiếp tục.")}
             </Text>
+            {!languages.length && <View>
+              {loadingLanguages ? <ActivityIndicator color="#15803D" /> : <>
+                {error && <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>}
+                <Button title={t("Thử lại")} onPress={() => void loadLanguages()} />
+              </>}
+            </View>}
             {languagePickerError && <Text accessibilityRole="alert" style={styles.error}>{t(languagePickerError)}</Text>}
             {isLanguagePickerOpen && <Button title={t("Dùng ngôn ngữ điện thoại")} onPress={() => {
               const code = resolveDeviceLanguage(languages.map((language) => language.code))

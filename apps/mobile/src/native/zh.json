@@ -138,5 +138,9 @@
   "Tour": "游览",
   "TOUR": "游览",
   "Tour: {0}": "游览：{0}",
-  "Chạm POI hoặc bản đồ để chọn {0}.": "点击景点或地图以选择{0}。"
+  "Chạm POI hoặc bản đồ để chọn {0}.": "点击景点或地图以选择{0}。",
+  "Máy chủ trả dữ liệu không hợp lệ. Vui lòng thử lại.": "服务器返回的数据无效，请重试。",
+  "Kết nối quá lâu. Kiểm tra mạng và thử lại.": "连接超时，请检查网络后重试。",
+  "Không kết nối được máy chủ. Kiểm tra mạng và thử lại.": "无法连接服务器，请检查网络后重试。",
+  "Chưa có ngôn ngữ khả dụng. Vui lòng thử lại sau.": "暂无可用语言，请稍后重试。"
 }
