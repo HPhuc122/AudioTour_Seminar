@@ -1,3 +1,4 @@
+import { useTranslator } from "./i18n"
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
@@ -14,6 +15,8 @@ function formatRemaining(seconds: number | null): string {
 }
 
 export function DashboardScreen({ children, isLoading, languageCode, onMenu, paidAccessRemainingSeconds, poiTotal, tourTotal }: Props) {
+  const t = useTranslator()
+
   const [remaining, setRemaining] = useState(paidAccessRemainingSeconds);
   useEffect(() => setRemaining(paidAccessRemainingSeconds), [paidAccessRemainingSeconds]);
   useEffect(() => {
@@ -23,11 +26,11 @@ export function DashboardScreen({ children, isLoading, languageCode, onMenu, pai
   }, [remaining === null || remaining <= 0]);
   return (
     <View style={styles.screen}>
-      <View style={styles.header}><Pressable onPress={onMenu} style={styles.menuButton}><Text style={styles.menuIcon}>☰</Text></Pressable><View><Text style={styles.title}>Dashboard</Text><Text style={styles.language}>Ngôn ngữ: {languageCode ?? "..."}</Text></View></View>
+      <View style={styles.header}><Pressable onPress={onMenu} style={styles.menuButton}><Text style={styles.menuIcon}>☰</Text></Pressable><View><Text style={styles.title}>Dashboard</Text><Text style={styles.language}>{t("Ngôn ngữ: ")}{languageCode ?? "..."}</Text></View></View>
       {isLoading ? <ActivityIndicator color="#15803D" style={styles.loading} /> : <View style={styles.stats}>
-        <View style={styles.statCard}><Text style={styles.statValue}>{tourTotal}</Text><Text style={styles.statLabel}>Tổng Tour</Text></View>
-        <View style={styles.statCard}><Text style={styles.statValue}>{poiTotal}</Text><Text style={styles.statLabel}>Tổng POI</Text></View>
-        <View style={styles.statCard}><Text style={styles.timeValue}>{formatRemaining(remaining)}</Text><Text style={styles.statLabel}>Audio trả phí</Text></View>
+        <View style={styles.statCard}><Text style={styles.statValue}>{tourTotal}</Text><Text style={styles.statLabel}>{t("Tổng Tour")}</Text></View>
+        <View style={styles.statCard}><Text style={styles.statValue}>{poiTotal}</Text><Text style={styles.statLabel}>{t("Tổng POI")}</Text></View>
+        <View style={styles.statCard}><Text style={styles.timeValue}>{t(formatRemaining(remaining))}</Text><Text style={styles.statLabel}>{t("Audio trả phí")}</Text></View>
       </View>}
       {children}
     </View>

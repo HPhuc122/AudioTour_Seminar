@@ -1,3 +1,4 @@
+import { useTranslator } from "./i18n"
 import { Button, ScrollView, StyleSheet, Text, View } from "react-native"
 import type { PublicTargetDetail } from "./api"
 import { DetailAudio } from "./DetailAudio"
@@ -25,9 +26,11 @@ export function CatalogDetailScreen({
   onBack,
   onMap,
 }: Props) {
+  const t = useTranslator()
+
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
-      <Button color="#456253" title="Quay lại danh sách" onPress={onBack} />
+      <Button color="#456253" title={t("Quay lại danh sách")} onPress={onBack} />
       {kind === "poi" && (
         <PoiImages images={detail.images} name={detail.name} />
       )}
@@ -36,7 +39,7 @@ export function CatalogDetailScreen({
         {detail.name}
       </Text>
       <Text style={styles.code}>{detail.code}</Text>
-      <Button title="Xem bản đồ" onPress={onMap} />
+      <Button title={t("Xem bản đồ")} onPress={onMap} />
       <DetailAudio
         detail={detail}
         kind={kind}
@@ -49,33 +52,32 @@ export function CatalogDetailScreen({
       <Text style={styles.description}>
         {detail.description ||
           detail.shortDescription ||
-          "Nội dung đang được cập nhật."}
+          t("Nội dung đang được cập nhật.")}
       </Text>
       {kind === "poi" ? (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Thông tin địa điểm</Text>
+          <Text style={styles.cardTitle}>{t("Thông tin địa điểm")}</Text>
           <Text style={styles.row}>
-            Loại: {detail.category || "Chưa phân loại"}
+            {t("Loại: ")}{detail.category || t("Chưa phân loại")}
           </Text>
           {typeof detail.latitude === "number" &&
             typeof detail.longitude === "number" && (
               <Text style={styles.row}>
-                Tọa độ: {detail.latitude.toFixed(5)},{" "}
+                {t("Tọa độ: ")}{detail.latitude.toFixed(5)},{" "}
                 {detail.longitude.toFixed(5)}
               </Text>
             )}
           {detail.radiusMeters != null && (
-            <Text style={styles.row}>Bán kính: {detail.radiusMeters} m</Text>
+            <Text style={styles.row}>{t("Bán kính: ")}{detail.radiusMeters} m</Text>
           )}
         </View>
       ) : (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Hành trình</Text>
+          <Text style={styles.cardTitle}>{t("Hành trình")}</Text>
           <Text style={styles.row}>
-            Thời lượng dự kiến: {detail.estimatedMinutes ?? "—"} phút
-          </Text>
+            {t("Thời lượng dự kiến: ")}{detail.estimatedMinutes ?? "—"} {t("phút")}</Text>
           <Text style={styles.row}>
-            Số điểm dừng: {detail.pois?.length ?? 0}
+            {t("Số điểm dừng: ")}{detail.pois?.length ?? 0}
           </Text>
           {detail.pois?.map((poi, index) => (
             <Text key={poi.id} style={styles.stop}>
