@@ -22,7 +22,26 @@ export type PublicTargetDetail = {
   id: number;
   code: string;
   name: string;
+  shortDescription?: string;
   description?: string;
+  latitude?: number;
+  longitude?: number;
+  radiusMeters?: number;
+  category?: string;
+  audioTracks?: Array<{
+    id: number;
+    audioTrackId: number;
+    languageCode: string;
+    title: string;
+    audioType: string;
+    durationSeconds?: number;
+    mimeType?: string;
+    isAvailable: boolean;
+  }>;
+  images?: Array<{
+    id: number;
+    imageCategory?: string;
+  }>;
 };
 
 const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
