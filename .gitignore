@@ -41,6 +41,13 @@ generated-audio/
 *.wav
 *.ogg
 
+# Keep the Content API media layout, but never commit uploaded files
+!services/content-service/uploads/
+services/content-service/uploads/*
+!services/content-service/uploads/audio/
+services/content-service/uploads/audio/*
+!services/content-service/uploads/audio/.gitkeep
+
 # Keep intentionally versioned audio assets
 !assets/audio/**/*.mp3
 !assets/audio/**/*.wav

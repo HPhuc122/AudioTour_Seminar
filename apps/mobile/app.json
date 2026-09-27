@@ -10,7 +10,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Cho phép AudioTour sử dụng camera để quét mã QR."
+          "cameraPermission": "Cho phép AudioTour sử dụng camera để quét mã QR.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ]
     ]

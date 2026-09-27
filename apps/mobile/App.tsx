@@ -12,6 +12,7 @@ import { createQrVisit } from "./src/native/qrFlow";
 import type { AudioEntryAction, PublicDetailDestination } from "./src/native/qrFlow";
 
 type PendingQrVisit = {
+  code: string;
   target: ApiQrTarget;
   languages: ApiLanguage[];
 };
@@ -22,10 +23,11 @@ export default function App() {
   const [destination, setDestination] = useState<PublicDetailDestination | null>(null);
   const [detail, setDetail] = useState<PublicTargetDetail | null>(null);
   const [audioEntryAction, setAudioEntryAction] = useState<AudioEntryAction | null>(null);
+  const [qrCode, setQrCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const openResolvedTarget = async (target: ApiQrTarget, languageCode: string) => {
+  const openResolvedTarget = async (target: ApiQrTarget, languageCode: string, scannedQrCode: string) => {
     setIsLoading(true);
     setError(null);
 
@@ -36,6 +38,7 @@ export default function App() {
         : await audioTourApi.getTour(visit.destination.id, languageCode);
       setDestination(visit.destination);
       setAudioEntryAction(visit.audioEntryAction);
+      setQrCode(scannedQrCode);
       setDetail(targetDetail);
       setPendingQrVisit(null);
     } catch (reason) {
@@ -52,15 +55,16 @@ export default function App() {
     setDestination(null);
     setDetail(null);
     setAudioEntryAction(null);
+    setQrCode(null);
 
     try {
       const [target, languages] = await Promise.all([audioTourApi.resolveQr(code), audioTourApi.getLanguages()]);
       const languageCode = resolveDeviceLanguage(languages.map((language) => language.code));
 
       if (languageCode) {
-        await openResolvedTarget(target, languageCode);
+        await openResolvedTarget(target, languageCode, code);
       } else {
-        setPendingQrVisit({ target, languages });
+        setPendingQrVisit({ code, target, languages });
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Không thể xử lý mã QR.");
@@ -72,7 +76,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.screen} edges={["top", "right", "bottom", "left"]}>
-        {detail && destination?.screen === "poi-detail" && audioEntryAction ? (
+        {detail && destination?.screen === "poi-detail" && audioEntryAction && qrCode ? (
           <PoiDetailScreen
             audioEntryAction={audioEntryAction}
             languageCode={destination.languageCode}
@@ -80,9 +84,11 @@ export default function App() {
               setDetail(null);
               setDestination(null);
               setAudioEntryAction(null);
+              setQrCode(null);
               setIsQrScannerOpen(true);
             }}
             poi={detail}
+            qrCode={qrCode}
           />
         ) : (
           <View style={styles.content}>
@@ -118,7 +124,7 @@ export default function App() {
               <Pressable
                 accessibilityRole="button"
                 key={language.code}
-                onPress={() => void openResolvedTarget(pendingQrVisit.target, language.code)}
+                onPress={() => void openResolvedTarget(pendingQrVisit.target, language.code, pendingQrVisit.code)}
                 style={styles.languageOption}
               >
                 <Text style={styles.languageName}>{language.nativeName || language.name}</Text>
