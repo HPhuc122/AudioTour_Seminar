@@ -101,8 +101,8 @@ function Player({
       ) : (
         <>
           <View style={styles.controls}>
-            <Button title="−15 giây" accessibilityLabel="Lùi 15 giây" disabled={disabled || duration <= 0 || position <= 0} onPress={() => void seek(status.currentTime - 15)} />
-            <Button title="+15 giây" accessibilityLabel="Tiến 15 giây" disabled={disabled || duration <= 0 || position >= duration} onPress={() => void seek(status.currentTime + 15)} />
+            <Button title="−5 giây" accessibilityLabel="Lùi 5 giây" disabled={disabled || duration <= 0 || position <= 0} onPress={() => void seek(status.currentTime - 5)} />
+            <Button title="+5 giây" accessibilityLabel="Tiến 5 giây" disabled={disabled || duration <= 0 || position >= duration} onPress={() => void seek(status.currentTime + 5)} />
           </View>
           <Button disabled={disabled} title={status.playing ? "Tạm dừng" : finished ? "Nghe lại" : "Phát audio"} onPress={() => void toggle()} />
           {finished && !status.playing && <Text style={styles.text}>Đã hết bài. Chọn bài khác hoặc bấm Nghe lại.</Text>}
