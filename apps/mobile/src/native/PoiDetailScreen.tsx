@@ -1,13 +1,23 @@
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { useState } from "react";
-import { Button, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Button, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { audioTourApi } from "./api";
 import type { PublicTargetDetail } from "./api";
 import type { AudioEntryAction } from "./qrFlow";
+
+type AudioTrack = NonNullable<PublicTargetDetail["audioTracks"]>[number];
+
+type AudioSession = {
+  accessToken: string;
+  track: AudioTrack;
+};
 
 type PoiDetailScreenProps = {
   poi: PublicTargetDetail;
   languageCode: string;
   audioEntryAction: AudioEntryAction;
+  qrCode: string;
   onScanAnother: () => void;
 };
 
@@ -18,13 +28,58 @@ function formatDuration(seconds?: number): string {
   return minutes > 0 ? `${minutes}:${remainingSeconds.toString().padStart(2, "0")}` : `${seconds} giây`;
 }
 
+function formatPlaybackTime(seconds: number): string {
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  return `${minutes}:${(safeSeconds % 60).toString().padStart(2, "0")}`;
+}
+
+function AudioPlayer({ session }: { session: AudioSession }) {
+  const player = useAudioPlayer(
+    audioTourApi.getAudioSource(session.track.audioTrackId, session.accessToken, session.track.title),
+    { updateInterval: 250 },
+  );
+  const status = useAudioPlayerStatus(player);
+  const duration = status.duration || session.track.durationSeconds || 0;
+
+  const togglePlayback = async () => {
+    if (status.playing) {
+      player.pause();
+      return;
+    }
+    if (status.didJustFinish) await player.seekTo(0);
+    player.play();
+  };
+
+  return (
+    <View style={styles.player}>
+      <Text style={styles.playerStatus}>
+        {formatPlaybackTime(status.currentTime)} / {formatPlaybackTime(duration)}
+      </Text>
+      {status.isBuffering && <ActivityIndicator color="#15803D" style={styles.playerLoading} />}
+      {status.error && <Text accessibilityRole="alert" style={styles.audioError}>{status.error}</Text>}
+      <View style={styles.playerButton}>
+        <Button
+          disabled={Boolean(status.error)}
+          title={status.playing ? "Tạm dừng" : status.didJustFinish ? "Nghe lại" : "Phát audio"}
+          onPress={() => void togglePlayback()}
+        />
+      </View>
+    </View>
+  );
+}
+
 export function PoiDetailScreen({
   poi,
   languageCode,
   audioEntryAction,
+  qrCode,
   onScanAnother,
 }: PoiDetailScreenProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [audioSession, setAudioSession] = useState<AudioSession | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [isStartingAudio, setIsStartingAudio] = useState(false);
   const description = poi.description || poi.shortDescription || "Nội dung giới thiệu đang được cập nhật.";
   const shouldCollapse = description.length > 150;
   const visibleDescription = shouldCollapse && !isDescriptionExpanded
@@ -32,6 +87,25 @@ export function PoiDetailScreen({
     : description;
   const availableTracks = poi.audioTracks?.filter((track) => track.isAvailable) ?? [];
   const primaryTrack = availableTracks[0];
+
+  const startAudio = async () => {
+    setIsStartingAudio(true);
+    setAudioError(null);
+    try {
+      const access = await audioTourApi.startGuestAccess(qrCode);
+      if (access.requiresPayment || !access.accessToken) {
+        throw new Error("Audio này cần được mở khóa trước khi nghe.");
+      }
+      const audioPoi = await audioTourApi.getAudioPoi(poi.id, languageCode, access.accessToken);
+      const track = audioPoi.audioTracks?.find((item) => item.isAvailable);
+      if (!track) throw new Error("Chưa có audio khả dụng cho ngôn ngữ này.");
+      setAudioSession({ accessToken: access.accessToken, track });
+    } catch (reason) {
+      setAudioError(reason instanceof Error ? reason.message : "Không thể mở audio.");
+    } finally {
+      setIsStartingAudio(false);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
@@ -81,19 +155,30 @@ export function PoiDetailScreen({
             <>
               <Text style={styles.trackTitle}>{primaryTrack.title}</Text>
               <Text style={styles.trackMeta}>{formatDuration(primaryTrack.durationSeconds)} · {primaryTrack.audioType}</Text>
-              <View style={styles.lockNotice}>
-                <Text style={styles.lockIcon}>🔒</Text>
-                <View style={styles.lockText}>
-                  <Text style={styles.lockTitle}>
-                    {audioEntryAction === "show-payment" ? "Cần mở khóa audio" : "Audio miễn phí chưa kích hoạt"}
-                  </Text>
-                  <Text style={styles.lockDescription}>
-                    {audioEntryAction === "show-payment"
-                      ? "Bạn vẫn xem được địa điểm; bước thanh toán chỉ áp dụng khi nghe audio."
-                      : "Lát tiếp theo sẽ tạo guest access và phát audio từ API."}
-                  </Text>
+              {audioSession ? (
+                <AudioPlayer session={audioSession} />
+              ) : (
+                <View style={styles.lockNotice}>
+                  <Text style={styles.lockIcon}>{audioEntryAction === "show-payment" ? "🔒" : "▶"}</Text>
+                  <View style={styles.lockText}>
+                    <Text style={styles.lockTitle}>
+                      {audioEntryAction === "show-payment" ? "Cần mở khóa audio" : "Audio miễn phí"}
+                    </Text>
+                    <Text style={styles.lockDescription}>
+                      {audioEntryAction === "show-payment"
+                        ? "Bạn vẫn xem được địa điểm; bước thanh toán chỉ áp dụng khi nghe audio."
+                        : "Bắt đầu phiên nghe dành cho khách vãng lai."}
+                    </Text>
+                    {audioEntryAction === "start-guest-access" && (
+                      <View style={styles.startAudioButton}>
+                        <Button disabled={isStartingAudio} title="Bắt đầu nghe" onPress={() => void startAudio()} />
+                      </View>
+                    )}
+                  </View>
                 </View>
-              </View>
+              )}
+              {isStartingAudio && <ActivityIndicator color="#15803D" style={styles.playerLoading} />}
+              {audioError && <Text accessibilityRole="alert" style={styles.audioError}>{audioError}</Text>}
             </>
           ) : (
             <Text style={styles.emptyText}>Chưa có audio khả dụng cho ngôn ngữ này.</Text>
@@ -170,5 +255,11 @@ const styles = StyleSheet.create({
   lockText: { flex: 1 },
   lockTitle: { color: "#7A4614", fontWeight: "700" },
   lockDescription: { color: "#8A5A2B", fontSize: 13, lineHeight: 19, marginTop: 4 },
+  startAudioButton: { alignSelf: "flex-start", marginTop: 12 },
+  player: { backgroundColor: "#ECFDF3", borderRadius: 14, marginTop: 16, padding: 14 },
+  playerStatus: { color: "#173B2A", fontVariant: ["tabular-nums"], fontWeight: "600", textAlign: "center" },
+  playerLoading: { marginTop: 12 },
+  playerButton: { marginTop: 12 },
+  audioError: { color: "#B42318", lineHeight: 20, marginTop: 12 },
   emptyText: { color: "#6B8777", lineHeight: 21, marginTop: 16 },
 });

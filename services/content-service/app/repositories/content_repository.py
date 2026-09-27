@@ -33,6 +33,13 @@ class ContentRepository:
         row = self._fetchone(query, params)
         return next(iter(row.values())) if row else None
 
+    def _execute_scalar(self, query: str, params: tuple = ()):  # noqa: ANN001
+        with get_connection() as connection, connection.cursor() as cursor:
+            cursor.execute(query, params)
+            row = cursor.fetchone()
+            connection.commit()
+            return next(iter(row.values())) if row else None
+
     def list_public_tours(self, language: str) -> list[dict]:
         query = """
         SELECT t.Id AS id, t.Code AS code,
@@ -217,7 +224,7 @@ class ContentRepository:
         OUTPUT INSERTED.Id
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, SYSUTCDATETIME(), SYSUTCDATETIME())
         """
-        return int(self._scalar(query, (qr_id, amount, currency, expires_at, is_paid, status, token_hash, starts_at)))
+        return int(self._execute_scalar(query, (qr_id, amount, currency, expires_at, is_paid, status, token_hash, starts_at)))
 
     def create_payment_session(self, pass_id: int, amount, currency: str, expires_at: datetime) -> int:
         query = """
@@ -225,7 +232,7 @@ class ContentRepository:
         OUTPUT INSERTED.Id
         VALUES (%s, 'SimulatedMoMo', 'Pending', %s, %s, SYSUTCDATETIME(), %s)
         """
-        return int(self._scalar(query, (pass_id, amount, currency, expires_at)))
+        return int(self._execute_scalar(query, (pass_id, amount, currency, expires_at)))
 
     def get_pass_by_token_hash(self, token_hash: str) -> dict | None:
         query = """
