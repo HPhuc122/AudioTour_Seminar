@@ -103,7 +103,7 @@ export function CatalogListScreen({
       ) : (
         <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={styles.list}>
           {entries.length === 0 ? (
-            <Text style={styles.empty}>{searchError ? "" : term ? t("Không tìm thấy {0} có tên chứa “{1}”.", kind === "poi" ? "POI" : "Tour", term) : t("Chưa có nội dung công khai.")}</Text>
+            <Text style={styles.empty}>{searchError ? "" : term ? t("Không tìm thấy {0} có tên chứa “{1}”.", t(kind === "poi" ? "POI" : "Tour"), term) : t("Chưa có nội dung công khai.")}</Text>
           ) : (
             entries.map((entry) => (
               <Pressable
@@ -120,7 +120,7 @@ export function CatalogListScreen({
                   </View>
                 ) : (
                   <View style={styles.badge}>
-                    <Text style={styles.badgeText}>TOUR</Text>
+                    <Text style={styles.badgeText}>{t("TOUR")}</Text>
                   </View>
                 )}
                 <View style={styles.cardBody}>

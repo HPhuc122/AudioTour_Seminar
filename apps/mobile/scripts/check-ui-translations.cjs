@@ -48,13 +48,52 @@ const cases=[
  ['QrScanner','QrScanner',{onClose:noop,onCodeScanned:noop},['Enter QR code','Allow camera access','Confirm code','Close']],
  ['PoiImages','PoiImages',{name:'Example',images:[]},['No image']],
 ];
-for(const [file,component,props,expected] of cases){
- const tree=React.createElement(UiLanguageContext.Provider,{value:'en'},React.createElement(load(file)[component],props));
- const markup=renderToStaticMarkup(tree);
- expected.forEach(label=>assert.ok(markup.includes(label),file+': missing '+label));
- assert.ok(!/[À-ỹ]/u.test(markup.replace(/<[^>]*>/g,'')),file+': untranslated Vietnamese text');
- console.log(file+': English render PASS');
+const { uiDictionaries } = load('i18n');
+const labels = {
+ DashboardScreen: ['Chưa có vé','Tổng Tour','Tổng POI','Audio trả phí','Ngôn ngữ:'],
+ MapPanel: ['Đi bộ','Ô tô','Vị trí tôi','Chọn điểm đi','Chọn điểm đến','Tìm đường'],
+ Sidebar: ['Khách vãng lai','Quét QR','Ngôn ngữ','Dashboard','Tour'],
+ CatalogListScreen: ['Tìm POI theo tên…','Chưa có nội dung công khai.'],
+ CatalogDetailScreen: ['Quay lại danh sách','Xem bản đồ','Hành trình','Thời lượng dự kiến:','Chưa có audio khả dụng cho ngôn ngữ này.'],
+ QrScanner: ['Nhập mã QR','Cho phép dùng camera','Xác nhận mã','Đóng'],
+ PoiImages: ['Chưa có ảnh'],
+};
+const plain = markup => markup.replace(/<[^>]*>/g,'').replace(/&#x27;/g,"'").replace(/&quot;/g,'"').replace(/&amp;/g,'&');
+const english = uiDictionaries.en;
+const variables = text => [...text.matchAll(/\{(\d+)\}/g)].map(match=>match[1]).sort();
+for (const [locale, dictionary] of Object.entries(uiDictionaries)) {
+ assert.deepEqual(Object.keys(dictionary).sort(),Object.keys(english).sort(),locale+': missing keys');
+ for(const [key,value] of Object.entries(dictionary)) {
+  assert.ok(value.trim() && !value.includes('\uFFFD'),locale+': empty or corrupt '+key);
+  assert.deepEqual(variables(value),variables(key),locale+': interpolation '+key);
+ }
 }
+for (const locale of ['vi','en','zh','ko','ja','fr']) {
+ const t = createTranslator(locale);
+ for(const [file,component,props] of cases) {
+  const tree = React.createElement(UiLanguageContext.Provider,{value:locale},React.createElement(load(file)[component],{...props,languageCode:locale}));
+  const rendered = plain(renderToStaticMarkup(tree));
+  labels[file].forEach(key=>assert.ok(rendered.includes(t(key)),locale+'/'+file+': missing '+key));
+  if(locale!=='vi') assert.ok(!/[ĂăĐđĨĩŨũƠơƯưẠ-ỹ]/u.test(rendered),locale+'/'+file+': Vietnamese fallback');
+ }
+ console.log(locale+': 7 screen renders PASS');
+}
+for (const [locale,expected] of [['zh-CN','步行'],['ko-KR','도보'],['ja-JP','徒歩'],['fr-FR','À pied']]) {
+ assert.equal(createTranslator(locale)('Đi bộ'),expected);
+}
+// UI source keys must exist in every dictionary; dynamic content is not translated.
+for (const name of [...cases.map(item=>item[0]),'DetailAudio']) {
+ const text=fs.readFileSync(path.join(root,name+'.tsx'),'utf8');
+ const source=ts.createSourceFile(name,text,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
+ function check(node) {
+  if(ts.isCallExpression(node)&&node.expression.getText(source)==='t'&&ts.isStringLiteral(node.arguments[0])) {
+   assert.ok(Object.hasOwn(english,node.arguments[0].text.trim()),name+': unknown translation key');
+  }
+  ts.forEachChild(node,check);
+ }
+ check(source);
+}
+console.log('All dictionaries: key coverage, placeholders and regional locales PASS');
 const en=createTranslator('en-US'),vi=createTranslator('vi');
 assert.equal(en('Chưa có vé'),'No pass');
 assert.equal(vi('Chưa có vé'),'Chưa có vé');

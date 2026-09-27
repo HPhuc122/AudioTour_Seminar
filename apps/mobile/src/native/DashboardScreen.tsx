@@ -26,7 +26,7 @@ export function DashboardScreen({ children, isLoading, languageCode, onMenu, pai
   }, [remaining === null || remaining <= 0]);
   return (
     <View style={styles.screen}>
-      <View style={styles.header}><Pressable onPress={onMenu} style={styles.menuButton}><Text style={styles.menuIcon}>☰</Text></Pressable><View><Text style={styles.title}>Dashboard</Text><Text style={styles.language}>{t("Ngôn ngữ: ")}{languageCode ?? "..."}</Text></View></View>
+      <View style={styles.header}><Pressable onPress={onMenu} style={styles.menuButton}><Text style={styles.menuIcon}>☰</Text></Pressable><View><Text style={styles.title}>{t("Dashboard")}</Text><Text style={styles.language}>{t("Ngôn ngữ: ")}{languageCode ?? "..."}</Text></View></View>
       {isLoading ? <ActivityIndicator color="#15803D" style={styles.loading} /> : <View style={styles.stats}>
         <View style={styles.statCard}><Text style={styles.statValue}>{tourTotal}</Text><Text style={styles.statLabel}>{t("Tổng Tour")}</Text></View>
         <View style={styles.statCard}><Text style={styles.statValue}>{poiTotal}</Text><Text style={styles.statLabel}>{t("Tổng POI")}</Text></View>

@@ -32,7 +32,7 @@ export function Sidebar({ activeSection, onClose, onNavigate, onOpenQr, onOpenLa
             {items.map((item) => (
               <Pressable key={item.id} onPress={() => onNavigate(item.id)} style={[styles.item, activeSection === item.id && styles.activeItem]}>
                 <Text style={styles.icon}>{item.icon}</Text>
-                <Text style={[styles.label, activeSection === item.id && styles.activeLabel]}>{item.label}</Text>
+                <Text style={[styles.label, activeSection === item.id && styles.activeLabel]}>{t(item.label)}</Text>
               </Pressable>
             ))}
             <Pressable onPress={onOpenQr} style={styles.item}>
