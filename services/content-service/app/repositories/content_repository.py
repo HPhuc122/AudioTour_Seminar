@@ -40,7 +40,7 @@ class ContentRepository:
             connection.commit()
             return next(iter(row.values())) if row else None
 
-    def list_public_tours(self, language: str) -> list[dict]:
+    def list_public_tours(self, language: str, name: str | None = None) -> list[dict]:
         query = """
         SELECT t.Id AS id, t.Code AS code,
                COALESCE(tt.Name, ttvi.Name, t.Code) AS name,
@@ -52,7 +52,11 @@ class ContentRepository:
         WHERE t.IsActive = 1 AND t.DeletedAt IS NULL
         ORDER BY COALESCE(tt.Name, ttvi.Name, t.Code)
         """
-        return self._fetchall(query, (language,))
+        params = [language]
+        if name and name.strip():
+            query = query.replace("ORDER BY COALESCE", "AND CHARINDEX(%s, COALESCE(tt.Name, ttvi.Name, t.Code) COLLATE Latin1_General_100_CI_AI) > 0 ORDER BY COALESCE")
+            params.append(name.strip())
+        return self._fetchall(query, tuple(params))
 
     def get_public_tour(self, tour_id: int, language: str) -> dict | None:
         query = """
@@ -90,13 +94,16 @@ class ContentRepository:
             poi["audioTracks"] = self.list_audio_tracks_for_poi(poi["id"], language)
         return pois
 
-    def list_public_pois(self, language: str, page: int = 1, page_size: int = 20, search: str | None = None, category: str | None = None) -> dict:
+    def list_public_pois(self, language: str, page: int = 1, page_size: int = 20, search: str | None = None, category: str | None = None, name: str | None = None) -> dict:
         where = [self.PUBLIC_POI_WHERE]
         params: list = [language]
         if search:
             where.append("(p.Code LIKE %s OR p.Name LIKE %s OR pt.Name LIKE %s OR ptvi.Name LIKE %s)")
             term = f"%{search}%"
             params.extend([term, term, term, term])
+        if name and name.strip():
+            where.append("CHARINDEX(%s, COALESCE(pt.Name, ptvi.Name, p.Name, p.Code) COLLATE Latin1_General_100_CI_AI) > 0")
+            params.append(name.strip())
         if category:
             where.append("p.Category = %s")
             params.append(category)

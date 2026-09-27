@@ -196,13 +196,13 @@ export const audioTourApi = {
     request<PublicTargetDetail>(
       `/api/v1/public/tours/${id}?lang=${encodeURIComponent(languageCode)}`,
     ),
-  listPois: (languageCode: string) =>
+  listPois: (languageCode: string, name = "", page = 1) =>
     request<PublicPoiList>(
-      `/api/v1/public/pois?page=1&pageSize=100&lang=${encodeURIComponent(languageCode)}`,
+      `/api/v1/public/pois?page=${page}&pageSize=100&lang=${encodeURIComponent(languageCode)}&name=${encodeURIComponent(name)}`,
     ),
-  listTours: (languageCode: string) =>
+  listTours: (languageCode: string, name = "") =>
     request<PublicTourSummary[]>(
-      `/api/v1/public/tours?lang=${encodeURIComponent(languageCode)}`,
+      `/api/v1/public/tours?lang=${encodeURIComponent(languageCode)}&name=${encodeURIComponent(name)}`,
     ),
   startGuestAccess: (qrCode: string) =>
     request<GuestAccessResult>("/api/v1/public/access/start", {

@@ -286,6 +286,8 @@ export default function App() {
       </DashboardScreen>
     ) : (
       <CatalogListScreen
+        key={activeSection}
+        languageCode={languageCode ?? ""}
         isLoading={isLoading}
         kind={activeSection === "pois" ? "poi" : "tour"}
         onMenu={() => setIsSidebarOpen(true)}
