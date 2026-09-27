@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   TextInput,
@@ -21,6 +21,11 @@ type Props = {
   onSelect: (id: number) => void
   pois: PublicPoiSummary[]
   tours: PublicTourSummary[]
+  poiTotal: number
+  hasMorePois: boolean
+  loadingMorePois: boolean
+  morePoisError: string | null
+  onLoadMorePois: () => void
 }
 
 export function CatalogListScreen({
@@ -31,6 +36,11 @@ export function CatalogListScreen({
   onSelect,
   pois,
   tours,
+  poiTotal,
+  hasMorePois,
+  loadingMorePois,
+  morePoisError,
+  onLoadMorePois,
 }: Props) {
   const t = useTranslator()
 
@@ -101,11 +111,14 @@ export function CatalogListScreen({
       {isLoading || searching ? (
         <ActivityIndicator color="#15803D" style={styles.loading} />
       ) : (
-        <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={styles.list}>
-          {entries.length === 0 ? (
-            <Text style={styles.empty}>{searchError ? "" : term ? t("Không tìm thấy {0} có tên chứa “{1}”.", t(kind === "poi" ? "POI" : "Tour"), term) : t("Chưa có nội dung công khai.")}</Text>
-          ) : (
-            entries.map((entry) => (
+        <FlatList
+          data={entries}
+          keyExtractor={(entry) => `${kind}:${entry.id}`}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={<Text style={styles.empty}>{searchError ? "" : term ? t("Không tìm thấy {0} có tên chứa “{1}”.", t(kind === "poi" ? "POI" : "Tour"), term) : t("Chưa có nội dung công khai.")}</Text>}
+          renderItem={({ item: entry }) => (
               <Pressable
                 key={entry.id}
                 onPress={() => onSelect(entry.id)}
@@ -141,15 +154,24 @@ export function CatalogListScreen({
                 </View>
                 <Text style={styles.chevron}>›</Text>
               </Pressable>
-            ))
           )}
-        </ScrollView>
+          ListFooterComponent={!term && kind === "poi" ? <View style={styles.footer}>
+            <Text style={styles.meta}>{t("Đã tải {0}/{1} POI", pois.length, poiTotal)}</Text>
+            {morePoisError && <Text accessibilityRole="alert" style={styles.error}>{t(morePoisError)}</Text>}
+            {(hasMorePois || morePoisError) && <Button
+              title={loadingMorePois ? t("Đang tải thêm…") : morePoisError ? t("Thử lại") : t("Tải thêm POI")}
+              disabled={loadingMorePois}
+              onPress={onLoadMorePois}
+            />}
+          </View> : null}
+        />
       )}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
+  footer: { gap: 10, paddingVertical: 16 },
   searchBox: { flexDirection: "row", alignItems: "center", marginHorizontal: 18, marginBottom: 14, borderWidth: 1, borderColor: "#C8EAD8", borderRadius: 12, backgroundColor: "white" },
   searchInput: { flex: 1, minWidth: 0, padding: 12, fontSize: 16, color: "#173B2A" },
   clearSearch: { width: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },

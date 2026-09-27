@@ -135,7 +135,7 @@ class ContentRepository:
         LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s
         LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi'
         WHERE {where_sql}
-        ORDER BY p.Priority DESC, COALESCE(pt.Name, ptvi.Name, p.Name, p.Code)
+        ORDER BY p.Priority DESC, COALESCE(pt.Name, ptvi.Name, p.Name, p.Code), p.Id
         OFFSET %s ROWS FETCH NEXT %s ROWS ONLY
         """
         rows = self._fetchall(query, tuple(params + [offset, page_size]))

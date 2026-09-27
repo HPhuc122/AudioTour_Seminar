@@ -12,6 +12,7 @@ const native = new Proxy({
   StyleSheet: { create: x => x, absoluteFill: {} },
   AppState: { currentState: 'active' },
   useWindowDimensions: () => ({width: 390, height: 800}),
+  FlatList: ({data,renderItem,ListEmptyComponent,ListFooterComponent}) => React.createElement('div',null,data.length ? data.map((item,index)=>React.createElement(React.Fragment,{key:item.id??index},renderItem({item,index}))) : ListEmptyComponent,ListFooterComponent),
   Modal: ({visible, children}) => visible ? React.createElement('div',null,children) : null,
 }, { get: (target, key) => target[key] ?? element });
 function load(name) {
@@ -43,7 +44,7 @@ const cases=[
  ['DashboardScreen','DashboardScreen',{paidAccessRemainingSeconds:null,poiTotal:5,tourTotal:3,languageCode:'en',onMenu:noop},['No pass','Total tours','Total POIs','Paid audio','Language:']],
  ['MapPanel','MapPanel',{pois:[],languageCode:'en',target:null,onScan:noop,onDetail:noop},['Walking','Driving','My location','Choose start','Choose destination','Directions']],
  ['Sidebar','Sidebar',{visible:true,languageLabel:'English',onClose:noop,onNavigate:noop,onOpenQr:noop,onOpenLanguage:noop},['Guest','Scan QR','Language']],
- ['CatalogListScreen','CatalogListScreen',{kind:'poi',languageCode:'en',pois:[],tours:[],isLoading:false,onMenu:noop,onSelect:noop},['Search POIs by name','No public content available.']],
+ ['CatalogListScreen','CatalogListScreen',{kind:'poi',languageCode:'en',pois:[],tours:[],poiTotal:0,hasMorePois:false,loadingMorePois:false,morePoisError:null,onLoadMorePois:noop,isLoading:false,onMenu:noop,onSelect:noop},['Search POIs by name','No public content available.']],
  ['CatalogDetailScreen','CatalogDetailScreen',{kind:'tour',languageCode:'en',detail:{id:1,name:'Example',code:'T1',pois:[]},onScan:noop,onMap:noop,onBack:noop},['Back to list','View map','Itinerary','Estimated duration:','No audio is available']],
  ['QrScanner','QrScanner',{onClose:noop,onCodeScanned:noop},['Enter QR code','Allow camera access','Confirm code','Close']],
  ['PoiImages','PoiImages',{name:'Example',images:[]},['No image']],
@@ -76,7 +77,12 @@ for (const locale of ['vi','en','zh','ko','ja','fr']) {
   labels[file].forEach(key=>assert.ok(rendered.includes(t(key)),locale+'/'+file+': missing '+key));
   if(locale!=='vi') assert.ok(!/[ĂăĐđĨĩŨũƠơƯưẠ-ỹ]/u.test(rendered),locale+'/'+file+': Vietnamese fallback');
  }
- console.log(locale+': 7 screen renders PASS');
+ const list = load('CatalogListScreen').CatalogListScreen;
+ const paging = React.createElement(list,{kind:'poi',languageCode:locale,pois:[{id:1,name:'Example',code:'P1'}],tours:[],poiTotal:150,hasMorePois:true,loadingMorePois:false,morePoisError:null,onLoadMorePois:noop,isLoading:false,onMenu:noop,onSelect:noop});
+ const pagingText = plain(renderToStaticMarkup(React.createElement(UiLanguageContext.Provider,{value:locale},paging)));
+ assert.ok(pagingText.includes(t('Tải thêm POI')));
+ assert.ok(pagingText.includes(t('Đã tải {0}/{1} POI',1,150)));
+ console.log(locale+': 7 screens and pagination footer PASS');
 }
 for (const [locale,expected] of [['zh-CN','步行'],['ko-KR','도보'],['ja-JP','徒歩'],['fr-FR','À pied']]) {
  assert.equal(createTranslator(locale)('Đi bộ'),expected);
