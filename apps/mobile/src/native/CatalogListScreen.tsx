@@ -1,3 +1,4 @@
+import { useTranslator } from "./i18n"
 import { useEffect, useState } from "react"
 import {
   ActivityIndicator,
@@ -31,6 +32,8 @@ export function CatalogListScreen({
   pois,
   tours,
 }: Props) {
+  const t = useTranslator()
+
   const [query, setQuery] = useState("")
   const [retry, setRetry] = useState(0)
   const [result, setResult] = useState<{
@@ -64,7 +67,7 @@ export function CatalogListScreen({
           }
           if (!cancelled) setResult({ key: searchKey, entries: matches })
         } catch (reason) {
-          if (!cancelled) setResult({ key: searchKey, entries: [], error: reason instanceof Error ? reason.message : "Không thể tìm kiếm. Vui lòng thử lại." })
+          if (!cancelled) setResult({ key: searchKey, entries: [], error: reason instanceof Error ? reason.message : t("Không thể tìm kiếm. Vui lòng thử lại.") })
         }
       })()
     }, 300)
@@ -77,13 +80,13 @@ export function CatalogListScreen({
           <Text style={styles.menuIcon}>☰</Text>
         </Pressable>
         <Text style={styles.title}>
-          {kind === "poi" ? "Danh sách POI" : "Danh sách Tour"}
+          {kind === "poi" ? t("Danh sách POI") : t("Danh sách Tour")}
         </Text>
       </View>
       <View style={styles.searchBox}>
         <TextInput
-          accessibilityLabel={kind === "poi" ? "Tìm POI theo tên" : "Tìm Tour theo tên"}
-          placeholder={kind === "poi" ? "Tìm POI theo tên…" : "Tìm Tour theo tên…"}
+          accessibilityLabel={kind === "poi" ? t("Tìm POI theo tên") : t("Tìm Tour theo tên")}
+          placeholder={kind === "poi" ? t("Tìm POI theo tên…") : t("Tìm Tour theo tên…")}
           placeholderTextColor="#6B8777"
           value={query}
           onChangeText={setQuery}
@@ -92,15 +95,15 @@ export function CatalogListScreen({
           autoCorrect={false}
           style={styles.searchInput}
         />
-        {query.length > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Xóa từ khóa" onPress={() => setQuery("")} style={styles.clearSearch}><Text style={styles.clearText}>×</Text></Pressable>}
+        {query.length > 0 && <Pressable accessibilityRole="button" accessibilityLabel={t("Xóa từ khóa")} onPress={() => setQuery("")} style={styles.clearSearch}><Text style={styles.clearText}>×</Text></Pressable>}
       </View>
-      {searchError ? <View style={styles.searchNotice}><Text accessibilityRole="alert" style={styles.error}>{searchError}</Text><Button title="Thử lại" onPress={() => setRetry((value) => value + 1)}/></View> : null}
+      {searchError ? <View style={styles.searchNotice}><Text accessibilityRole="alert" style={styles.error}>{t(searchError)}</Text><Button title={t("Thử lại")} onPress={() => setRetry((value) => value + 1)}/></View> : null}
       {isLoading || searching ? (
         <ActivityIndicator color="#15803D" style={styles.loading} />
       ) : (
         <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={styles.list}>
           {entries.length === 0 ? (
-            <Text style={styles.empty}>{searchError ? "" : term ? `Không tìm thấy ${kind === "poi" ? "POI" : "Tour"} có tên chứa “${term}”.` : "Chưa có nội dung công khai."}</Text>
+            <Text style={styles.empty}>{searchError ? "" : term ? t("Không tìm thấy {0} có tên chứa “{1}”.", kind === "poi" ? "POI" : "Tour", term) : t("Chưa có nội dung công khai.")}</Text>
           ) : (
             entries.map((entry) => (
               <Pressable
@@ -128,12 +131,12 @@ export function CatalogListScreen({
                       (kind === "poi"
                         ? (entry as PublicPoiSummary).shortDescription
                         : undefined) ||
-                      "Nội dung đang được cập nhật."}
+                      t("Nội dung đang được cập nhật.")}
                   </Text>
                   <Text style={styles.meta}>
                     {kind === "tour"
-                      ? `${(entry as PublicTourSummary).estimatedMinutes ?? "—"} phút`
-                      : (entry as PublicPoiSummary).category || "Địa điểm"}
+                      ? t("{0} phút", (entry as PublicTourSummary).estimatedMinutes ?? "—")
+                      : (entry as PublicPoiSummary).category || t("Địa điểm")}
                   </Text>
                 </View>
                 <Text style={styles.chevron}>›</Text>

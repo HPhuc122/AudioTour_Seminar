@@ -1,3 +1,4 @@
+import { UiLanguageContext, createTranslator } from "./src/native/i18n"
 import { StatusBar } from "expo-status-bar"
 
 import { useEffect, useRef, useState } from "react"
@@ -61,6 +62,7 @@ export default function App() {
   const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false)
   const [languagePickerError, setLanguagePickerError] = useState<string | null>(null)
   const [languageCode, setLanguageCode] = useState<string | null>(null)
+  const t = createTranslator(languageCode)
   const [pendingQrVisit, setPendingQrVisit] = useState<PendingQrVisit | null>(
     null,
   )
@@ -96,7 +98,7 @@ export default function App() {
         )
       } catch (reason) {
         setError(
-          reason instanceof Error ? reason.message : "Không thể tải ngôn ngữ.",
+          reason instanceof Error ? reason.message : t("Không thể tải ngôn ngữ."),
         )
       }
     })()
@@ -137,7 +139,7 @@ export default function App() {
       setError(
         reason instanceof Error
           ? reason.message
-          : "Không thể tải nội dung công khai.",
+          : t("Không thể tải nội dung công khai."),
       )
     } finally {
       if (request === catalogRequest.current) setIsLoading(false)
@@ -179,7 +181,7 @@ export default function App() {
     } catch (reason) {
       if (request !== detailRequest.current) return
       setError(
-        reason instanceof Error ? reason.message : "Không thể mở chi tiết.",
+        reason instanceof Error ? reason.message : t("Không thể mở chi tiết."),
       )
     } finally {
       if (request === detailRequest.current) setIsLoading(false)
@@ -216,7 +218,7 @@ export default function App() {
     } catch (reason) {
       if (request !== detailRequest.current) return
       setError(
-        reason instanceof Error ? reason.message : "Không thể mở nội dung QR.",
+        reason instanceof Error ? reason.message : t("Không thể mở nội dung QR."),
       )
     } finally {
       if (request === detailRequest.current) setIsLoading(false)
@@ -248,7 +250,7 @@ export default function App() {
     } catch (reason) {
       if (request !== detailRequest.current) return
       setError(
-        reason instanceof Error ? reason.message : "Không thể xử lý mã QR.",
+        reason instanceof Error ? reason.message : t("Không thể xử lý mã QR."),
       )
     } finally {
       if (request === detailRequest.current) setIsLoading(false)
@@ -341,7 +343,7 @@ export default function App() {
     )
 
   return (
-    <SafeAreaProvider>
+    <UiLanguageContext.Provider value={languageCode}><SafeAreaProvider>
       <SafeAreaView
         style={styles.screen}
         edges={["top", "right", "bottom", "left"]}
@@ -350,7 +352,7 @@ export default function App() {
         {error && !detail && (
           <View style={styles.errorBanner}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {t(error)}
             </Text>
           </View>
         )}
@@ -359,7 +361,7 @@ export default function App() {
           onClose={() => setIsSidebarOpen(false)}
           onNavigate={openSection}
           onOpenQr={openQr}
-          languageLabel={currentLanguage?.nativeName || currentLanguage?.name || languageCode || "Chưa chọn"}
+          languageLabel={currentLanguage?.nativeName || currentLanguage?.name || languageCode || t("Chưa chọn")}
           onOpenLanguage={() => { setIsSidebarOpen(false); setLanguagePickerError(null); setIsLanguagePickerOpen(true) }}
           visible={isSidebarOpen}
         />
@@ -388,18 +390,17 @@ export default function App() {
             edges={["top", "right", "bottom", "left"]}
           >
             <Text accessibilityRole="header" style={styles.languageTitle}>
-              Chọn ngôn ngữ
-            </Text>
+              {t("Chọn ngôn ngữ")}</Text>
             <Text style={styles.languageDescription}>
               {isLanguagePickerOpen
-                ? "Đổi ngôn ngữ nội dung và audio cho lần sử dụng này. Lần khởi động app sau sẽ dùng ngôn ngữ điện thoại."
-                : "Ngôn ngữ thiết bị chưa có trong nội dung này. Hãy chọn ngôn ngữ để tiếp tục."}
+                ? t("Đổi ngôn ngữ nội dung và audio cho lần sử dụng này. Lần khởi động app sau sẽ dùng ngôn ngữ điện thoại.")
+                : t("Ngôn ngữ thiết bị chưa có trong nội dung này. Hãy chọn ngôn ngữ để tiếp tục.")}
             </Text>
-            {languagePickerError && <Text accessibilityRole="alert" style={styles.error}>{languagePickerError}</Text>}
-            {isLanguagePickerOpen && <Button title="Dùng ngôn ngữ điện thoại" onPress={() => {
+            {languagePickerError && <Text accessibilityRole="alert" style={styles.error}>{t(languagePickerError)}</Text>}
+            {isLanguagePickerOpen && <Button title={t("Dùng ngôn ngữ điện thoại")} onPress={() => {
               const code = resolveDeviceLanguage(languages.map((language) => language.code))
               if (code) chooseLanguage(code)
-              else setLanguagePickerError("Ngôn ngữ điện thoại chưa được hỗ trợ. Hãy chọn một ngôn ngữ bên dưới.")
+              else setLanguagePickerError(t("Ngôn ngữ điện thoại chưa được hỗ trợ. Hãy chọn một ngôn ngữ bên dưới."))
             }} />}
             <ScrollView>
             {(pendingQrVisit?.languages ?? languages).map((language) => (
@@ -421,7 +422,7 @@ export default function App() {
               <View style={styles.closeLanguageButton}>
                 <Button
                   color="#456253"
-                  title="Đóng"
+                  title={t("Đóng")}
                   onPress={closeLanguagePicker}
                 />
               </View>
@@ -430,7 +431,7 @@ export default function App() {
         </Modal>
         <StatusBar style="dark" />
       </SafeAreaView>
-    </SafeAreaProvider>
+    </SafeAreaProvider></UiLanguageContext.Provider>
   )
 }
 

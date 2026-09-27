@@ -1,3 +1,4 @@
+import { useTranslator, type Translator } from "./i18n"
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, AppState, Button, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,8 +26,10 @@ const validPoint = (point: {
     longitude?: number;
 }): point is MapPoint => Number.isFinite(point.latitude) && Number.isFinite(point.longitude) && Math.abs(point.latitude!) <= 90 && Math.abs(point.longitude!) <= 180;
 const distance = (meters: number) => meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
-const duration = (seconds: number) => { const mins = Math.max(1, Math.ceil(seconds / 60)); return mins < 60 ? `${mins} phút` : `${Math.floor(mins / 60)} giờ ${mins % 60} phút`; };
+const duration = (seconds: number, t: Translator) => { const mins = Math.max(1, Math.ceil(seconds / 60)); return mins < 60 ? t("{0} phút", mins) : t("{0} giờ {1} phút", Math.floor(mins / 60), mins % 60); };
 export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props) {
+  const t = useTranslator()
+
     const web = useRef<WebView>(null);
     const mounted = useRef(true);
     const routeRequest = useRef(0);
@@ -86,13 +89,13 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
         try {
             const permission = await Location.requestForegroundPermissionsAsync();
             if (permission.status !== "granted")
-                throw new Error("Chưa có quyền vị trí. Bạn vẫn có thể chọn POI hoặc ghim; bật quyền trong Cài đặt để dùng vị trí hiện tại.");
+                throw new Error(t("Chưa có quyền vị trí. Bạn vẫn có thể chọn POI hoặc ghim; bật quyền trong Cài đặt để dùng vị trí hiện tại."));
             if (!await Location.hasServicesEnabledAsync())
-                throw new Error("Hãy bật GPS/dịch vụ vị trí trên điện thoại.");
+                throw new Error(t("Hãy bật GPS/dịch vụ vị trí trên điện thoại."));
             let timeout: ReturnType<typeof setTimeout> | undefined;
             const result = await Promise.race([
                 Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
-                new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error("GPS chưa xác định được vị trí. Hãy ra nơi thoáng và thử lại.")), 20000); }),
+                new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error(t("GPS chưa xác định được vị trí. Hãy ra nơi thoáng và thử lại."))), 20000); }),
             ]).finally(() => { if (timeout)
                 clearTimeout(timeout); });
             if (!mounted.current || request !== locationRequest.current || AppState.currentState !== "active")
@@ -100,7 +103,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
             const point = { latitude: result.coords.latitude, longitude: result.coords.longitude, accuracy: result.coords.accuracy ?? 0 };
             setLocation(point);
             if (endpoint)
-                choose(endpoint, { ...point, label: "Vị trí hiện tại" });
+                choose(endpoint, { ...point, label: t("Vị trí hiện tại") });
             else {
                 setFocus([point]);
                 setFitKey((v) => v + 1);
@@ -117,7 +120,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
         }
         catch (reason) {
             if (mounted.current && request === locationRequest.current)
-                setLocationError(reason instanceof Error ? reason.message : "Không lấy được vị trí. Vui lòng thử lại.");
+                setLocationError(reason instanceof Error ? reason.message : t("Không lấy được vị trí. Vui lòng thử lại."));
         }
         finally {
             if (mounted.current && request === locationRequest.current)
@@ -144,7 +147,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
         setFocus([]);
         try {
             if (!tourDetail && (!from || !to))
-                throw new Error("Chọn điểm đi và điểm đến trước khi tìm đường.");
+                throw new Error(t("Chọn điểm đi và điểm đến trước khi tìm đường."));
             const result = tourDetail ? await audioTourApi.getTourRoute(tourDetail.id, travelMode) : await audioTourApi.getDirections([from!, to!], travelMode);
             if (mounted.current && request === routeRequest.current) {
                 setRoute(result);
@@ -153,7 +156,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
         }
         catch (reason) {
             if (mounted.current && request === routeRequest.current)
-                setError(reason instanceof Error ? reason.message : "Không tìm được đường.");
+                setError(reason instanceof Error ? reason.message : t("Không tìm được đường."));
         }
         finally {
             if (mounted.current && request === routeRequest.current)
@@ -163,7 +166,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
     useEffect(() => { if (tour)
         void calculate(tour, mode); }, [tour?.id, mode]);
     useEffect(() => { if (!ready && !mapError) {
-        const timeout = setTimeout(() => setMapError("Tải bản đồ quá lâu. Kiểm tra Internet và thử lại."), 20000);
+        const timeout = setTimeout(() => setMapError(t("Tải bản đồ quá lâu. Kiểm tra Internet và thử lại.")), 20000);
         return () => clearTimeout(timeout);
     } }, [ready, mapError, webKey]);
     useEffect(() => {
@@ -192,7 +195,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
         }
         catch (reason) {
             if (mounted.current && request === detailRequest.current)
-                setError(reason instanceof Error ? reason.message : "Không tải được POI.");
+                setError(reason instanceof Error ? reason.message : t("Không tải được POI."));
         }
         finally {
             if (mounted.current && request === detailRequest.current)
@@ -204,31 +207,31 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
       <View style={styles.row}>{(["walking", "driving"] as TravelMode[]).map((value) => <Pressable accessibilityRole="button" accessibilityState={{ selected: mode === value }} key={value} style={[styles.mode, mode === value && styles.active]} onPress={() => { if (mode !== value) {
         clearRoute();
         setMode(value);
-    } }}><Text style={styles.modeText}>{value === "walking" ? "Đi bộ" : "Ô tô"}</Text></Pressable>)}<Button title={locating ? "Đang định vị…" : "Vị trí tôi"} disabled={locating} onPress={() => void locate()}/></View>
-      {tour ? <View style={styles.row}><Text style={styles.tourName} numberOfLines={2}>Tour: {tour.name}</Text><Button title="Đổi tuyến" onPress={() => { clearRoute(); setTour(null); }}/></View> : <View style={styles.row}>
-        <Pressable accessibilityRole="button" onPress={() => setPicker("from")} style={styles.endpoint}><Text numberOfLines={1}>A · {from?.label ?? "Chọn điểm đi"}</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Đảo điểm đi và đến" onPress={() => { clearRoute(); setFrom(to); setTo(from); }} style={styles.swap}><Text>⇄</Text></Pressable>
-        <Pressable accessibilityRole="button" onPress={() => setPicker("to")} style={styles.endpoint}><Text numberOfLines={1}>B · {to?.label ?? "Chọn điểm đến"}</Text></Pressable>
+    } }}><Text style={styles.modeText}>{value === "walking" ? t("Đi bộ") : t("Ô tô")}</Text></Pressable>)}<Button title={locating ? t("Đang định vị…") : t("Vị trí tôi")} disabled={locating} onPress={() => void locate()}/></View>
+      {tour ? <View style={styles.row}><Text style={styles.tourName} numberOfLines={2}>Tour: {tour.name}</Text><Button title={t("Đổi tuyến")} onPress={() => { clearRoute(); setTour(null); }}/></View> : <View style={styles.row}>
+        <Pressable accessibilityRole="button" onPress={() => setPicker("from")} style={styles.endpoint}><Text numberOfLines={1}>A · {from?.label ?? t("Chọn điểm đi")}</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("Đảo điểm đi và đến")} onPress={() => { clearRoute(); setFrom(to); setTo(from); }} style={styles.swap}><Text>⇄</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => setPicker("to")} style={styles.endpoint}><Text numberOfLines={1}>B · {to?.label ?? t("Chọn điểm đến")}</Text></Pressable>
       </View>}
-      <View style={styles.row}><Button title={routing ? "Đang tìm đường…" : "Tìm đường"} disabled={routing || (!tour && (!from || !to))} onPress={() => void calculate()}/>{route && <Text style={styles.summary}>{distance(route.routeDistanceMeters)} · {duration(route.durationSeconds)}</Text>}</View>
-      {route && <Text style={styles.note}>Thời gian ước tính, chưa tính giao thông trực tiếp. © OpenRouteService / HeiGIT</Text>}
-      {pinMode && <View style={styles.row}><Text style={styles.hint}>Chạm POI hoặc bản đồ để chọn {pinMode === "from" ? "điểm đi A" : "điểm đến B"}.</Text><Button title="Hủy" onPress={() => setPinMode(null)}/></View>}
-      {locationError && <View><Text accessibilityRole="alert" style={styles.error}>{locationError}</Text><Button title="Mở cài đặt quyền" onPress={() => void Linking.openSettings()}/></View>}
-      {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+      <View style={styles.row}><Button title={routing ? t("Đang tìm đường…") : t("Tìm đường")} disabled={routing || (!tour && (!from || !to))} onPress={() => void calculate()}/>{route && <Text style={styles.summary}>{distance(route.routeDistanceMeters)} · {duration(route.durationSeconds, t)}</Text>}</View>
+      {route && <Text style={styles.note}>{t("Thời gian ước tính, chưa tính giao thông trực tiếp. © OpenRouteService / HeiGIT")}</Text>}
+      {pinMode && <View style={styles.row}><Text style={styles.hint}>{t("Chạm POI hoặc bản đồ để chọn ")}{pinMode === "from" ? t("điểm đi A") : t("điểm đến B")}.</Text><Button title={t("Hủy")} onPress={() => setPinMode(null)}/></View>}
+      {locationError && <View><Text accessibilityRole="alert" style={styles.error}>{t(locationError)}</Text><Button title={t("Mở cài đặt quyền")} onPress={() => void Linking.openSettings()}/></View>}
+      {error && <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>}
     </View>
     <View style={styles.canvas}>
       <WebView ref={web} key={webKey} source={{ html: MAP_HTML, baseUrl: "https://audiotour.local/" }} originWhitelist={["*"]} applicationNameForUserAgent="AudioTour/1.0" javaScriptEnabled geolocationEnabled={false} allowFileAccess={false} mixedContentMode="never" setSupportMultipleWindows={false} style={styles.web} onShouldStartLoadWithRequest={(request) => { if (request.url === "about:blank" || request.url.startsWith("https://audiotour.local/"))
         return true; if (request.url.startsWith("https://www.openstreetmap.org/copyright"))
-        void Linking.openURL(request.url); return false; }} onError={() => setMapError("Không tải được bản đồ. Vui lòng thử lại.")} onMessage={(event) => { try {
+        void Linking.openURL(request.url); return false; }} onError={() => setMapError(t("Không tải được bản đồ. Vui lòng thử lại."))} onMessage={(event) => { try {
         const data = JSON.parse(event.nativeEvent.data);
         if (data.type === "ready") {
             setReady(true);
             setMapError(null);
         }
         else if (data.type === "error")
-            setMapError("Không tải được bản đồ. Kiểm tra Internet và thử lại.");
+            setMapError(t("Không tải được bản đồ. Kiểm tra Internet và thử lại."));
         else if (data.type === "tileError")
-            setMapError("Không tải được nền bản đồ. Kiểm tra Internet và thử lại.");
+            setMapError(t("Không tải được nền bản đồ. Kiểm tra Internet và thử lại."));
         else if (data.type === "tileLoaded")
             setMapError(null);
         else if (data.type === "poi" && Number.isInteger(data.id))
@@ -238,25 +241,25 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
     }
     catch { /* Ignore invalid bridge messages. */ } }}/>
       {!ready && !mapError && <ActivityIndicator style={styles.mapLoading} color="#15803D"/>}
-      {mapError && <View style={styles.mapNotice}><Text style={styles.error}>{mapError}</Text><Button title="Tải lại bản đồ" onPress={() => { setReady(false); setMapError(null); setWebKey((v) => v + 1); }}/></View>}
-      {!mapPois.length && ready && <Text style={styles.empty}>Chưa có POI có tọa độ.</Text>}
+      {mapError && <View style={styles.mapNotice}><Text style={styles.error}>{t(mapError)}</Text><Button title={t("Tải lại bản đồ")} onPress={() => { setReady(false); setMapError(null); setWebKey((v) => v + 1); }}/></View>}
+      {!mapPois.length && ready && <Text style={styles.empty}>{t("Chưa có POI có tọa độ.")}</Text>}
     </View>
     {loadingPoi && <ActivityIndicator color="#15803D"/>}
     {selected && <ScrollView style={styles.poiSheet} contentContainerStyle={styles.sheetContent}>
-      <View style={styles.row}><Text style={styles.tourName}>{selected.name}</Text><Button title="Đóng" onPress={() => { detailRequest.current++; setSelected(null); }}/></View>
-      <Button title="Chi tiết" onPress={() => onDetail(selected.id)}/>
+      <View style={styles.row}><Text style={styles.tourName}>{selected.name}</Text><Button title={t("Đóng")} onPress={() => { detailRequest.current++; setSelected(null); }}/></View>
+      <Button title={t("Chi tiết")} onPress={() => onDetail(selected.id)}/>
       <View style={styles.row}>
-        <View style={styles.poiAction}><Button title="Điểm bắt đầu" disabled={!validPoint(selected)} onPress={() => chooseSelectedPoi("from")}/></View>
-        <View style={styles.poiAction}><Button title="Điểm đến" disabled={!validPoint(selected)} onPress={() => chooseSelectedPoi("to")}/></View>
+        <View style={styles.poiAction}><Button title={t("Điểm bắt đầu")} disabled={!validPoint(selected)} onPress={() => chooseSelectedPoi("from")}/></View>
+        <View style={styles.poiAction}><Button title={t("Điểm đến")} disabled={!validPoint(selected)} onPress={() => chooseSelectedPoi("to")}/></View>
       </View>
       <DetailAudio key={`${selected.id}:${languageCode}`} detail={selected} kind="poi" languageCode={languageCode} autoStart onScan={onScan}/>
     </ScrollView>}
     <Modal visible={picker !== null} animationType="slide" onRequestClose={() => setPicker(null)}><SafeAreaView style={styles.modal}>
-      <Text style={styles.title}>{picker === "from" ? "Chọn điểm đi A" : "Chọn điểm đến B"}</Text>
-      <Button title="Đóng" onPress={() => setPicker(null)}/>
-      <Button title="Vị trí hiện tại" disabled={locating} onPress={() => { const which = picker; setPicker(null); if (which)
+      <Text style={styles.title}>{picker === "from" ? t("Chọn điểm đi A") : t("Chọn điểm đến B")}</Text>
+      <Button title={t("Đóng")} onPress={() => setPicker(null)}/>
+      <Button title={t("Vị trí hiện tại")} disabled={locating} onPress={() => { const which = picker; setPicker(null); if (which)
         void locate(which); }}/>
-      <Button title="Chọn POI / ghim trên bản đồ" onPress={() => { detailRequest.current++; setLoadingPoi(false); setPinMode(picker); setPicker(null); setSelected(null); }}/>
+      <Button title={t("Chọn POI / ghim trên bản đồ")} onPress={() => { detailRequest.current++; setLoadingPoi(false); setPinMode(picker); setPicker(null); setSelected(null); }}/>
       <ScrollView>{mapPois.map((poi) => <Pressable key={poi.id} accessibilityRole="button" style={styles.poiOption} onPress={() => { if (picker)
         choose(picker, { ...poi, label: poi.name }); }}><Text style={styles.optionText}>{poi.name}</Text></Pressable>)}</ScrollView>
     </SafeAreaView></Modal>

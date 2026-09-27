@@ -1,3 +1,4 @@
+import { useTranslator } from "./i18n"
 import { useState } from "react"
 import {
   FlatList,
@@ -22,6 +23,8 @@ export function PoiImage({
   label: string
   contain?: boolean
 }) {
+  const t = useTranslator()
+
   const [failedId, setFailedId] = useState<number | null>(null)
   return id && failedId !== id ? (
     <Image
@@ -34,7 +37,7 @@ export function PoiImage({
   ) : (
     <View style={styles.placeholder}>
       <Text style={styles.empty}>
-        {id ? "Không tải được ảnh" : "Chưa có ảnh"}
+        {id ? t("Không tải được ảnh") : t("Chưa có ảnh")}
       </Text>
     </View>
   )
@@ -47,6 +50,8 @@ export function PoiImages({
   images?: PublicTargetDetail["images"]
   name: string
 }) {
+  const t = useTranslator()
+
   const highlight = images.find(
     (image) => image.imageCategory?.toLowerCase() === "highlight",
   )
@@ -64,14 +69,14 @@ export function PoiImages({
     <View style={styles.gallery}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Xem ảnh ${name}`}
+        accessibilityLabel={t("Xem ảnh {0}", name)}
         disabled={!ordered.length}
         onPress={() => open(0)}
         style={styles.hero}
       >
         <PoiImage id={ordered[0]?.id} label={name} />
         {ordered.length > 0 && (
-          <Text style={styles.count}>{ordered.length} ảnh</Text>
+          <Text style={styles.count}>{ordered.length} {t(" ảnh")}</Text>
         )}
       </Pressable>
       {ordered.length > 1 && (
@@ -84,11 +89,11 @@ export function PoiImages({
             <Pressable
               key={item.id}
               accessibilityRole="button"
-              accessibilityLabel={`Xem ảnh ${index + 2} của ${name}`}
+              accessibilityLabel={t("Xem ảnh {0} của {1}", index + 2, name)}
               onPress={() => open(index + 1)}
               style={styles.tile}
             >
-              <PoiImage id={item.id} label={`${name}, ảnh ${index + 2}`} />
+              <PoiImage id={item.id} label={t("{0}, ảnh {1}", name, index + 2)} />
             </Pressable>
           ))}
         </ScrollView>
@@ -108,7 +113,7 @@ export function PoiImages({
               onPress={() => setSelected(null)}
               style={styles.close}
             >
-              <Text style={styles.closeText}>Đóng ✕</Text>
+              <Text style={styles.closeText}>{t("Đóng ✕")}</Text>
             </Pressable>
           </View>
           {selected !== null && (
@@ -131,7 +136,7 @@ export function PoiImages({
                 <View style={{ width, height: Math.max(160, height - 160) }}>
                   <PoiImage
                     id={item.id}
-                    label={`${name}, ảnh ${index + 1}`}
+                    label={t("{0}, ảnh {1}", name, index + 1)}
                     contain
                   />
                 </View>

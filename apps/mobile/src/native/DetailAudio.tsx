@@ -1,3 +1,4 @@
+import { useTranslator } from "./i18n"
 import { useEffect, useRef, useState } from "react"
 import { ActivityIndicator, AppState, Button, StyleSheet, Text, View } from "react-native"
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio"
@@ -22,6 +23,8 @@ function Player({
   track: Track
   onRetry: () => void
 }) {
+  const t = useTranslator()
+
   const player = useAudioPlayer(
     audioTourApi.getAudioSource(track.audioTrackId, token, track.title),
     { updateInterval: 250 },
@@ -55,7 +58,7 @@ function Player({
     try {
       await player.seekTo(Math.max(0, Math.min(duration, value)))
     } catch {
-      if (mounted.current) setControlError("Không thể tua audio. Vui lòng thử lại.")
+      if (mounted.current) setControlError(t("Không thể tua audio. Vui lòng thử lại."))
     } finally {
       seekingRef.current = false
       if (mounted.current) { setSeeking(false); setPreview(null) }
@@ -71,7 +74,7 @@ function Player({
         if (mounted.current && AppState.currentState === "active") player.play()
       }
     } catch {
-      if (mounted.current) setControlError("Không thể điều khiển audio. Vui lòng thử lại.")
+      if (mounted.current) setControlError(t("Không thể điều khiển audio. Vui lòng thử lại."))
     }
   }
   return (
@@ -95,20 +98,20 @@ function Player({
       {(!status.isLoaded || status.isBuffering || seeking) && !status.error && <ActivityIndicator color="#15803D" />}
       {status.error ? (
         <>
-          <Text accessibilityRole="alert" style={styles.error}>Không thể phát audio. Vui lòng thử lại.</Text>
-          <Button title="Thử lại" onPress={onRetry} />
+          <Text accessibilityRole="alert" style={styles.error}>{t("Không thể phát audio. Vui lòng thử lại.")}</Text>
+          <Button title={t("Thử lại")} onPress={onRetry} />
         </>
       ) : (
         <>
           <View style={styles.controls}>
-            <Button title="−5 giây" accessibilityLabel="Lùi 5 giây" disabled={disabled || duration <= 0 || position <= 0} onPress={() => void seek(status.currentTime - 5)} />
-            <Button title="+5 giây" accessibilityLabel="Tiến 5 giây" disabled={disabled || duration <= 0 || position >= duration} onPress={() => void seek(status.currentTime + 5)} />
+            <Button title={t("−5 giây")} accessibilityLabel={t("Lùi 5 giây")} disabled={disabled || duration <= 0 || position <= 0} onPress={() => void seek(status.currentTime - 5)} />
+            <Button title={t("+5 giây")} accessibilityLabel={t("Tiến 5 giây")} disabled={disabled || duration <= 0 || position >= duration} onPress={() => void seek(status.currentTime + 5)} />
           </View>
-          <Button disabled={disabled} title={status.playing ? "Tạm dừng" : finished ? "Nghe lại" : "Phát audio"} onPress={() => void toggle()} />
-          {finished && !status.playing && <Text style={styles.text}>Đã hết bài. Chọn bài khác hoặc bấm Nghe lại.</Text>}
+          <Button disabled={disabled} title={status.playing ? t("Tạm dừng") : finished ? t("Nghe lại") : t("Phát audio")} onPress={() => void toggle()} />
+          {finished && !status.playing && <Text style={styles.text}>{t("Đã hết bài. Chọn bài khác hoặc bấm Nghe lại.")}</Text>}
         </>
       )}
-      {controlError && <Text accessibilityRole="alert" style={styles.error}>{controlError}</Text>}
+      {controlError && <Text accessibilityRole="alert" style={styles.error}>{t(controlError)}</Text>}
     </View>
   )
 }
@@ -130,6 +133,8 @@ export function DetailAudio({
   requiresPayment?: boolean
   onScan: () => void
 }) {
+  const t = useTranslator()
+
   const [session, setSession] = useState<Session | null>(null)
   const [trackIndex, setTrackIndex] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -217,7 +222,7 @@ export function DetailAudio({
         }
         token = access.accessToken
         if (!token)
-          throw new Error("Không thể tạo phiên nghe. Vui lòng thử lại.")
+          throw new Error(t("Không thể tạo phiên nghe. Vui lòng thử lại."))
         protectedDetail = await getAudio(token)
       }
       const tracks =
@@ -226,7 +231,7 @@ export function DetailAudio({
           : protectedDetail?.pois?.flatMap((poi) => poi.audioTracks ?? [])
         )?.filter((track) => track.isAvailable) ?? []
       if (!tracks.length)
-        throw new Error("Chưa có audio khả dụng cho ngôn ngữ này.")
+        throw new Error(t("Chưa có audio khả dụng cho ngôn ngữ này."))
       if (isCurrent()) {
         setLocked(false)
         setTrackIndex(0)
@@ -235,7 +240,7 @@ export function DetailAudio({
     } catch (reason) {
       if (isCurrent())
         setError(
-          reason instanceof Error ? reason.message : "Không thể mở audio.",
+          reason instanceof Error ? reason.message : t("Không thể mở audio."),
         )
     } finally {
       if (request === startRequest.current) {
@@ -254,11 +259,10 @@ export function DetailAudio({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Thuyết minh audio · {languageCode}</Text>
+      <Text style={styles.title}>{t("Thuyết minh audio · ")}{languageCode}</Text>
       {!hasTracks ? (
         <Text style={styles.text}>
-          Chưa có audio khả dụng cho ngôn ngữ này.
-        </Text>
+          {t("Chưa có audio khả dụng cho ngôn ngữ này.")}</Text>
       ) : (
         <>
           {session ? (
@@ -271,10 +275,10 @@ export function DetailAudio({
               />
               {kind === "tour" && (
                 <View style={styles.playlist}>
-                  <Text style={styles.text}>Bài {trackIndex + 1} / {session.tracks.length}</Text>
+                  <Text style={styles.text}>{t("Bài ")}{trackIndex + 1} / {session.tracks.length}</Text>
                   <View style={styles.controls}>
-                    <Button title="Bài trước" disabled={trackIndex === 0} onPress={() => setTrackIndex((index) => Math.max(0, index - 1))} />
-                    <Button title="Bài sau" disabled={trackIndex === session.tracks.length - 1} onPress={() => setTrackIndex((index) => Math.min(session.tracks.length - 1, index + 1))} />
+                    <Button title={t("Bài trước")} disabled={trackIndex === 0} onPress={() => setTrackIndex((index) => Math.max(0, index - 1))} />
+                    <Button title={t("Bài sau")} disabled={trackIndex === session.tracks.length - 1} onPress={() => setTrackIndex((index) => Math.min(session.tracks.length - 1, index + 1))} />
                   </View>
                 </View>
               )}
@@ -296,27 +300,27 @@ export function DetailAudio({
             <>
               <Text style={styles.text}>
                 {locked
-                  ? "Audio trả phí cần quyền nghe hợp lệ. Quét QR tại điểm tham quan để mở quyền nghe."
-                  : "Bấm phát để nghe thuyết minh."}
+                  ? t("Audio trả phí cần quyền nghe hợp lệ. Quét QR tại điểm tham quan để mở quyền nghe.")
+                  : t("Bấm phát để nghe thuyết minh.")}
               </Text>
               <Button
                 disabled={loading}
                 title={
                   loading
-                    ? "Đang chuẩn bị audio…"
+                    ? t("Đang chuẩn bị audio…")
                     : error
-                      ? "Thử lại"
-                      : "Phát audio"
+                      ? t("Thử lại")
+                      : t("Phát audio")
                 }
                 onPress={() => void start()}
               />
-              {locked && <Button title="Quét QR" onPress={onScan} />}
+              {locked && <Button title={t("Quét QR")} onPress={onScan} />}
             </>
           )}
           {loading && <ActivityIndicator color="#15803D" />}
           {error && (
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {t(error)}
             </Text>
           )}
         </>

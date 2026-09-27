@@ -1,3 +1,4 @@
+import { useTranslator } from "./i18n"
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -15,6 +16,8 @@ type QrScannerProps = {
 };
 
 export function QrScanner({ onCodeScanned, onClose }: QrScannerProps) {
+  const t = useTranslator()
+
   const [permission, requestPermission] = useCameraPermissions();
   const [manualCode, setManualCode] = useState("");
   const requestedPermission = useRef(false);
@@ -39,7 +42,7 @@ export function QrScanner({ onCodeScanned, onClose }: QrScannerProps) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color="#15803D" />
-        <Text style={styles.description}>Đang kiểm tra quyền camera…</Text>
+        <Text style={styles.description}>{t("Đang kiểm tra quyền camera…")}</Text>
       </View>
     );
   }
@@ -48,29 +51,27 @@ export function QrScanner({ onCodeScanned, onClose }: QrScannerProps) {
     return (
       <View style={styles.fallback}>
         <Text accessibilityRole="header" style={styles.title}>
-          Nhập mã QR
-        </Text>
+          {t("Nhập mã QR")}</Text>
         <Text style={styles.description}>
-          Bạn có thể nhập mã trên vé hoặc bảng thông tin nếu không dùng camera.
-        </Text>
+          {t("Bạn có thể nhập mã trên vé hoặc bảng thông tin nếu không dùng camera.")}</Text>
         {permission.canAskAgain && (
           <View style={styles.buttonSpacing}>
-            <Button title="Cho phép dùng camera" onPress={() => void requestPermission()} />
+            <Button title={t("Cho phép dùng camera")} onPress={() => void requestPermission()} />
           </View>
         )}
         <TextInput
-          accessibilityLabel="Mã QR"
+          accessibilityLabel={t("Mã QR")}
           autoCapitalize="characters"
           autoCorrect={false}
           onChangeText={setManualCode}
-          placeholder="Nhập mã QR"
+          placeholder={t("Nhập mã QR")}
           style={styles.input}
           value={manualCode}
         />
         <View style={styles.buttonSpacing}>
-          <Button title="Xác nhận mã" disabled={!manualCode.trim()} onPress={() => submitCode(manualCode)} />
+          <Button title={t("Xác nhận mã")} disabled={!manualCode.trim()} onPress={() => submitCode(manualCode)} />
         </View>
-        <Button color="#456253" title="Đóng" onPress={onClose} />
+        <Button color="#456253" title={t("Đóng")} onPress={onClose} />
       </View>
     );
   }
@@ -83,10 +84,10 @@ export function QrScanner({ onCodeScanned, onClose }: QrScannerProps) {
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.cameraOverlay}>
-        <Text style={styles.cameraTitle}>Đưa mã QR vào khung hình</Text>
+        <Text style={styles.cameraTitle}>{t("Đưa mã QR vào khung hình")}</Text>
         <View style={styles.scanFrame} />
         <View style={styles.closeButton}>
-          <Button color="#FFFFFF" title="Đóng" onPress={onClose} />
+          <Button color="#FFFFFF" title={t("Đóng")} onPress={onClose} />
         </View>
       </View>
     </View>

@@ -1,3 +1,4 @@
+import { useTranslator } from "./i18n"
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 export type AppSection = "dashboard" | "pois" | "tours";
@@ -19,12 +20,14 @@ const items: Array<{ id: AppSection; label: string; icon: string }> = [
 ];
 
 export function Sidebar({ activeSection, onClose, onNavigate, onOpenQr, onOpenLanguage, languageLabel, visible }: SidebarProps) {
+  const t = useTranslator()
+
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
       <View style={styles.overlay}>
         <View style={styles.drawer}>
           <Text style={styles.brand}>AudioTour</Text>
-          <Text style={styles.caption}>Khách vãng lai</Text>
+          <Text style={styles.caption}>{t("Khách vãng lai")}</Text>
           <View style={styles.menu}>
             {items.map((item) => (
               <Pressable key={item.id} onPress={() => onNavigate(item.id)} style={[styles.item, activeSection === item.id && styles.activeItem]}>
@@ -33,15 +36,15 @@ export function Sidebar({ activeSection, onClose, onNavigate, onOpenQr, onOpenLa
               </Pressable>
             ))}
             <Pressable onPress={onOpenQr} style={styles.item}>
-              <Text style={styles.icon}>▦</Text><Text style={styles.label}>Quét QR</Text>
+              <Text style={styles.icon}>▦</Text><Text style={styles.label}>{t("Quét QR")}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Ngôn ngữ: ${languageLabel}`} onPress={onOpenLanguage} style={styles.item}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("Ngôn ngữ: {0}", languageLabel)} onPress={onOpenLanguage} style={styles.item}>
               <Text style={styles.icon}>◎</Text>
-              <View style={{ flex: 1 }}><Text style={styles.label}>Ngôn ngữ</Text><Text style={styles.caption}>{languageLabel}</Text></View>
+              <View style={{ flex: 1 }}><Text style={styles.label}>{t("Ngôn ngữ")}</Text><Text style={styles.caption}>{languageLabel}</Text></View>
             </Pressable>
           </View>
         </View>
-        <Pressable accessibilityLabel="Đóng menu" onPress={onClose} style={styles.backdrop} />
+        <Pressable accessibilityLabel={t("Đóng menu")} onPress={onClose} style={styles.backdrop} />
       </View>
     </Modal>
   );
