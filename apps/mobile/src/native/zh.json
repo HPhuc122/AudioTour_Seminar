@@ -142,5 +142,8 @@
   "Máy chủ trả dữ liệu không hợp lệ. Vui lòng thử lại.": "服务器返回的数据无效，请重试。",
   "Kết nối quá lâu. Kiểm tra mạng và thử lại.": "连接超时，请检查网络后重试。",
   "Không kết nối được máy chủ. Kiểm tra mạng và thử lại.": "无法连接服务器，请检查网络后重试。",
-  "Chưa có ngôn ngữ khả dụng. Vui lòng thử lại sau.": "暂无可用语言，请稍后重试。"
+  "Chưa có ngôn ngữ khả dụng. Vui lòng thử lại sau.": "暂无可用语言，请稍后重试。",
+  "Đã tải {0}/{1} POI": "已加载{0}/{1}个景点",
+  "Đang tải thêm…": "正在加载更多…",
+  "Tải thêm POI": "加载更多景点"
 }

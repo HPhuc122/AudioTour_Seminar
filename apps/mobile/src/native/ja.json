@@ -142,5 +142,8 @@
   "Máy chủ trả dữ liệu không hợp lệ. Vui lòng thử lại.": "サーバーから無効なデータが返されました。再試行してください。",
   "Kết nối quá lâu. Kiểm tra mạng và thử lại.": "接続がタイムアウトしました。ネットワークを確認して再試行してください。",
   "Không kết nối được máy chủ. Kiểm tra mạng và thử lại.": "サーバーに接続できません。ネットワークを確認して再試行してください。",
-  "Chưa có ngôn ngữ khả dụng. Vui lòng thử lại sau.": "利用可能な言語がありません。しばらくしてから再試行してください。"
+  "Chưa có ngôn ngữ khả dụng. Vui lòng thử lại sau.": "利用可能な言語がありません。しばらくしてから再試行してください。",
+  "Đã tải {0}/{1} POI": "{0}/{1}件のスポットを読み込み済み",
+  "Đang tải thêm…": "追加読み込み中…",
+  "Tải thêm POI": "スポットをさらに読み込む"
 }

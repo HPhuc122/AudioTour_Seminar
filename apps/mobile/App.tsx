@@ -1,3 +1,4 @@
+import { appendPois, hasMorePois } from "./src/native/poiPagination"
 import { UiLanguageContext, createTranslator } from "./src/native/i18n"
 import { StatusBar } from "expo-status-bar"
 
@@ -27,6 +28,7 @@ import type {
   ApiLanguage,
   ApiQrTarget,
   PublicPoiSummary,
+  PublicPoiList,
   PublicTargetDetail,
   PublicTourSummary,
 } from "./src/native/api"
@@ -71,6 +73,10 @@ export default function App() {
   )
   const [pois, setPois] = useState<PublicPoiSummary[]>([])
   const [poiTotal, setPoiTotal] = useState(0)
+  const [poiPage, setPoiPage] = useState<PublicPoiList | null>(null)
+  const [loadingMorePois, setLoadingMorePois] = useState(false)
+  const [morePoisError, setMorePoisError] = useState<string | null>(null)
+  const morePoisBusy = useRef(false)
   const [tours, setTours] = useState<PublicTourSummary[]>([])
   const [paidAccessRemainingSeconds, setPaidAccessRemainingSeconds] =
     useState<number | null>(null)
@@ -123,6 +129,9 @@ export default function App() {
 
   const loadCatalog = async (selectedLanguage: string) => {
     const request = ++catalogRequest.current
+    morePoisBusy.current = false
+    setLoadingMorePois(false)
+    setMorePoisError(null)
     setLoadingCatalog(true)
     setError(null)
     try {
@@ -133,6 +142,7 @@ export default function App() {
       ])
       if (request !== catalogRequest.current) return
       setPois(poiPage.items)
+      setPoiPage(poiPage)
       setPoiTotal(poiPage.total)
       setTours(tourItems)
       if (paidSession) {
@@ -159,6 +169,29 @@ export default function App() {
       )
     } finally {
       if (request === catalogRequest.current) setLoadingCatalog(false)
+    }
+  }
+
+  const loadMorePois = async () => {
+    if (!languageCode || !poiPage || !hasMorePois(poiPage) || loadingCatalog || morePoisBusy.current) return
+    const request = catalogRequest.current
+    morePoisBusy.current = true
+    setLoadingMorePois(true)
+    setMorePoisError(null)
+    try {
+      const next = await audioTourApi.listPois(languageCode, "", poiPage.page + 1)
+      if (request !== catalogRequest.current) return
+      setPois((current) => appendPois(current, next.items))
+      setPoiPage(next)
+      setPoiTotal(next.total)
+    } catch (reason) {
+      if (request === catalogRequest.current)
+        setMorePoisError(reason instanceof Error ? reason.message : "Không thể tải nội dung công khai.")
+    } finally {
+      if (request === catalogRequest.current) {
+        morePoisBusy.current = false
+        setLoadingMorePois(false)
+      }
     }
   }
 
@@ -302,6 +335,8 @@ export default function App() {
       setPois([])
       setTours([])
       setPoiTotal(0)
+      setPoiPage(null)
+      setMorePoisError(null)
       setLanguageCode(code)
     }
     if (pending) void openResolvedTarget(pending.target, code, pending.code)
@@ -366,6 +401,11 @@ export default function App() {
         }
         pois={pois}
         tours={tours}
+        poiTotal={poiTotal}
+        hasMorePois={hasMorePois(poiPage)}
+        loadingMorePois={loadingMorePois}
+        morePoisError={morePoisError}
+        onLoadMorePois={() => void loadMorePois()}
       />
     )
 
