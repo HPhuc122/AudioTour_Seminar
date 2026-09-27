@@ -45,7 +45,22 @@ class ContentService:
         self._repository.record_play_log(poi_id, self._lang(language), self._trigger(trigger_type), device_id)
         return poi
 
-    def start_access(self, qr_code: str, device_id: str | None = None) -> dict:
+    def start_target_access(self, target_type: str, target_id: int, device_id: str | None = None) -> dict:
+        if target_type == "poi":
+            self.get_poi(target_id, "vi")
+        elif target_type == "tour":
+            self.get_tour(target_id, "vi")
+        else:
+            raise HTTPException(status_code=422, detail="Invalid target type")
+        qr = self._repository.get_target_qr(target_type, target_id)
+        if qr is None:
+            raise HTTPException(status_code=404, detail="Nội dung chưa có cấu hình quyền nghe. Vui lòng liên hệ điểm tham quan.")
+        if qr.get("requiresPayment"):
+            return {"requiresPayment": True, "status": "RequiresQr", "accessDurationMinutes": 0}
+        # Reuse issuance and scoped stream authorization; never expose unprotected audio.
+        return self.start_access(qr["code"], device_id, trigger_type="manual")
+
+    def start_access(self, qr_code: str, device_id: str | None = None, trigger_type: str = "qr") -> dict:
         if not qr_code or not qr_code.strip():
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="QR code is required")
         qr = self._repository.get_qr_by_code(qr_code.strip())
@@ -72,7 +87,7 @@ class ContentService:
         if requires_payment:
             payment_session_id = self._repository.create_payment_session(pass_id, amount, "VND", now + timedelta(minutes=15))
         elif qr.get("poiId"):
-            self._repository.record_play_log(qr["poiId"], "vi", "qr", device_id)
+            self._repository.record_play_log(qr["poiId"], "vi", trigger_type, device_id)
         return {
             "qr": qr,
             "requiresPayment": requires_payment,
@@ -212,7 +227,7 @@ class ContentService:
         result = self.validate_access(token)
         if not result.get("isValid"):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Guest access token is invalid")
-        if result.get("tourId") and result.get("tourId") != tour_id:
+        if result.get("poiId") or (result.get("tourId") and result.get("tourId") != tour_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access pass does not allow this tour")
 
     def _require_access_for_poi(self, token: str | None, poi_id: int) -> None:

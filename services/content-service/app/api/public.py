@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Body, Header, Query
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
+from typing import Literal
 
 from app.services.content_service import ContentService
 
@@ -56,6 +58,16 @@ def get_audio_poi(
 @router.post("/api/v1/public/access/start")
 def start_access(payload: dict = Body(...), device_id: str | None = Header(default=None, alias="X-Guest-Device-Id")):
     return ok(service.start_access(payload.get("qrCode") or payload.get("qr_code"), device_id), "Access flow started")
+
+
+class TargetAccessRequest(BaseModel):
+    targetType: Literal["poi", "tour"]
+    targetId: int = Field(gt=0)
+
+
+@router.post("/api/v1/public/access/start-target")
+def start_target_access(payload: TargetAccessRequest, device_id: str | None = Header(default=None, alias="X-Guest-Device-Id")):
+    return ok(service.start_target_access(payload.targetType, payload.targetId, device_id), "Target access flow started")
 
 
 @router.post("/api/v1/public/access/simulate-payment")
