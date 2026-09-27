@@ -12,6 +12,7 @@ type Props = {
   requiresPayment?: boolean
   onScan: () => void
   onBack: () => void
+  onMap: () => void
 }
 export function CatalogDetailScreen({
   detail,
@@ -22,6 +23,7 @@ export function CatalogDetailScreen({
   requiresPayment,
   onScan,
   onBack,
+  onMap,
 }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
@@ -34,6 +36,7 @@ export function CatalogDetailScreen({
         {detail.name}
       </Text>
       <Text style={styles.code}>{detail.code}</Text>
+      <Button title="Xem bản đồ" onPress={onMap} />
       <DetailAudio
         detail={detail}
         kind={kind}

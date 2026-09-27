@@ -23,6 +23,9 @@ export type PaymentResult = { status: string; accessToken?: string; expiresAt?: 
 export type AccessValidation = { isValid: boolean; status: string; expiresAt?: string; remainingSeconds: number; qrLocationId?: number; poiId?: number; tourId?: number };
 export type PublicPackage = { code: string; name?: string; requiresPayment: boolean; priceAmount: number; accessDurationMinutes: number; publicQrUrl: string };
 export type RouteResult = { fromPoiId: number; toPoiId: number; directDistanceMeters: number; routeDistanceMeters: number; durationSeconds: number; latLngs: Array<{ latitude: number; longitude: number }> };
+export type TravelMode = "walking" | "driving";
+export type RoutePoint = { latitude: number; longitude: number };
+export type DirectionsResult = { mode: TravelMode; routeDistanceMeters: number; durationSeconds: number; latLngs: RoutePoint[]; attribution: string; tourId?: number };
 export type LoginResult = { accessToken: string; expiresAtUtc: string; userId: number; username: string; role: string };
 
 type QueryValue = string | number | boolean | undefined | null;
@@ -89,6 +92,8 @@ export class AudioTourApiClient {
   }
 
   getPoiToPoiRoute(fromPoiId: number, toPoiId: number) { return this.request<RouteResult>(this.query("/api/v1/public/routes/poi-to-poi", { fromPoiId, toPoiId })); }
+  getDirections(points: RoutePoint[], mode: TravelMode) { return this.request<DirectionsResult>("/api/v1/public/routes/directions", { method: "POST", body: JSON.stringify({ points, mode }) }); }
+  getTourRoute(tourId: number, mode: TravelMode) { return this.request<DirectionsResult>(this.query(`/api/v1/public/routes/tours/${tourId}`, { mode })); }
   getNearestPoiRoute(fromPoiId: number) { return this.request<RouteResult>(this.query("/api/v1/public/routes/nearest-poi", { fromPoiId })); }
 
   audioUrl(audioTrackId: number) { return `${this.baseUrl}/api/v1/public/audio/${audioTrackId}`; }

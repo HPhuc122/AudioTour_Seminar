@@ -16,6 +16,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
 import { CatalogDetailScreen } from "./src/native/CatalogDetailScreen"
 import { CatalogListScreen } from "./src/native/CatalogListScreen"
 import { DashboardScreen } from "./src/native/DashboardScreen"
+import { MapPanel, type MapTarget } from "./src/native/MapPanel"
 import { QrScanner } from "./src/native/QrScanner"
 import { Sidebar } from "./src/native/Sidebar"
 import type { AppSection } from "./src/native/Sidebar"
@@ -75,6 +76,8 @@ export default function App() {
 
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [mapTarget, setMapTarget] = useState<MapTarget | null>(null)
+  const [detailFromMap, setDetailFromMap] = useState(false)
 
   useEffect(() => {
     void (async () => {
@@ -142,11 +145,13 @@ export default function App() {
 
   const openSection = (section: AppSection) => {
     clearDetail()
+    setMapTarget(null)
+    setDetailFromMap(false)
     setActiveSection(section)
     setIsSidebarOpen(false)
   }
 
-  const openCatalogDetail = async (kind: CatalogDetailKind, id: number) => {
+  const openCatalogDetail = async (kind: CatalogDetailKind, id: number, fromMap = false) => {
     if (!languageCode) return
     setIsLoading(true)
     setError(null)
@@ -156,6 +161,7 @@ export default function App() {
           ? await audioTourApi.getPoi(id, languageCode)
           : await audioTourApi.getTour(id, languageCode)
       setDetail(target)
+      setDetailFromMap(fromMap)
       setCatalogDetailKind(kind)
     } catch (reason) {
       setError(
@@ -252,11 +258,19 @@ export default function App() {
         autoStart={Boolean(destination)}
         requiresPayment={audioEntryAction === "show-payment"}
         onScan={openQr}
+        onMap={() => {
+          setMapTarget({ kind: detailKind, detail })
+          clearDetail()
+          setDetailFromMap(false)
+          setActiveSection("dashboard")
+        }}
         onBack={() => {
           const previousKind = detailKind
           clearDetail()
-          if (previousKind)
+          if (detailFromMap) setActiveSection("dashboard")
+          else if (previousKind)
             setActiveSection(previousKind === "poi" ? "pois" : "tours")
+          setDetailFromMap(false)
         }}
       />
     ) : activeSection === "dashboard" ? (
@@ -267,7 +281,9 @@ export default function App() {
         paidAccessRemainingSeconds={paidAccessRemainingSeconds}
         poiTotal={poiTotal}
         tourTotal={tours.length}
-      />
+      >
+        {languageCode && <MapPanel pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onDetail={(id) => void openCatalogDetail("poi", id, true)} />}
+      </DashboardScreen>
     ) : (
       <CatalogListScreen
         isLoading={isLoading}

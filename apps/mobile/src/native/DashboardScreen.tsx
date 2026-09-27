@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
-type Props = { isLoading: boolean; languageCode?: string; onMenu: () => void; paidAccessRemainingSeconds: number | null; poiTotal: number; tourTotal: number };
+type Props = { children?: ReactNode; isLoading: boolean; languageCode?: string; onMenu: () => void; paidAccessRemainingSeconds: number | null; poiTotal: number; tourTotal: number };
 
 function formatRemaining(seconds: number | null): string {
   if (seconds === null) return "Chưa có vé";
@@ -12,7 +13,7 @@ function formatRemaining(seconds: number | null): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${rest.toString().padStart(2, "0")}`;
 }
 
-export function DashboardScreen({ isLoading, languageCode, onMenu, paidAccessRemainingSeconds, poiTotal, tourTotal }: Props) {
+export function DashboardScreen({ children, isLoading, languageCode, onMenu, paidAccessRemainingSeconds, poiTotal, tourTotal }: Props) {
   const [remaining, setRemaining] = useState(paidAccessRemainingSeconds);
   useEffect(() => setRemaining(paidAccessRemainingSeconds), [paidAccessRemainingSeconds]);
   useEffect(() => {
@@ -28,7 +29,7 @@ export function DashboardScreen({ isLoading, languageCode, onMenu, paidAccessRem
         <View style={styles.statCard}><Text style={styles.statValue}>{poiTotal}</Text><Text style={styles.statLabel}>Tổng POI</Text></View>
         <View style={styles.statCard}><Text style={styles.timeValue}>{formatRemaining(remaining)}</Text><Text style={styles.statLabel}>Audio trả phí</Text></View>
       </View>}
-      <View style={styles.mapArea}><Text style={styles.mapTitle}>Khu vực bản đồ</Text><Text style={styles.mapDescription}>Phần này được dành riêng cho map POI ở lát phát triển sau.</Text></View>
+      {children}
     </View>
   );
 }

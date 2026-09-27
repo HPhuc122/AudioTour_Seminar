@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from typing import Literal
 
 from app.services.content_service import ContentService
+from app.services.routing_service import RoutingService
 
 router = APIRouter(tags=["public"])
 service = ContentService()
@@ -111,6 +112,26 @@ def list_packages():
 @router.get("/api/v1/public/routes/poi-to-poi")
 def route_between_pois(from_poi_id: int = Query(alias="fromPoiId"), to_poi_id: int = Query(alias="toPoiId")):
     return ok(service.route_between_pois(from_poi_id, to_poi_id))
+
+
+class RoutePoint(BaseModel):
+    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+
+
+class RouteRequest(BaseModel):
+    points: list[RoutePoint] = Field(min_length=2, max_length=50)
+    mode: Literal["walking", "driving"]
+
+
+@router.post("/api/v1/public/routes/directions")
+def directions(payload: RouteRequest):
+    return ok(RoutingService().calculate([point.model_dump() for point in payload.points], payload.mode))
+
+
+@router.get("/api/v1/public/routes/tours/{tour_id}")
+def tour_route(tour_id: int, mode: Literal["walking", "driving"] = "walking"):
+    return ok(service.route_tour(tour_id, mode))
 
 
 @router.get("/api/v1/public/routes/nearest-poi")
