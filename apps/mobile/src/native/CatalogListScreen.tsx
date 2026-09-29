@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  Button,
   View,
 } from "react-native"
 import { audioTourApi, type PublicPoiSummary, type PublicTourSummary } from "./api"
@@ -87,7 +86,7 @@ export function CatalogListScreen({
     <View style={styles.screen}>
       <View style={styles.header}>
         <Pressable onPress={onMenu} style={styles.menuButton}>
-          <Text style={styles.menuIcon}>☰</Text>
+          <Text style={styles.menuIcon}>‹</Text>
         </Pressable>
         <Text style={styles.title}>
           {kind === "poi" ? t("Danh sách POI") : t("Danh sách Tour")}
@@ -107,7 +106,7 @@ export function CatalogListScreen({
         />
         {query.length > 0 && <Pressable accessibilityRole="button" accessibilityLabel={t("Xóa từ khóa")} onPress={() => setQuery("")} style={styles.clearSearch}><Text style={styles.clearText}>×</Text></Pressable>}
       </View>
-      {searchError ? <View style={styles.searchNotice}><Text accessibilityRole="alert" style={styles.error}>{t(searchError)}</Text><Button title={t("Thử lại")} onPress={() => setRetry((value) => value + 1)}/></View> : null}
+      {searchError ? <View style={styles.searchNotice}><Text accessibilityRole="alert" style={styles.error}>{t(searchError)}</Text><Pressable onPress={() => setRetry(value => value + 1)} style={styles.retryButton}><Text style={styles.retryText}>{t("Thử lại")}</Text></Pressable></View> : null}
       {isLoading || searching ? (
         <ActivityIndicator color="#15803D" style={styles.loading} />
       ) : (
@@ -158,11 +157,7 @@ export function CatalogListScreen({
           ListFooterComponent={!term && kind === "poi" ? <View style={styles.footer}>
             <Text style={styles.meta}>{t("Đã tải {0}/{1} POI", pois.length, poiTotal)}</Text>
             {morePoisError && <Text accessibilityRole="alert" style={styles.error}>{t(morePoisError)}</Text>}
-            {(hasMorePois || morePoisError) && <Button
-              title={loadingMorePois ? t("Đang tải thêm…") : morePoisError ? t("Thử lại") : t("Tải thêm POI")}
-              disabled={loadingMorePois}
-              onPress={onLoadMorePois}
-            />}
+            {(hasMorePois || morePoisError) && <Pressable accessibilityRole="button" disabled={loadingMorePois} onPress={onLoadMorePois} style={styles.retryButton}><Text style={styles.retryText}>{loadingMorePois ? t("Đang tải thêm…") : morePoisError ? t("Thử lại") : t("Tải thêm POI")}</Text></Pressable>}
           </View> : null}
         />
       )}
@@ -171,25 +166,27 @@ export function CatalogListScreen({
 }
 
 const styles = StyleSheet.create({
-  footer: { gap: 10, paddingVertical: 16 },
-  searchBox: { flexDirection: "row", alignItems: "center", marginHorizontal: 18, marginBottom: 14, borderWidth: 1, borderColor: "#C8EAD8", borderRadius: 12, backgroundColor: "white" },
+  footer: { gap: 10, paddingVertical: 16, alignItems: "center" },
+  retryButton: { backgroundColor: "#E0F7F0", borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12, alignSelf: "flex-start", marginTop: 8 },
+  retryText: { color: "#058578", fontWeight: "700" },
+  searchBox: { flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginBottom: 14, borderWidth: 1, borderColor: "#D6E9E9", borderRadius: 16, backgroundColor: "white" },
   searchInput: { flex: 1, minWidth: 0, padding: 12, fontSize: 16, color: "#173B2A" },
   clearSearch: { width: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   clearText: { fontSize: 26, color: "#456253" },
   searchNotice: { paddingHorizontal: 18, marginBottom: 8 },
   error: { color: "#B42318" },
   thumbnail: { width: 88, height: 96, borderRadius: 12, overflow: "hidden" },
-  screen: { backgroundColor: "#F7FDF9", flex: 1 },
+  screen: { backgroundColor: "#F5FAFA", flex: 1 },
   header: {
     alignItems: "center",
     flexDirection: "row",
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingVertical: 14,
   },
   menuButton: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderColor: "#C8EAD8",
+    borderColor: "#D6E9E9",
     borderRadius: 12,
     borderWidth: 1,
     height: 44,
@@ -197,20 +194,22 @@ const styles = StyleSheet.create({
     marginRight: 14,
     width: 44,
   },
-  menuIcon: { color: "#173B2A", fontSize: 22 },
-  title: { color: "#173B2A", fontSize: 24, fontWeight: "800" },
+  menuIcon: { color: "#058578", fontSize: 30, lineHeight: 34 },
+  title: { color: "#0F2124", fontSize: 24, fontWeight: "800" },
   loading: { marginTop: 36 },
-  list: { padding: 18, paddingTop: 4 },
+  list: { padding: 20, paddingTop: 4 },
   empty: { color: "#6B8777", padding: 30, textAlign: "center" },
   card: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderColor: "#C8EAD8",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 20,
     flexDirection: "row",
     marginBottom: 12,
     padding: 14,
+    elevation: 2,
+    shadowColor: "#233",
+    shadowOpacity: .06,
+    shadowRadius: 10,
   },
   badge: {
     alignItems: "center",

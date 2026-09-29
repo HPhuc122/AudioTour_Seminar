@@ -30,6 +30,7 @@ function load(name) {
     if(id==='expo-camera') return {CameraView:element,useCameraPermissions:()=>[{granted:false,canAskAgain:true},()=>{}]};
     if(id==='expo-location'||id==='expo-audio') return {};
     if(id==='@react-native-community/slider') return element;
+    if(id==='@expo/vector-icons') return {Ionicons:element};
     if(id==='./api') return {audioTourApi:{getImageUrl:()=>''}};
     if(id==='./paidAccessStore') return {};
     if(id.startsWith('.')) return load(id);
@@ -45,9 +46,12 @@ const cases=[
  ['MapPanel','MapPanel',{pois:[],languageCode:'en',target:null,onScan:noop,onDetail:noop},['Walking','Driving','My location','Choose start','Choose destination','Directions']],
  ['Sidebar','Sidebar',{visible:true,languageLabel:'English',onClose:noop,onNavigate:noop,onOpenQr:noop,onOpenLanguage:noop},['Guest','Scan QR','Language']],
  ['CatalogListScreen','CatalogListScreen',{kind:'poi',languageCode:'en',pois:[],tours:[],poiTotal:0,hasMorePois:false,loadingMorePois:false,morePoisError:null,onLoadMorePois:noop,isLoading:false,onMenu:noop,onSelect:noop},['Search POIs by name','No public content available.']],
- ['CatalogDetailScreen','CatalogDetailScreen',{kind:'tour',languageCode:'en',detail:{id:1,name:'Example',code:'T1',pois:[]},onScan:noop,onMap:noop,onBack:noop},['Back to list','View map','Itinerary','Estimated duration:','No audio is available']],
+ ['CatalogDetailScreen','CatalogDetailScreen',{kind:'tour',languageCode:'en',detail:{id:1,name:'Example',code:'T1',pois:[]},onScan:noop,onMap:noop,onBack:noop},['Back','View map','Itinerary','Estimated duration:','No audio is available']],
  ['QrScanner','QrScanner',{onClose:noop,onCodeScanned:noop},['Enter QR code','Allow camera access','Confirm code','Close']],
  ['PoiImages','PoiImages',{name:'Example',images:[]},['No image']],
+ ['HomeScreen','HomeScreen',{languageCode:'en',languageLabel:'English',loading:false,pois:[],tours:[],remainingSeconds:null,onLanguage:noop,onScan:noop,onPois:noop,onTours:noop,onPoi:noop,onTour:noop},['Explore Vĩnh Hy','Featured places','Suggested tours']],
+ ['TicketScreen','TicketScreen',{remainingSeconds:null,onScan:noop,onExplore:noop},['Your audio pass','No active pass']],
+ ['BottomNavigation','BottomNavigation',{active:'home',onSelect:noop,onScan:noop},['Home','Map','Tour','Pass','Search']],
 ];
 const { uiDictionaries } = load('i18n');
 const labels = {
@@ -55,9 +59,12 @@ const labels = {
  MapPanel: ['Đi bộ','Ô tô','Vị trí tôi','Chọn điểm đi','Chọn điểm đến','Tìm đường'],
  Sidebar: ['Khách vãng lai','Quét QR','Ngôn ngữ','Dashboard','Tour'],
  CatalogListScreen: ['Tìm POI theo tên…','Chưa có nội dung công khai.'],
- CatalogDetailScreen: ['Quay lại danh sách','Xem bản đồ','Hành trình','Thời lượng dự kiến:','Chưa có audio khả dụng cho ngôn ngữ này.'],
+ CatalogDetailScreen: ['Quay lại','Xem bản đồ','Hành trình','Thời lượng dự kiến:','Chưa có audio khả dụng cho ngôn ngữ này.'],
  QrScanner: ['Nhập mã QR','Cho phép dùng camera','Xác nhận mã','Đóng'],
  PoiImages: ['Chưa có ảnh'],
+ HomeScreen: ['Khám phá Vĩnh Hy','Địa điểm nổi bật','Tour đề xuất'],
+ TicketScreen: ['Vé audio của bạn','Chưa có vé đang hoạt động'],
+ BottomNavigation: ['Trang chủ','Bản đồ','Tour','Vé','Tìm kiếm'],
 };
 const plain = markup => markup.replace(/<[^>]*>/g,'').replace(/&#x27;/g,"'").replace(/&quot;/g,'"').replace(/&amp;/g,'&');
 const english = uiDictionaries.en;
@@ -75,14 +82,14 @@ for (const locale of ['vi','en','zh','ko','ja','fr']) {
   const tree = React.createElement(UiLanguageContext.Provider,{value:locale},React.createElement(load(file)[component],{...props,languageCode:locale}));
   const rendered = plain(renderToStaticMarkup(tree));
   labels[file].forEach(key=>assert.ok(rendered.includes(t(key)),locale+'/'+file+': missing '+key));
-  if(locale!=='vi') assert.ok(!/[ĂăĐđĨĩŨũƠơƯưẠ-ỹ]/u.test(rendered),locale+'/'+file+': Vietnamese fallback');
+  if(locale!=='vi') assert.ok(!/[ĂăĐđĨĩŨũƠơƯưẠ-ỹ]/u.test(rendered.replaceAll('Vĩnh Hy','')),locale+'/'+file+': Vietnamese fallback');
  }
  const list = load('CatalogListScreen').CatalogListScreen;
  const paging = React.createElement(list,{kind:'poi',languageCode:locale,pois:[{id:1,name:'Example',code:'P1'}],tours:[],poiTotal:150,hasMorePois:true,loadingMorePois:false,morePoisError:null,onLoadMorePois:noop,isLoading:false,onMenu:noop,onSelect:noop});
  const pagingText = plain(renderToStaticMarkup(React.createElement(UiLanguageContext.Provider,{value:locale},paging)));
  assert.ok(pagingText.includes(t('Tải thêm POI')));
  assert.ok(pagingText.includes(t('Đã tải {0}/{1} POI',1,150)));
- console.log(locale+': 7 screens and pagination footer PASS');
+ console.log(locale+': 10 screens and pagination footer PASS');
 }
 for (const [locale,expected] of [['zh-CN','步行'],['ko-KR','도보'],['ja-JP','徒歩'],['fr-FR','À pied']]) {
  assert.equal(createTranslator(locale)('Đi bộ'),expected);
