@@ -1,5 +1,6 @@
 import { useTranslator } from "./i18n"
-import { Button, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 import type { PublicTargetDetail } from "./api"
 import { DetailAudio } from "./DetailAudio"
 import { PoiImages } from "./PoiImages"
@@ -30,7 +31,7 @@ export function CatalogDetailScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
-      <Button color="#456253" title={t("Quay lại danh sách")} onPress={onBack} />
+      <Pressable accessibilityRole="button" onPress={onBack} style={styles.back}><Ionicons name="arrow-back" size={20} color="#058578" /><Text style={styles.backText}>{t("Quay lại")}</Text></Pressable>
       {kind === "poi" && (
         <PoiImages images={detail.images} name={detail.name} />
       )}
@@ -39,7 +40,7 @@ export function CatalogDetailScreen({
         {detail.name}
       </Text>
       <Text style={styles.code}>{detail.code}</Text>
-      <Button title={t("Xem bản đồ")} onPress={onMap} />
+      <Pressable accessibilityRole="button" onPress={onMap} style={styles.mapButton}><Ionicons name="map-outline" size={19} color="#FFFFFF" /><Text style={styles.mapButtonText}>{t("Xem bản đồ")}</Text></Pressable>
       <DetailAudio
         detail={detail}
         kind={kind}
@@ -90,27 +91,29 @@ export function CatalogDetailScreen({
   )
 }
 const styles = StyleSheet.create({
-  screen: { backgroundColor: "#F7FDF9", flex: 1 },
+  screen: { backgroundColor: "#F5FAFA", flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
-  kind: { color: "#15803D", fontSize: 12, fontWeight: "800", marginTop: 28 },
-  title: { color: "#173B2A", fontSize: 29, fontWeight: "800", marginTop: 6 },
-  code: { color: "#6B8777", fontSize: 12, marginTop: 5 },
+  back: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", minHeight: 44, marginBottom: 8 },
+  backText: { color: "#058578", fontSize: 14, fontWeight: "700" },
+  mapButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, backgroundColor: "#058578", borderRadius: 15, minHeight: 48, marginTop: 18 },
+  mapButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
+  kind: { color: "#058578", fontSize: 12, fontWeight: "800", marginTop: 18 },
+  title: { color: "#0F2124", fontSize: 29, fontWeight: "800", marginTop: 6 },
+  code: { color: "#667A7D", fontSize: 12, marginTop: 5 },
   description: {
-    color: "#456253",
+    color: "#4F676A",
     fontSize: 16,
     lineHeight: 25,
     marginTop: 20,
   },
   card: {
     backgroundColor: "#FFFFFF",
-    borderColor: "#C8EAD8",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 20,
     marginTop: 24,
     padding: 18,
   },
   cardTitle: {
-    color: "#173B2A",
+    color: "#0F2124",
     fontSize: 17,
     fontWeight: "700",
     marginBottom: 8,

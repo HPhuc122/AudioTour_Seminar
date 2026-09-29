@@ -18,11 +18,11 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
 
 import { CatalogDetailScreen } from "./src/native/CatalogDetailScreen"
 import { CatalogListScreen } from "./src/native/CatalogListScreen"
-import { DashboardScreen } from "./src/native/DashboardScreen"
+import { HomeScreen } from "./src/native/HomeScreen"
+import { BottomNavigation, type Tab } from "./src/native/BottomNavigation"
+import { TicketScreen } from "./src/native/TicketScreen"
 import { MapPanel, type MapTarget } from "./src/native/MapPanel"
 import { QrScanner } from "./src/native/QrScanner"
-import { Sidebar } from "./src/native/Sidebar"
-import type { AppSection } from "./src/native/Sidebar"
 import { audioTourApi } from "./src/native/api"
 import type {
   ApiLanguage,
@@ -55,8 +55,9 @@ type PendingQrVisit = {
 type CatalogDetailKind = "poi" | "tour"
 
 export default function App() {
-  const [activeSection, setActiveSection] = useState<AppSection>("dashboard")
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState<"dashboard" | "pois" | "tours">("dashboard")
+  const [activeTab, setActiveTab] = useState<Tab>("home")
+  const detailOrigin = useRef<"home" | "map" | "list">("list")
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false)
   const [languages, setLanguages] = useState<ApiLanguage[]>([])
   const languageRequest = useRef(0)
@@ -210,12 +211,16 @@ export default function App() {
     setQrCode(null)
   }
 
-  const openSection = (section: AppSection) => {
+  const openSection = (section: "dashboard" | "pois" | "tours") => {
     clearDetail()
     setMapTarget(null)
     setDetailFromMap(false)
     setActiveSection(section)
-    setIsSidebarOpen(false)
+  }
+
+  const openTab = (tab: Tab) => {
+    openSection(tab === "search" ? "pois" : tab === "tour" ? "tours" : "dashboard")
+    setActiveTab(tab)
   }
 
   const openCatalogDetail = async (kind: CatalogDetailKind, id: number, fromMap = false) => {
@@ -284,6 +289,7 @@ export default function App() {
   }
 
   const handleQrCodeScanned = async (code: string) => {
+    detailOrigin.current = activeTab === "map" ? "map" : activeTab === "home" && activeSection === "dashboard" ? "home" : "list"
     setIsQrScannerOpen(false)
     clearDetail()
     setLoadingDetail(true)
@@ -318,7 +324,6 @@ export default function App() {
   }
 
   const openQr = () => {
-    setIsSidebarOpen(false)
     setIsQrScannerOpen(true)
   }
 
@@ -368,37 +373,48 @@ export default function App() {
           clearDetail()
           setDetailFromMap(false)
           setActiveSection("dashboard")
+          setActiveTab("map")
         }}
         onBack={() => {
           const previousKind = detailKind
           clearDetail()
-          if (detailFromMap) setActiveSection("dashboard")
+          if (detailFromMap || detailOrigin.current === "map") { setActiveSection("dashboard"); setActiveTab("map") }
+          else if (detailOrigin.current === "home") { setActiveSection("dashboard"); setActiveTab("home") }
           else if (previousKind)
             setActiveSection(previousKind === "poi" ? "pois" : "tours")
           setDetailFromMap(false)
         }}
       />
+    ) : activeTab === "ticket" ? (
+      <TicketScreen remainingSeconds={paidAccessRemainingSeconds} onScan={openQr} onExplore={() => openTab("search")} />
+    ) : activeTab === "map" ? (
+      <View style={styles.mapScreen}>
+        <View style={styles.mapHeader}><Text style={styles.mapTitle}>{t("Bản đồ khám phá")}</Text></View>
+        {languageCode ? <MapPanel key={languageCode} pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onDetail={(id) => { detailOrigin.current = "map"; void openCatalogDetail("poi", id, true) }} /> : <ActivityIndicator color="#058578" />}
+      </View>
     ) : activeSection === "dashboard" ? (
-      <DashboardScreen
-        isLoading={isLoading}
-        languageCode={languageCode ?? undefined}
-        onMenu={() => setIsSidebarOpen(true)}
-        paidAccessRemainingSeconds={paidAccessRemainingSeconds}
-        poiTotal={poiTotal}
-        tourTotal={tours.length}
-      >
-        {languageCode && <MapPanel key={languageCode} pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onDetail={(id) => void openCatalogDetail("poi", id, true)} />}
-      </DashboardScreen>
+      <HomeScreen
+        languageCode={languageCode}
+        languageLabel={currentLanguage?.nativeName || currentLanguage?.name || languageCode || t("Chưa chọn")}
+        loading={isLoading}
+        pois={pois}
+        tours={tours}
+        remainingSeconds={paidAccessRemainingSeconds}
+        onLanguage={() => { setLanguagePickerError(null); setIsLanguagePickerOpen(true) }}
+        onScan={openQr}
+        onPois={() => openTab("search")}
+        onTours={() => openTab("tour")}
+        onPoi={(id) => { detailOrigin.current = "home"; void openCatalogDetail("poi", id) }}
+        onTour={(id) => { detailOrigin.current = "home"; void openCatalogDetail("tour", id) }}
+      />
     ) : (
       <CatalogListScreen
         key={`${activeSection}:${languageCode}`}
         languageCode={languageCode ?? ""}
         isLoading={isLoading}
         kind={activeSection === "pois" ? "poi" : "tour"}
-        onMenu={() => setIsSidebarOpen(true)}
-        onSelect={(id) =>
-          void openCatalogDetail(activeSection === "pois" ? "poi" : "tour", id)
-        }
+        onMenu={() => openTab("home")}
+        onSelect={(id) => { detailOrigin.current = "list"; void openCatalogDetail(activeSection === "pois" ? "poi" : "tour", id) }}
         pois={pois}
         tours={tours}
         poiTotal={poiTotal}
@@ -416,6 +432,7 @@ export default function App() {
         edges={["top", "right", "bottom", "left"]}
       >
         {content}
+        {!detail && <BottomNavigation active={activeTab} onSelect={openTab} onScan={openQr} />}
         {error && !detail && (
           <View style={styles.errorBanner}>
             <Text accessibilityRole="alert" style={styles.error}>
@@ -424,15 +441,6 @@ export default function App() {
             {retryAction.current && <Button title={t("Thử lại")} disabled={isLoading} onPress={() => void retryAction.current?.()} />}
           </View>
         )}
-        <Sidebar
-          activeSection={activeSection}
-          onClose={() => setIsSidebarOpen(false)}
-          onNavigate={openSection}
-          onOpenQr={openQr}
-          languageLabel={currentLanguage?.nativeName || currentLanguage?.name || languageCode || t("Chưa chọn")}
-          onOpenLanguage={() => { setIsSidebarOpen(false); setLanguagePickerError(null); setIsLanguagePickerOpen(true) }}
-          visible={isSidebarOpen}
-        />
         <Modal
           animationType="slide"
           onRequestClose={() => setIsQrScannerOpen(false)}
@@ -510,6 +518,9 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  mapScreen: { flex: 1, backgroundColor: "#F5FAFA" },
+  mapHeader: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 8 },
+  mapTitle: { color: "#0F2124", fontSize: 23, fontWeight: "800" },
   selectedLanguage: { borderColor: "#15803D", backgroundColor: "#DCFCE7" },
   screen: {
     flex: 1,
@@ -517,7 +528,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7FDF9",
   },
 
-  errorBanner: { bottom: 18, left: 18, position: "absolute", right: 18 },
+  errorBanner: { bottom: 104, left: 18, position: "absolute", right: 18, zIndex: 2 },
   error: {
     backgroundColor: "#FEE4E2",
     borderRadius: 12,
