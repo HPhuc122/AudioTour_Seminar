@@ -10,7 +10,10 @@ class UserRepository:
     def _fetchone(self, query: str, params: tuple = ()) -> dict | None:
         with get_connection() as connection, connection.cursor() as cursor:
             cursor.execute(query, params)
-            return cursor.fetchone()
+            row = cursor.fetchone()
+            if query.lstrip().upper().startswith(("INSERT ", "UPDATE ", "DELETE ", "MERGE ")):
+                connection.commit()
+            return row
 
     def _execute(self, query: str, params: tuple = ()) -> None:
         with get_connection() as connection, connection.cursor() as cursor:

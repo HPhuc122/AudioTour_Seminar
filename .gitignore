@@ -27,6 +27,7 @@ Thumbs.db
 *.log
 
 coverage/
+.tooling/
 logs/
 
 # Python tooling and package artifacts

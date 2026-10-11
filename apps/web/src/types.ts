@@ -1,0 +1,10 @@
+import type { Poi, Tour, AudioTrack, LoginResult } from '@audiotour/api-client';
+export type { Language, AccessStartResult, AccessValidation, QrLocation } from '@audiotour/api-client';
+export type Session = LoginResult;
+export type PublicPoi = Poi & { radiusMeters?: number; priority?: number; cooldownSeconds?: number; minDwellSeconds?: number; thumbnailImageId?: number; images?: { id: number }[] };
+export type PublicTour = Omit<Tour, 'pois'> & { pois?: PublicPoi[] };
+export type Track = AudioTrack;
+export type Value = string | number | boolean | null;
+export type Row = Record<string, Value>;
+export type Page<T> = { items: T[]; total: number; page: number; pageSize: number };
+export type Field = { key: string; label: string; type?: 'number' | 'checkbox' | 'textarea' | 'password' | 'email' | 'select'; required?: boolean; min?: number; max?: number; step?: string; options?: { value: string; label: string }[]; default?: Value };
