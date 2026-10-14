@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from app.core.database import get_connection
@@ -19,6 +18,15 @@ class AdminRepository:
         "narrations": {"table": "NarrationDrafts", "id": "Id", "soft_delete": False, "fields": ["Title", "LanguageCode", "TextContent", "Voice", "PoiId", "Status", "SubmittedByUserId", "SubmittedAt", "ReviewedByUserId", "ReviewedAt", "RejectionReason", "GeneratedAudioTrackId", "AudioGeneratedAt", "SimulatedAudioUrl", "CreatedAt", "UpdatedAt"]},
         "narration_logs": {"table": "NarrationLogs", "id": "Id", "soft_delete": False, "fields": ["UserId", "POIId", "TriggerType", "LanguageCode", "PlayedAt", "DurationPlayedSeconds", "DeviceId", "Synced"]},
     }
+
+    TABLES['poi-translations'] = {'table': 'POITranslations', 'id': 'Id', 'soft_delete': 'IsDeleted', 'fields': ['POIId', 'LanguageCode', 'Name', 'Description', 'ShortDescription', 'Version', 'CreatedAt', 'UpdatedAt']}
+    TABLES['tour-translations'] = {'table': 'TourTranslations', 'id': 'Id', 'soft_delete': 'IsDeleted', 'fields': ['TourId', 'LanguageCode', 'Name', 'Description', 'Version']}
+    TABLES['tours']['fields'].append('UserId')
+    TABLES['narrations']['fields'] += ['PublishedTranslationId', 'PublishedTranslationVersion']
+    for resource in ('pois', 'tours', 'audio', 'media', 'narrations', 'poi-translations', 'tour-translations'):
+        TABLES[resource]['fields'] += ['ReviewStatus', 'RejectionReason']
+        if 'Version' not in TABLES[resource]['fields']:
+            TABLES[resource]['fields'].append('Version')
 
     def fetchall(self, query: str, params: tuple = ()) -> list[dict]:
         with get_connection() as connection, connection.cursor() as cursor:
@@ -159,7 +167,7 @@ class AdminRepository:
         return {"durationSeconds": row.get("durationSeconds", 0), "ttsPlays": None}
 
     def web_tts_tracks(self, poi_id: int, language_code: str) -> list[dict]:
-        return self.fetchall("SELECT Id AS id, TTSText AS ttsText FROM AudioTracks WHERE POIId = %s AND LanguageCode = %s AND IsActive = 1 AND DeletedAt IS NULL", (poi_id, language_code))
+        return self.fetchall("SELECT Id AS id, TTSText AS ttsText FROM AudioTracks WHERE POIId = %s AND LanguageCode = %s AND IsActive = 1 AND DeletedAt IS NULL AND ReviewStatus = 'Approved' AND AudioType = 'tts'", (poi_id, language_code))
 
     def save_media_file(self, file_name: str, original_name: str, content_type: str, file_size: int, relative_path: str, uploaded_by: int | None, poi_id: int | None, image_category: str | None, approval_status: str) -> dict:
         row = self.fetchone(

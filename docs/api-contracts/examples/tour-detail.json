@@ -1,0 +1,80 @@
+{
+  "success": true,
+  "message": "Success",
+  "data": {
+    "id": 201,
+    "code": "TOUR-201",
+    "defaultLanguage": "vi",
+    "name": "Khám phá Vịnh Hy",
+    "description": "Tour đã duyệt",
+    "estimatedMinutes": 45,
+    "languageCode": "vi",
+    "pois": [
+      {
+        "id": 101,
+        "code": "POI-101",
+        "name": "Sạp hải sản Vịnh Hy",
+        "shortDescription": "Ẩm thực địa phương",
+        "latitude": 11.733,
+        "longitude": 109.19,
+        "radiusMeters": 50,
+        "priority": 1,
+        "cooldownSeconds": 120,
+        "minDwellSeconds": 3,
+        "category": "Ẩm thực",
+        "languageCode": "vi",
+        "imageUrl": null,
+        "narrationText": "Nội dung đã được Admin duyệt",
+        "orderIndex": 0,
+        "audioTracks": [
+          {
+            "id": 301,
+            "audioTrackId": 301,
+            "poiId": 101,
+            "languageCode": "vi",
+            "language": "vi",
+            "title": "Giới thiệu sạp hải sản",
+            "audioType": "prerecorded",
+            "ttsText": null,
+            "durationSeconds": 60,
+            "duration": 60,
+            "fileSizeBytes": 960000,
+            "mimeType": "audio/mpeg",
+            "isAvailable": true,
+            "streamUrl": "/api/v1/public/audio/301"
+          }
+        ],
+        "images": [
+          {
+            "id": 401,
+            "fileName": "vinh-hy.jpg",
+            "originalFileName": "vinh-hy.jpg",
+            "contentType": "image/jpeg",
+            "fileSize": 120000,
+            "imageCategory": "Highlight",
+            "url": "/api/v1/public/media/images/401"
+          }
+        ]
+      },
+      {
+        "id": 102,
+        "code": "POI-102",
+        "name": "Điểm ngắm vịnh",
+        "shortDescription": "Ẩm thực địa phương",
+        "latitude": 11.736,
+        "longitude": 109.193,
+        "radiusMeters": 80,
+        "priority": 1,
+        "cooldownSeconds": 120,
+        "minDwellSeconds": 3,
+        "category": "Ẩm thực",
+        "languageCode": "vi",
+        "imageUrl": null,
+        "narrationText": "Nội dung đã được Admin duyệt",
+        "orderIndex": 1,
+        "audioTracks": [],
+        "images": []
+      }
+    ]
+  }
+}

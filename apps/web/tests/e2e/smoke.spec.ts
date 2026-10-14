@@ -5,13 +5,19 @@ async function session(page: Page, role: string) {
 async function mockApi(page: Page) {
  await page.route('**/api/v1/**', route => {
   const path = new URL(route.request().url()).pathname;
-  const data = path.endsWith('/pois') ? { items: [{ Id: 1, Code: 'POI-1', Name: 'Test POI', Latitude: 11.733, Longitude: 109.19, RadiusMeters: 50 }], total: 1 } : path.endsWith('/users') ? [] : path.includes('grouped') ? [] : path.includes('summary') ? { pois: 1, tours: 0, plays: 0, devices: 0 } : path.includes('web-duration') ? { durationSeconds: 0, ttsPlays: null } : [];
+  const data = path.endsWith('/pois') ? { items: [{ Id: 1, Code: 'POI-1', Name: 'Test POI', Latitude: 11.733, Longitude: 109.19, RadiusMeters: 50 }], total: 1 } : path.includes('/cms/catalog/') ? { items: [], total: 0 } : path.includes('grouped') ? [] : path.includes('summary') ? { pois: 1, tours: 0, plays: 0, devices: 0 } : path.includes('web-duration') ? { durationSeconds: 0, ttsPlays: null } : [];
   return route.fulfill({ json: { success: true, data } });
  });
 }
-test('root and management pages require login', async ({ page }) => {
- for (const path of ['/', '/admin', '/admin/pois', '/admin/map', '/admin/users']) { await page.goto(path); await expect(page).toHaveURL(/\/login$/); await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible(); }
- await expect(page.getByRole('link', { name: /web tham quan/ })).toHaveCount(0);
+test('admin pages require login and never substitute sample data', async ({ page }) => {
+ let requests = 0; page.on('request', r => { if (r.url().includes('/api/')) requests++; });
+ await page.goto('/'); await expect(page).toHaveURL(/\/login$/);
+ for (const path of ['dashboard', 'pois', 'tours', 'media', 'users', 'transactions']) {
+  await page.goto('/admin/' + path); await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible();
+ }
+ expect(requests).toBe(0);
+ await expect(page.getByText(/dữ liệu mẫu/)).toHaveCount(0);
 });
 test('visitor routes are unavailable', async ({ page }) => {
  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));

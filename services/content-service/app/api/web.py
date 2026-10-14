@@ -4,7 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel, Field
 
-from app.api.admin import current_user
+from app.api.admin import scoped_user, service as management_service
 from app.services.web_service import WebService
 
 router = APIRouter(tags=["web"])
@@ -15,14 +15,14 @@ def ok(data):
     return {"success": True, "message": "Success", "data": data}
 
 
-@router.get("/api/v1/web/tours/{tour_id}/content", dependencies=[Depends(current_user)])
+@router.get("/api/v1/web/tours/{tour_id}/content", dependencies=[Depends(scoped_user)])
 def tour_content(tour_id: int):
-    return ok(service.tour_content(tour_id))
+    return ok(management_service.tour_content(tour_id))
 
 
-@router.get("/api/v1/analytics/web-duration", dependencies=[Depends(current_user)])
+@router.get("/api/v1/analytics/web-duration", dependencies=[Depends(scoped_user)])
 def duration_stats():
-    return ok(service.duration_stats())
+    return ok(management_service.duration_stats())
 
 
 @router.get("/api/v1/public/web-narration/pois/{poi_id}")

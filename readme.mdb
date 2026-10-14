@@ -1,0 +1,321 @@
+# AudioTour — Hướng dẫn đọc dự án và bàn giao
+
+Cập nhật: 12/10/2026. Tài liệu dành cho người mới nhận dự án và để tiếp tục công việc vào thứ Tư, 14/10/2026.
+
+Tài liệu được đối chiếu với mã nguồn và cấu hình hiện tại. Các chức năng bên dưới đã có phần triển khai, nhưng chưa được chạy kiểm thử toàn hệ thống trong lần viết tài liệu này. Không nên hiểu danh sách này là cam kết tất cả luồng đã hoạt động hoàn chỉnh trên máy mới.
+
+## 1. Dự án này dùng để làm gì?
+
+AudioTour là hệ thống tham quan có thuyết minh đa ngôn ngữ. Khách xem địa điểm, chọn tour, mở bản đồ hoặc quét QR để vào nội dung và nghe audio. Người quản trị quản lý địa điểm, tour, bản dịch, audio, mã QR và quyền truy cập.
+
+POI (Point of Interest) là một địa điểm tham quan. Tour là tập hợp các địa điểm được sắp xếp thành hành trình. Quyền nghe là phiên truy cập cho phép nghe nội dung trong khoảng thời gian nhất định.
+
+## 2. Những phần hiện đã có
+
+| Phần | Nội dung có trong mã nguồn | Điểm cần lưu ý |
+| --- | --- | --- |
+| Web cho khách | Danh sách và chi tiết địa điểm/tour, chọn ngôn ngữ, bản đồ, QR, trang quyền nghe | Cần API và dữ liệu thật để sử dụng |
+| Thuyết minh web | Phát audio, hàng đợi, TTS bằng SpeechSynthesis, gửi nhật ký nghe | Giọng TTS phụ thuộc trình duyệt và giọng đã cài |
+| Kích hoạt theo vị trí web | Có logic vùng kích hoạt, ưu tiên, thời gian ở trong vùng và thời gian chờ phát lại | Cần kiểm tra GPS và quyền vị trí trên thiết bị thật |
+| CMS | Đăng nhập, phân quyền, quản lý POI, tour, QR, tài khoản, bản dịch/audio, bản đồ và thống kê | Chức năng phụ thuộc vai trò và dữ liệu trong database |
+| Duyệt nội dung | API cho trạng thái duyệt/xuất bản và các bước liên quan thanh toán POI | Cần kiểm tra luồng từ CMS đến nội dung công khai |
+| Mobile Expo | Danh sách/chi tiết POI và tour, phân trang POI, bản đồ, quét QR, chọn ngôn ngữ, phát audio, lưu phiên quyền nghe | Dùng App.tsx ở gốc apps/mobile và src/native |
+| Quyền nghe | Khởi tạo, kiểm tra phiên, giới hạn thời gian, nội dung miễn phí hoặc có phí | Thanh toán hiện có endpoint mô phỏng |
+| Chỉ đường | API đường giữa POI, tuyến tour, POI gần nhất và directions | Có cấu hình ORS_API_KEY; cần kiểm tra nhà cung cấp và dữ liệu tuyến |
+| Backend | FastAPI auth/content, gateway chuyển tiếp request | narration-service riêng hiện chỉ có health check |
+
+Chưa nên báo cáo đã có thanh toán MoMo thật, tạo audio đầy đủ qua narration-service riêng, chạy production hoàn chỉnh hoặc tự thuyết minh nền trên mobile. Cần xác minh riêng các phần này trước khi bổ sung vào báo cáo.
+
+## 3. Cấu trúc và nơi nên đọc trước
+
+```text
+AudioTour_Seminar/
+  apps/web/                    Web khách + CMS, React/Vite
+  apps/mobile/
+    App.tsx                    Điểm vào ứng dụng Expo
+    src/native/                Thành phần mobile kết nối API
+    src/App.tsx                Giao diện React/Vite riêng
+    src/screens/               Các màn hình của giao diện Vite
+    scripts/                   Chạy LAN và kiểm tra mobile
+  packages/api-client/         API client dùng chung
+  packages/i18n/               Tài nguyên đa ngôn ngữ
+  packages/ui-tokens/          Tài nguyên thiết kế dùng chung
+  services/auth-service/       Đăng nhập, người dùng, vai trò
+  services/content-service/    POI, tour, media, QR, quyền nghe, thống kê
+  services/narration-service/  Khung service, hiện chỉ có health
+  gateway/main.py              Chuyển request tới service tương ứng
+  infra/docker-compose.yml    Docker cho ba service
+  docs/                       Tài liệu kiến trúc/API
+```
+
+Thứ tự đọc đề xuất:
+
+1. Đọc tài liệu này để hiểu luồng và cách chạy.
+2. Đọc apps/web/src/App.tsx để biết các trang và đường dẫn.
+3. Đọc apps/web/src/services/api.ts và packages/api-client để hiểu web gọi backend.
+4. Đọc services/content-service/app/api/public.py, admin.py và web.py để biết endpoint.
+5. Đọc lớp services rồi repositories tương ứng khi cần hiểu xử lý dữ liệu.
+6. Đọc apps/mobile/App.tsx, src/native/api.ts và src/native/qrFlow.ts để hiểu Expo.
+
+Backend đi theo luồng: API → services → repositories → SQL Server. Khi sửa nghiệp vụ, tìm trong services; khi sửa truy vấn, tìm trong repositories.
+
+## 4. Chuẩn bị trên máy mới
+
+- Git, Node.js/npm và Python có thể tạo virtual environment.
+- SQL Server đang chạy, có database và dữ liệu phù hợp với dự án.
+- Tài khoản SQL Server hoặc Windows Authentication đã cấu hình.
+- Thư mục ảnh/audio từ dữ liệu dự án cũ.
+- Điện thoại và môi trường Expo tương thích với phiên bản trong apps/mobile/package.json nếu kiểm tra mobile.
+- Docker Desktop nếu chọn chạy backend bằng Docker.
+
+Dự án nằm trong htdocs nhưng backend là Python, frontend là Vite/Expo. Chỉ bật Apache/XAMPP không đủ để chạy hệ thống này.
+
+Trong lần kiểm tra này không thấy file .sql trong repository. Người nhận cần xin bản backup/schema và dữ liệu từ người đang giữ database; không tự giả định backend sẽ tạo sẵn database khi khởi động. Tài khoản quản trị cũng phải có trong database hoặc được tạo qua luồng có quyền phù hợp; tài liệu này không cung cấp tài khoản mặc định.
+
+## 5. Cấu hình môi trường
+
+Mở PowerShell tại thư mục gốc dự án. Nếu chưa có .env thì tạo từ mẫu:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Nếu .env đã tồn tại, sửa file hiện có, tránh chép đè cấu hình đang dùng. Không gửi mật khẩu thật hoặc commit .env vào Git.
+
+Các giá trị quan trọng:
+
+| Biến | Cách cấu hình |
+| --- | --- |
+| SQLSERVER_HOST | localhost nếu chạy Python trên Windows; host.docker.internal nếu chạy trong Docker |
+| SQLSERVER_PORT | Thường là 1433, sửa theo SQL Server thực tế |
+| SQLSERVER_DATABASE | Mẫu đang dùng VinhHyAudioTourDB; phải khớp database của máy |
+| SQLSERVER_USER / SQLSERVER_PASSWORD | Tài khoản SQL thực tế |
+| SQLSERVER_USE_WINDOWS_AUTH | true nếu dùng Windows Authentication; nhánh này dùng ODBC Driver 17 |
+| MEDIA_ROOT | Đường dẫn chứa uploads/audio và uploads/images |
+| PUBLIC_WEB_BASE_URL | URL web dùng trong liên kết công khai; local thường http://localhost:5173 |
+| JWT_SECRET | Đặt cùng giá trị cho auth-service và content-service |
+| ORS_API_KEY | Cấu hình nếu dùng phần chỉ đường yêu cầu OpenRouteService |
+
+MEDIA_ROOT trong .env.example là đường dẫn ổ D của máy cũ. Phải đổi sang đường dẫn có thật trên máy nhận. Nếu dùng Docker, thư mục này cần được mount vào container và MEDIA_ROOT phải trỏ tới đường dẫn bên trong container; Compose hiện chưa khai báo volume media.
+
+## 6. Chạy backend trực tiếp trên Windows
+
+Cách này phù hợp khi database và media đang có sẵn trên Windows. Các lệnh dưới chạy tại thư mục gốc dự án. Đặt SQLSERVER_HOST=localhost trong .env trước khi chạy.
+
+Tạo môi trường và cài dependency một lần:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r services/auth-service/requirements.txt -r services/content-service/requirements.txt -r services/narration-service/requirements.txt -r gateway/requirements.txt
+```
+
+Mở các terminal riêng, cùng ở thư mục gốc, mỗi terminal chạy một lệnh:
+
+```powershell
+# Terminal 1: đăng nhập và tài khoản
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir services/auth-service --host 0.0.0.0 --port 8001 --reload
+```
+
+```powershell
+# Terminal 2: nội dung, QR, audio và quyền nghe
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir services/content-service --host 0.0.0.0 --port 8002 --reload
+```
+
+```powershell
+# Terminal 3: gateway cho web
+.\.venv\Scripts\python.exe -m uvicorn gateway.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+```powershell
+# Terminal 4: tùy chọn, service thuyết minh riêng hiện mới có health
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir services/narration-service --host 0.0.0.0 --port 8003 --reload
+```
+
+Gateway lấy URL service từ biến môi trường hệ điều hành và mặc định localhost:8001/8002/8003; gateway/main.py hiện không tự load .env. Nếu đổi cổng service, đặt AUTH_SERVICE_URL, CONTENT_SERVICE_URL, NARRATION_SERVICE_URL trong terminal gateway trước khi khởi động.
+
+Kiểm tra bằng trình duyệt:
+
+- http://localhost:8001/health — auth sống.
+- http://localhost:8002/health — content sống.
+- http://localhost:8000/health — gateway sống.
+- http://localhost:8002/docs — Swagger của content.
+- http://localhost:8001/docs — Swagger của auth.
+
+Health trả thành công chỉ chứng minh process chạy. Hãy gọi thêm /api/v1/languages hoặc /api/v1/public/pois qua gateway để kiểm tra truy vấn database.
+
+## 7. Nếu chọn Docker
+
+Từ thư mục gốc:
+
+```powershell
+docker compose -f infra/docker-compose.yml up --build
+```
+
+Compose hiện chỉ chạy auth-service, content-service và narration-service. Không có SQL Server và gateway trong Compose. Cần SQL Server trên host, cấu hình media volume nếu muốn dùng file trên host, và chạy gateway riêng theo mục 6. Gateway chạy trên host có thể gọi các service qua cổng 8001/8002/8003 được Docker publish.
+
+Xem log hoặc dừng container:
+
+```powershell
+docker compose -f infra/docker-compose.yml logs --tail 100
+docker compose -f infra/docker-compose.yml down
+```
+
+Không chạy Docker service và Python service cùng một cổng đồng thời.
+
+## 8. Chạy web khách và CMS
+
+Mở terminal riêng:
+
+```powershell
+Set-Location apps/web
+# Chỉ chép mẫu nếu chưa có .env
+Copy-Item .env.example .env
+npm ci
+npm run dev
+```
+
+Nếu đã có .env, bỏ qua lệnh Copy-Item. Web mở tại http://localhost:5173. Cấu hình mặc định proxy /api sang gateway cổng 8000; VITE_API_BASE_URL để trống để dùng proxy này.
+
+Các trang cần biết:
+
+| URL | Chức năng |
+| --- | --- |
+| / | Trang chủ |
+| /pois và /pois/:id | Danh sách/chi tiết địa điểm |
+| /tours và /tours/:id | Danh sách/chi tiết tour |
+| /map | Bản đồ khám phá |
+| /qr và /qr/:code | Quét hoặc mở QR |
+| /access | Quyền nghe |
+| /login | Đăng nhập CMS |
+| /admin | Khu vực quản trị |
+
+CMS có các trang dashboard, pois, tours, translations, audio, qr, map, analytics và users. Vai trò quản lý gồm Admin, SuperAdmin, TourOperator, ContentAdmin; quản lý người dùng chỉ dành cho vai trò admin. Cần kiểm tra quyền backend khi thử từng tài khoản.
+
+## 9. Chạy mobile: phân biệt Expo và bản Vite
+
+apps/mobile chứa hai điểm vào khác nhau:
+
+- npm start chạy Expo, dùng App.tsx ở gốc và src/native. Đây là luồng cần dùng khi thử ứng dụng điện thoại kết nối API.
+- npm run dev chạy giao diện Vite, dùng src/main.tsx và src/App.tsx. Không dùng kết quả chạy giao diện này để kết luận ứng dụng Expo đã hoạt động.
+
+Chạy Expo từ terminal riêng:
+
+```powershell
+Set-Location apps/mobile
+npm ci
+npm run start:check
+npm start
+```
+
+Script start-lan.mjs chọn IPv4 của adapter mạng, truyền địa chỉ API local cổng 8002 cho Metro và theo dõi khi IP đổi. Không cần sửa địa chỉ IP thủ công mỗi lần đổi Wi-Fi trong luồng mặc định này.
+
+Điện thoại và máy tính cần kết nối mạng có thể truy cập nhau. Content API phải đang chạy trên 0.0.0.0:8002. Trên điện thoại thử mở:
+
+```text
+http://IP_MAY_TINH:8002/health
+http://IP_MAY_TINH:8081/status
+```
+
+Sau đó mở QR Expo bằng ứng dụng/client phù hợp với Expo SDK đang dùng. Nếu client báo không hỗ trợ SDK, cần dùng client/build tương thích; đừng coi đây là lỗi API.
+
+Khi đổi Wi-Fi, đợi script khởi động lại Metro và quét QR Expo mới. Nếu có nhiều adapter, có thể chỉ định IP trong terminal:
+
+```powershell
+$env:AUDIOTOUR_LAN_IP = '192.168.1.10'
+npm start
+```
+
+Địa chỉ trên chỉ là ví dụ, thay bằng IPv4 thật. Muốn dùng Expo CLI nguyên bản thì chạy npm run start:manual và cấu hình EXPO_PUBLIC_API_BASE_URL phù hợp. Tunnel của Expo chỉ hỗ trợ đường Metro, không tự đưa backend LAN lên Internet.
+
+## 10. Luồng demo cho người mới
+
+1. Bật database, backend và gateway; kiểm tra endpoint dữ liệu.
+2. Bật web, xem danh sách POI và tour có dữ liệu không.
+3. Chọn ngôn ngữ, mở chi tiết POI, kiểm tra ảnh và nội dung.
+4. Thử nghe nội dung miễn phí: phát, dừng, kết thúc và nhật ký nghe.
+5. Mở bản đồ, cấp quyền vị trí, kiểm tra marker và đường đi.
+6. Quét một QR có trong database; xác nhận mở đúng POI hoặc tour.
+7. Thử nội dung có phí bằng luồng mô phỏng; kiểm tra quyền nghe được cấp và hết hạn.
+8. Đăng nhập CMS bằng tài khoản được bàn giao; kiểm tra danh sách và sửa một bản ghi thử nghiệm.
+9. Chạy Expo, thử danh sách, phân trang, bản đồ, QR, chọn ngôn ngữ, phát/tua audio và phiên quyền nghe.
+
+QR để mở ứng dụng Expo khác với QR địa điểm/tour. QR Expo mở app; QR AudioTour được quét bên trong chức năng của app/web để mở nội dung.
+
+## 11. Kiểm tra mã nguồn khi tiếp tục sửa
+
+Web, chạy trong apps/web:
+
+```powershell
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
+Có kiểm tra geofence và queue/QR trong tests. Có smoke test Playwright, xem apps/web/playwright.config.ts và tests/e2e/smoke.spec.ts trước khi chạy npm run test:e2e để biết yêu cầu server/môi trường.
+
+Mobile, chạy trong apps/mobile:
+
+```powershell
+npm run typecheck
+node scripts/check-ui-translations.cjs
+node scripts/check-poi-pagination.cjs
+node scripts/check-api-network.cjs
+```
+
+Backend có tests/test_target_access.py và tests/test_routing.py. Đọc phần thiết lập trong test trước khi chọn lệnh chạy và dependency cần cài. Những kiểm tra tự động này không thay thế việc thử camera, GPS, audio và LAN trên điện thoại thật.
+
+Các lệnh kiểm tra trên là hướng dẫn cho lần tiếp tục, chưa được chạy trong lần cập nhật tài liệu này.
+
+## 12. Lỗi thường gặp
+
+| Hiện tượng | Nơi kiểm tra đầu tiên |
+| --- | --- |
+| Web mở nhưng API lỗi | Gateway 8000, proxy trong apps/web/.env, log service |
+| Health OK nhưng danh sách lỗi | SQLSERVER_*, schema/database và dữ liệu |
+| Không thấy ảnh hoặc audio | MEDIA_ROOT, uploads, metadata đường dẫn; volume nếu chạy Docker |
+| Đăng nhập lỗi hoặc thiếu quyền | Tài khoản/role trong DB, JWT_SECRET giữa auth và content |
+| Điện thoại không gọi được API | IP LAN, host 0.0.0.0, firewall, router có chặn thiết bị truy cập nhau không |
+| Quét QR Expo không vào app | Client hỗ trợ SDK, QR mới sau đổi Wi-Fi, kết nối Metro 8081 |
+| QR nội dung không mở đúng | Mã có tồn tại và đang hoạt động, PoiId/TourId gắn trong database |
+| TTS không có giọng mong muốn | SpeechSynthesis và danh sách giọng của trình duyệt/hệ điều hành |
+| GPS/camera không hoạt động trên web | Quyền người dùng và secure context; localhost khác với HTTP qua IP LAN |
+| Port đã được dùng | Terminal/process cũ, chỉ dừng process do mình khởi động |
+
+## 13. Bàn giao cho bạn và việc tiếp tục thứ Tư
+
+Người đang giữ môi trường cần cung cấp cho người nhận: database backup/schema, dữ liệu mẫu, vị trí media, tài khoản test và cách lấy cấu hình local qua kênh riêng. Không đưa mật khẩu thật vào tài liệu.
+
+Checklist nên làm trước:
+
+- [ ] Người nhận chạy được endpoint dữ liệu qua gateway.
+- [ ] Web hiển thị được POI/tour và ảnh/audio từ database đang dùng.
+- [ ] Mobile truy cập được API từ điện thoại.
+- [ ] Chạy demo miễn phí, QR, mô phỏng thanh toán và hết hạn quyền nghe.
+- [ ] Kiểm tra quyền CMS và luồng duyệt/xuất bản.
+- [ ] Ghi lại lỗi có bước tái hiện, thiết bị và ảnh/log cần thiết.
+
+Thứ Tư nên bắt đầu bằng việc đọc ghi chú bàn giao và xác nhận lại môi trường. Ưu tiên sửa lỗi làm đứt luồng demo trước; sau đó mới chọn phát triển thanh toán thật, dịch/tạo giọng phía server hoặc các tính năng bổ sung. Đây là gợi ý thứ tự làm, chưa phải các hạng mục đã hoàn thành hay đã được chốt triển khai.
+
+Mẫu để người nhận ghi kết quả ngay dưới đây:
+
+```text
+Ngày kiểm tra:
+Máy/điện thoại:
+Phiên bản code hoặc commit:
+Database và vị trí media (không ghi mật khẩu):
+Những luồng đã chạy thành công:
+Lỗi còn gặp + bước tái hiện:
+File đang sửa/dở dang:
+Việc đề xuất làm tiếp:
+```
+
+## 14. Tài liệu liên quan
+
+- README.md: giới thiệu ngắn, hiện vẫn mô tả placeholder ở một số README con.
+- docs/architecture.md: kiến trúc tổng quát; mô tả mục tiêu service, cần đối chiếu mã thực tế.
+- docs/api-contracts/legacy-api-migration.md: ánh xạ API từ hệ thống cũ.
+- apps/mobile/scripts/README.md: giải thích script chạy Expo qua LAN.
+- cau-truc-thu-muc-du-an.md: tài liệu cấu trúc thư mục.
+
+File này giữ tên readme.mdb đúng theo yêu cầu và chứa văn bản Markdown UTF-8. Nếu trình soạn thảo coi .mdb là file database, chọn mở bằng text editor hoặc chuyển chế độ ngôn ngữ sang Markdown.

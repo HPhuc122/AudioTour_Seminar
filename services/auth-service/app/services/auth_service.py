@@ -2,6 +2,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+from app.core.admin_validation import validate_user
 from fastapi import HTTPException, status
 from jose import jwt
 
@@ -46,13 +47,26 @@ class AuthService:
         return user
 
     def create_user(self, payload: dict) -> dict:
+        self._validate_user_write(payload, creating=True)
         if not payload.get("password"):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Password is required")
         return self._repository.create_user(payload, self._hash_password(payload["password"]))
 
     def update_user(self, user_id: int, payload: dict) -> dict:
+        self.get_user(user_id)
+        self._validate_user_write(payload, user_id=user_id)
         password_hash = self._hash_password(payload["password"]) if payload.get("password") else None
         return self._repository.update_user(user_id, payload, password_hash)
+
+    def _validate_user_write(self, payload, creating=False, user_id=None):
+        validate_user(payload, creating)
+        if payload.get("roleId") is not None and not self._repository.get_role(payload["roleId"]):
+            raise HTTPException(422, "Role does not exist")
+        for key, column in (("username", "Username"), ("email", "Email")):
+            if payload.get(key):
+                duplicate = self._repository._fetchone(f"SELECT Id FROM Users WHERE {column}=%s AND Id<>%s", (payload[key], user_id or 0))
+                if duplicate:
+                    raise HTTPException(409, "Username or email is already in use")
 
     def list_roles(self) -> list[dict]:
         return self._repository.list_roles()

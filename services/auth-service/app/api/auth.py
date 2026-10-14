@@ -24,7 +24,14 @@ def current_user(authorization: str | None = Header(default=None, alias="Authori
         payload = jwt.decode(authorization.split(" ", 1)[1].strip(), settings.jwt_secret, algorithms=["HS256"])
     except JWTError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
-    return {"id": int(payload.get("sub") or 0), "username": payload.get("username"), "role": payload.get("role")}
+    try:
+        uid = int(payload.get('sub') or 0)
+    except (TypeError, ValueError):
+        raise HTTPException(401, 'Invalid subject')
+    record = service._repository.find_by_id(uid)
+    if not record or record['role'] != payload.get('role'):
+        raise HTTPException(401, 'Account disabled or role changed')
+    return {'id': uid, 'username': record['username'], 'role': record['role']}
 
 
 def require_admin(user: dict = Depends(current_user)) -> dict:

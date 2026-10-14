@@ -7,4 +7,4 @@ export type Track = AudioTrack;
 export type Value = string | number | boolean | null;
 export type Row = Record<string, Value>;
 export type Page<T> = { items: T[]; total: number; page: number; pageSize: number };
-export type Field = { key: string; label: string; type?: 'number' | 'checkbox' | 'textarea' | 'password' | 'email' | 'select'; required?: boolean; min?: number; max?: number; step?: string; options?: { value: string; label: string }[]; default?: Value };
+export type Field = { key: string; label: string; type?: 'number' | 'checkbox' | 'textarea' | 'password' | 'email' | 'select' | 'datetime-local'; required?: boolean; min?: number; max?: number; maxLength?: number; step?: string; options?: { value: string; label: string }[]; default?: Value };

@@ -43,5 +43,5 @@ export const api = {
     if (!response.ok) throw new ApiError('Không thể mở audio. Hãy kiểm tra quyền truy cập.', response.status);
     return response.blob();
   },
-  upload: (file: File, poiId: number, token: string) => { const body = new FormData(); body.append('file', file); return request<Row>(`/api/v1/media/upload?poiId=${poiId}&imageCategory=Highlight`, { method: 'POST', body }, token); },
+  upload: (file: File, poiId: number, token: string) => { const body = new FormData(); body.append('file', file); return request<Row>(`/api/v1/media/upload?poiId=${poiId}${file.type.startsWith('image/') ? '&imageCategory=Highlight' : ''}`, { method: 'POST', body }, token); },
 };
