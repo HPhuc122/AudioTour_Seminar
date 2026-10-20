@@ -1,3 +1,3 @@
 # API contracts
 
-Place OpenAPI specifications and cross-service API contracts here.
+[Tích hợp Mobile/Web/database, phân quyền, duyệt nội dung và ví dụ JSON](mobile-integration.md).

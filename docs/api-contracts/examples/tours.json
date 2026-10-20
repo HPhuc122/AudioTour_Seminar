@@ -1,0 +1,14 @@
+{
+  "success": true,
+  "message": "Success",
+  "data": [
+    {
+      "id": 201,
+      "code": "TOUR-201",
+      "defaultLanguage": "vi",
+      "name": "Khám phá Vịnh Hy",
+      "description": "Tour đã duyệt",
+      "estimatedMinutes": 45
+    }
+  ]
+}

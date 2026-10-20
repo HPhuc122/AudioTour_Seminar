@@ -1,0 +1,58 @@
+name: AudioTour Web
+on:
+  push:
+    paths: ['apps/web/**', 'packages/api-client/**', 'services/**', 'gateway/**', 'infra/**', '.github/workflows/web.yml']
+  pull_request:
+    paths: ['apps/web/**', 'packages/api-client/**', 'services/**', 'gateway/**', 'infra/**', '.github/workflows/web.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint -- --max-warnings=0
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audiotour-web-dist
+          path: apps/web/dist
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-results
+          path: apps/web/.playwright-results
+          include-hidden-files: true
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r services/content-service/requirements.txt -r services/auth-service/requirements.txt -r gateway/requirements.txt
+      - run: python -m compileall -q services gateway
+      - run: python -m unittest discover -s tests -v
+        working-directory: services/content-service
+      - run: python -m unittest discover -s tests -v
+        working-directory: services/auth-service
+  container:
+    needs: [web, backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f apps/web/Dockerfile -t audiotour-web:${{ github.sha }} .

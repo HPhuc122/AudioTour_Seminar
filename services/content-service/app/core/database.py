@@ -51,6 +51,9 @@ class OdbcConnection:
     def commit(self) -> None:
         self._connection.commit()
 
+    def rollback(self) -> None:
+        self._connection.rollback()
+
     def close(self) -> None:
         self._connection.close()
 
@@ -66,6 +69,8 @@ def get_connection() -> Iterator[pymssql.Connection | OdbcConnection]:
         )
     else:
         connection = pymssql.connect(server=settings.host, port=str(settings.port), user=settings.user, password=settings.password, database=settings.database, as_dict=True)
+    with connection.cursor() as cursor:
+        cursor.execute('SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON; SET CONCAT_NULL_YIELDS_NULL ON; SET NUMERIC_ROUNDABORT OFF;')
     try:
         yield connection
     finally:

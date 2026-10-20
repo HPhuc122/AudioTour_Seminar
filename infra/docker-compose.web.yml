@@ -1,0 +1,23 @@
+# Additive overlay; uses the existing services and existing SQL Server.
+services:
+  gateway:
+    build:
+      context: ../gateway
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8000
+      CONTENT_SERVICE_URL: http://content-service:8000
+      NARRATION_SERVICE_URL: http://narration-service:8000
+    ports:
+      - "${GATEWAY_PORT:-8000}:8000"
+    depends_on:
+      - auth-service
+      - content-service
+      - narration-service
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "${WEB_PORT:-5173}:80"
+    depends_on:
+      - gateway

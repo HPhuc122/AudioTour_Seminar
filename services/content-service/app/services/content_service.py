@@ -1,6 +1,5 @@
 import hashlib
 import math
-import os
 import secrets
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -23,17 +22,34 @@ class ContentService:
         tour = self._repository.get_public_tour(tour_id, self._lang(language))
         if tour is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tour not found")
+        for poi in tour.get('pois', []):
+            self._media_urls(poi, language)
+        tour['languageCode'] = self._lang(language)
         return tour
 
     def list_pois(self, language: str, page: int = 1, page_size: int = 20, search: str | None = None, category: str | None = None, name: str | None = None) -> dict:
         page = max(page, 1)
         page_size = min(max(page_size, 1), 100)
-        return self._repository.list_public_pois(self._lang(language), page, page_size, search, category, name)
+        result = self._repository.list_public_pois(self._lang(language), page, page_size, search, category, name)
+        for poi in result['items']:
+            self._media_urls(poi, language)
+        return result
 
     def get_poi(self, poi_id: int, language: str) -> dict:
         poi = self._repository.get_public_poi(poi_id, self._lang(language))
         if poi is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="POI not found")
+        return self._media_urls(poi, language)
+
+    def _media_urls(self, poi: dict, language: str) -> dict:
+        base = settings.public_api_base_url.rstrip('/')
+        poi['languageCode'] = self._lang(language)
+        if poi.get('thumbnailImageId'):
+            poi['thumbnailUrl'] = f"{base}/api/v1/public/media/images/{poi['thumbnailImageId']}"
+        for image in poi.get('images', []):
+            image['url'] = f"{base}/api/v1/public/media/images/{image['id']}"
+        for audio in poi.get('audioTracks', []):
+            audio['streamUrl'] = f"{base}/api/v1/public/audio/{audio['id']}"
         return poi
 
     def get_audio_tour(self, tour_id: int, language: str, token: str | None) -> dict:
@@ -64,7 +80,7 @@ class ContentService:
     def start_access(self, qr_code: str, device_id: str | None = None, trigger_type: str = "qr") -> dict:
         if not qr_code or not qr_code.strip():
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="QR code is required")
-        qr = self._repository.get_qr_by_code(qr_code.strip())
+        qr = self.get_qr_by_code(qr_code.strip())
         if qr is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR code not found")
         duration = int(qr.get("accessDurationMinutes") or 60)
@@ -162,6 +178,10 @@ class ContentService:
         qr = self._repository.get_qr_by_code(code)
         if qr is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR code not found")
+        if qr.get('poiId'):
+            self.get_poi(qr['poiId'], 'vi')
+        elif qr.get('tourId'):
+            self.get_tour(qr['tourId'], 'vi')
         return qr
 
     def resolve_qr(self, code: str) -> dict:
