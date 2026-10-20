@@ -37,7 +37,8 @@ test('validity form validates order and submits ISO date proposal', async ({ pag
 });
 test('unconfigured generation is disabled', async ({ page }) => {
   await setup(page); await page.goto('/admin/automation'); await expect(page.getByRole('button', { name: 'Tạo và gửi duyệt' })).toBeDisabled();
-  await expect(page.getByText('Chưa cấu hình nhà cung cấp dịch/TTS thật.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Chưa cấu hình ADMIN_TRANSLATION_URL', { exact: false })).toBeVisible();
+  await expect(page.getByText('Chưa cấu hình ADMIN_TTS_URL', { exact: false })).toBeVisible();
 });
 test('dashboard works at desktop and tablet sizes with real API-shaped counts', async ({ page }) => {
   await setup(page);
