@@ -33,7 +33,7 @@ test('validity form validates order and submits ISO date proposal', async ({ pag
   await page.getByLabel('Kết thúc (giờ địa phương)').fill('2027-03-01T10:00');
   const request = page.waitForRequest(r => r.url().endsWith('/cms/validity/1') && r.method() === 'PUT');
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click(); const body = (await request).postDataJSON(); expect(body.validFrom).toMatch(/Z$/); expect(body.validUntil).toMatch(/Z$/);
-  await expect(page.getByRole('status')).toContainText('hàng đợi duyệt');
+  await expect(page.getByRole('status').filter({ hasText: 'hàng đợi duyệt' })).toContainText('hàng đợi duyệt');
 });
 test('unconfigured generation is disabled', async ({ page }) => {
   await setup(page); await page.goto('/admin/automation'); await expect(page.getByRole('button', { name: 'Tạo và gửi duyệt' })).toBeDisabled();
