@@ -13,6 +13,10 @@ Web React dành cho chủ sạp và quản trị viên; khách tham quan dùng M
 - Thư viện Âm thanh có nút Thêm file âm thanh: chọn MP3/WAV/OGG/M4A/AAC/FLAC, POI, tên và ngôn ngữ rồi lưu. Backend lưu file thật và bản ghi AudioTracks vào Pending. Không cần nhập đường dẫn file; khi tạo bản ghi lỗi, thử lại dùng file đã tải lên để tránh tải trùng.
 - Ngôn ngữ có API cấu hình thật. Dịch/TTS có adapter và hook chạy sau duyệt, nhưng provider thật chưa cấu hình; chưa bật tự động. Kết quả tạo vào Pending, audio cần duyệt media trước.
 - Admin/SuperAdmin duyệt và quản lý hệ thống. Vendor/ContentAdmin/TourOperator sửa nội dung sở hữu hoặc được cấp quyền; AnalyticsViewer chỉ đọc. Backend kiểm tra role/scope độc lập với Web.
+- Khu vực Chủ sạp dùng route `/vendor`: tổng quan trong scope, danh sách/tạo/sửa POI, ảnh, audio, trạng thái gửi duyệt, QR chỉ xem/tải theo POI và thống kê. Hồ sơ sạp, gói dịch vụ/gia hạn chưa có API đầy đủ nên không hiển thị như chức năng hoàn chỉnh.
+- Chưa có tài khoản Vendor thì mở `/register` để tạo tài khoản qua `POST /api/v1/auth/register`; Backend hiện kích hoạt tài khoản ngay và chưa có quy trình xét duyệt hồ sơ Chủ sạp.
+- Từ trang `/login` có nút **Xem thử giao diện Chủ sạp** dùng fixture cục bộ; chế độ này không gọi Backend để đọc dữ liệu và chặn mọi thao tác ghi/tải file.
+- Source frontend hiện được nạp từ `docs/src`; TypeScript và test cũng trỏ về cùng thư mục.
 - Giữ API Mobile và không sửa apps/mobile. Web không có GPS/geofencing/scan QR của khách.
 - 46 file media gốc vẫn thiếu trên máy; upload hoặc khôi phục file thật trước khi demo đầy đủ.
 
