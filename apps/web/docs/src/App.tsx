@@ -11,6 +11,12 @@ import { AdminMap } from './pages/admin/AdminMap';
 import { OperationsPage, SystemPage } from './pages/admin/OperationsPage';
 import { AutomationPage } from './pages/admin/AutomationPage';
 import { roleLabels } from './components/AdminTable';
+import { VendorLayout } from './layouts/VendorLayout';
+import { VendorDashboard } from './pages/vendor/VendorDashboard';
+import { VendorPoiDetail, VendorPoiEditor, VendorPoiList } from './pages/vendor/VendorPois';
+import { VendorStatistics } from './pages/vendor/VendorStatistics';
+import { VendorSubmissions } from './pages/vendor/VendorSubmissions';
+import { Register } from './pages/Register';
 const links = [
   ['dashboard', 'Tổng quan', LayoutDashboard], ['pois', 'Địa điểm', MapPin], ['tours', 'Tour tham quan', RouteIcon],
   ['narrations', 'Thuyết minh', Languages], ['review', 'Duyệt nội dung', Languages], ['translations', 'Đa ngôn ngữ', Languages], ['media', 'Hình ảnh', MapPin], ['audio', 'Âm thanh', Music], ['qr', 'Mã QR', QrCode],
@@ -28,6 +34,7 @@ const restricted = ['users', 'vendors', 'validity', 'plans', 'transactions', 'se
 function AdminLayout() {
   const { session, logout, preview } = useSession();
   if (!session) return <Navigate to="/login" replace/>;
+  if (session.role === 'Vendor') return <Navigate to="/vendor/dashboard" replace/>;
   if (!managementRoles.includes(session.role)) return <div className="state"><h1>Không có quyền quản trị</h1><p>Web dành cho chủ sạp và người quản lý.</p><button onClick={logout}>Đăng xuất</button></div>;
   return <div className="admin-shell"><aside className="sidebar"><Link className="brand" to="/admin/dashboard"><Headphones/>AudioTour<span>CMS</span></Link><p className="sidebar-caption">KHÔNG GIAN QUẢN TRỊ</p><nav>{groups.map(group => <div className="nav-group" key={group.title}><p className="nav-group-title">{group.title}</p>{links.filter(([path]) => group.paths.includes(path) && (!restricted.includes(path) || adminRoles.includes(session.role))).map(([path, label, Icon]) => <NavLink key={path} to={`/admin/${path}`}><Icon size={19}/>{path === 'review' && !preview && !adminRoles.includes(session.role) ? 'Trạng thái gửi duyệt' : label}</NavLink>)}</div>)}</nav><div className="sidebar-bottom"><span className="avatar">{session.username.slice(0, 1).toUpperCase()}</span><div><strong>{session.username}</strong><small>{preview ? 'Dữ liệu mẫu' : roleLabels[session.role] || session.role}</small></div><>{preview ? <Link to="/login">Đăng nhập</Link> : <button aria-label="Đăng xuất" className="icon-button" onClick={logout}><LogOut size={18}/></button>}</></div></aside><div className="admin-main"><header className="admin-top"><span>Hệ thống thuyết minh đa ngôn ngữ</span><span>Dành cho chủ sạp / người quản lý</span></header><main>{preview && <p className="notice" role="status">Bạn đang xem thử với dữ liệu mẫu. <Link to="/login">Đăng nhập</Link> để quản lý dữ liệu thật.</p>}<Outlet/></main></div></div>;
 }
@@ -36,8 +43,9 @@ function AdminOnly() {
  const { session, preview } = useSession();
  return session && (preview || adminRoles.includes(session.role)) ? <Outlet/> : <div className="state"><h1>Không có quyền quản lý người dùng</h1><Link to="/admin/dashboard">Về Dashboard</Link></div>;
 }
-export function App() { return <Routes>
-<Route path="/" element={<Navigate to="/admin" replace/>}/><Route path="/login" element={<Login/>}/>
+export function App() { const { session } = useSession(); return <Routes>
+<Route path="/" element={<Navigate to={session?.role === 'Vendor' ? '/vendor/dashboard' : session ? '/admin' : '/login'} replace/>}/><Route path="/login" element={<Login/>}/><Route path="/register" element={<Register/>}/>
+<Route path="/vendor" element={<VendorLayout/>}><Route index element={<Navigate to="dashboard" replace/>}/><Route path="dashboard" element={<VendorDashboard/>}/><Route path="pois" element={<VendorPoiList/>}/><Route path="pois/new" element={<VendorPoiEditor/>}/><Route path="pois/:id/edit" element={<VendorPoiEditor/>}/><Route path="pois/:id" element={<VendorPoiDetail/>}/><Route path="submissions" element={<VendorSubmissions/>}/><Route path="statistics" element={<VendorStatistics/>}/></Route>
 <Route path="/admin" element={<AdminLayout/>}>
 <Route index element={<Navigate to="dashboard" replace/>}/>
 <Route path="dashboard" element={<Dashboard/>}/><Route path="analytics" element={<Dashboard analytics/>}/>
