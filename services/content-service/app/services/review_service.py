@@ -515,7 +515,7 @@ class ReviewService(AdminService):
                 p
                 for p in members
                 if self._repository.scalar(
-                    f"SELECT COUNT(*) FROM POIs WHERE Id=%s AND ({clause})",
+                    f"SELECT COUNT(*) AS total FROM POIs WHERE Id=%s AND ({clause})",
                     (p["POIId"],) + params,
                 )
             ]
@@ -735,15 +735,15 @@ class ReviewService(AdminService):
             tour, tp = scope("tours")
             return {
                 "pois": self._repository.scalar(
-                    f"SELECT COUNT(*) FROM POIs WHERE DeletedAt IS NULL AND ({clause})",
+                    f"SELECT COUNT(*) AS total FROM POIs WHERE DeletedAt IS NULL AND ({clause})",
                     params,
                 ),
                 "tours": self._repository.scalar(
-                    f"SELECT COUNT(*) FROM Tours WHERE DeletedAt IS NULL AND ({tour})",
+                    f"SELECT COUNT(*) AS total FROM Tours WHERE DeletedAt IS NULL AND ({tour})",
                     tp,
                 ),
                 "plays": self._repository.scalar(
-                    f"SELECT COUNT(*) FROM NarrationLogs WHERE POIId IN (SELECT Id FROM POIs WHERE {clause})",
+                    f"SELECT COUNT(*) AS total FROM NarrationLogs WHERE POIId IN (SELECT Id FROM POIs WHERE {clause})",
                     params,
                 ),
                 "devices": 0,
@@ -769,7 +769,7 @@ class ReviewService(AdminService):
         clause, params = scope("pois")
         return {
             "durationSeconds": self._repository.scalar(
-                f"SELECT COALESCE(SUM(CAST(DurationPlayedSeconds AS bigint)),0) FROM NarrationLogs WHERE POIId IN (SELECT Id FROM POIs WHERE {clause})",
+                f"SELECT COALESCE(SUM(CAST(DurationPlayedSeconds AS bigint)),0) AS durationSeconds FROM NarrationLogs WHERE POIId IN (SELECT Id FROM POIs WHERE {clause})",
                 params,
             ),
             "ttsPlays": None,

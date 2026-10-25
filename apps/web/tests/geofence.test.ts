@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { GeofenceEngine, distance } from '../src/lib/geofence';
-import type { PublicPoi } from '../src/types';
+import { GeofenceEngine, distance } from '../docs/src/lib/geofence';
+import type { PublicPoi } from '../docs/src/types';
 const poi: PublicPoi = { id: 1, code: 'P1', name: 'POI', latitude: 11.7, longitude: 109.2, radiusMeters: 50, minDwellSeconds: 3, cooldownSeconds: 60 };
 const inside = { latitude: 11.7, longitude: 109.2, accuracy: 5 };
 const outside = { latitude: 12, longitude: 109.2, accuracy: 5 };

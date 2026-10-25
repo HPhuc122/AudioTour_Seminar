@@ -32,7 +32,7 @@ test('approval requires a concrete confirmation', async ({ page }) => {
   const request = page.waitForRequest(r => r.url().endsWith('/submissions/7/approve'));
   await page.getByRole('button', { name: 'Xác nhận duyệt', exact: true }).click();
   expect((await request).method()).toBe('POST');
-  await expect(page.getByRole('status')).toContainText('Đã duyệt hồ sơ');
+  await expect(page.getByRole('status').filter({ hasText: 'Đã duyệt hồ sơ' })).toContainText('Đã duyệt hồ sơ');
 });
 test('Admin must supply a reason when rejecting a pending proposal', async ({ page }) => {
   await setup(page, 'Admin'); await page.goto('/admin/review'); await page.getByRole('button', { name: 'Xem nội dung' }).click();

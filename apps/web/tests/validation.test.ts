@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateFields } from '../src/lib/validation';
+import { validateFields } from '../docs/src/lib/validation';
 describe('CMS form validation', () => {
   it('rejects whitespace-only required text', () => expect(validateFields({ Name: '  ' }, [{ key: 'Name', label: 'Tên', required: true }])).toContain('cần nhập'));
   it('rejects out-of-range and nonfinite coordinates', () => {

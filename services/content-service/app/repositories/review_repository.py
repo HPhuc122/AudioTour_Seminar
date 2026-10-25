@@ -131,7 +131,7 @@ class ReviewRepository(AdminRepository):
         where = " AND ".join(clauses)
         total = (
             self.scalar(
-                f"SELECT COUNT(*) FROM ContentSubmissions s WHERE {where}",
+                f"SELECT COUNT(*) AS total FROM ContentSubmissions s WHERE {where}",
                 tuple(params),
             )
             or 0

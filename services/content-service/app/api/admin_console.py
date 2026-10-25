@@ -28,7 +28,7 @@ def like(value):
 
 def paged(sql, params, page, size):
     repo = service._repository
-    total = repo.scalar("SELECT COUNT(*) FROM (" + sql + ") counted", params) or 0
+    total = repo.scalar("SELECT COUNT(*) AS total FROM (" + sql + ") counted", params) or 0
     rows = repo.fetchall(sql + " ORDER BY Id DESC OFFSET %s ROWS FETCH NEXT %s ROWS ONLY", params + ((page - 1) * size, size))
     return {"items": rows, "total": total, "page": page, "pageSize": size}
 
@@ -94,7 +94,7 @@ def catalog(resource: str, search: str = Query("", max_length=200), status: str 
         where.append("(" + " OR ".join(search_clauses) + ")")
     sql = "SELECT * FROM " + table + " WHERE " + " AND ".join(where)
     if resource == "languages":
-        total = repo.scalar("SELECT COUNT(*) FROM (" + sql + ") counted", tuple(values)) or 0
+        total = repo.scalar("SELECT COUNT(*) AS total FROM (" + sql + ") counted", tuple(values)) or 0
         rows = repo.fetchall(sql + " ORDER BY SortOrder,Code OFFSET %s ROWS FETCH NEXT %s ROWS ONLY", tuple(values) + ((page - 1) * pageSize, pageSize))
         return ok({"items": rows, "total": total, "page": page, "pageSize": pageSize})
     result = paged(sql, tuple(values), page, pageSize)
@@ -153,8 +153,8 @@ def console_summary():
         target = (root / str(item["RelativePath"]).replace("\\", "/")).resolve()
         missing += int(root not in target.parents or not target.is_file())
     clause, params = scope("pois")
-    expiring = repo.scalar("SELECT COUNT(*) FROM POIs WHERE DeletedAt IS NULL AND ValidUntil>=SYSUTCDATETIME() AND ValidUntil<DATEADD(day,30,SYSUTCDATETIME()) AND (" + clause + ")", params) or 0
-    expired = repo.scalar("SELECT COUNT(*) FROM POIs WHERE DeletedAt IS NULL AND ValidUntil<SYSUTCDATETIME() AND (" + clause + ")", params) or 0
+    expiring = repo.scalar("SELECT COUNT(*) AS total FROM POIs WHERE DeletedAt IS NULL AND ValidUntil>=SYSUTCDATETIME() AND ValidUntil<DATEADD(day,30,SYSUTCDATETIME()) AND (" + clause + ")", params) or 0
+    expired = repo.scalar("SELECT COUNT(*) AS total FROM POIs WHERE DeletedAt IS NULL AND ValidUntil<SYSUTCDATETIME() AND (" + clause + ")", params) or 0
     return ok({**counts, "pending": pending, "missingMedia": missing, "expiring": expiring, "expired": expired})
 
 
