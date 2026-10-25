@@ -59,6 +59,10 @@
     {
       "Status": "Pending",
       "total": 90
+    },
+    {
+      "Status": "Superseded",
+      "total": 1
     }
   ],
   "audioReview": [
