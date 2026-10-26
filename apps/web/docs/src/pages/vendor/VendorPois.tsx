@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import {
   ArrowLeft,
   ClipboardList,
@@ -16,10 +16,10 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { Editor } from '../../components/Editor';
+import { RelatedContent } from './VendorRelatedContent';
 import { AudioUploadDialog } from '../../components/AudioUploadDialog';
 import { AutomationStatus } from '../../components/AutomationStatus';
-import { MediaPreview } from '../../components/MediaPreview';
+
 import { ReviewStatus } from '../../components/ReviewStatus';
 import { PageTitle, State } from '../../components/States';
 import { useSession } from '../../contexts/Session';
@@ -41,7 +41,8 @@ export function VendorPoiList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
-  const page = Math.max(1, Number(searchParams.get('page') || 1));
+  const requestedPage = Number(searchParams.get('page') || 1);
+  const page = Number.isFinite(requestedPage) ? Math.max(1, Math.floor(requestedPage)) : 1;
 
   const data = useResource(
     useCallback(() => {
@@ -374,7 +375,7 @@ export function VendorPoiEditor() {
                           ? 90
                           : field.key === 'Longitude'
                             ? 180
-                            : undefined
+                            : field.key === 'RadiusMeters' ? 10000 : undefined
                       }
                       min={
                         field.key === 'Latitude'
@@ -422,7 +423,9 @@ export function VendorPoiDetail() {
   const { id } = useParams();
   const { session } = useSession();
   const token = session!.accessToken;
-  const [tab, setTab] = useState<PoiTab>('overview');
+  const [tabParams, setTabParams] = useSearchParams();
+  const requestedTab = tabParams.get('tab') || 'overview';
+  const tab: PoiTab = ['overview', 'images', 'narrations', 'audio', 'translations', 'qr', 'history'].includes(requestedTab) ? requestedTab as PoiTab : 'overview';
   const [uploading, setUploading] = useState(false);
   const [contentVersion, setContentVersion] = useState(0);
   const [audioDialog, setAudioDialog] = useState(false);
@@ -505,7 +508,7 @@ export function VendorPoiDetail() {
                 className={tab === key ? 'active' : ''}
                 key={key}
                 onClick={() => {
-                  setTab(key as PoiTab);
+                  setTabParams({ tab: key });
                   setError('');
                   setMessage('');
                 }}
@@ -587,7 +590,7 @@ export function VendorPoiDetail() {
           )}
           {tab === 'translations' && (
             <RelatedContent
-              empty="Chưa có bản dịch. Bản dịch hiện chỉ xem được trong khu vực Chủ sạp."
+              empty="Chưa có bản dịch. Thêm bản dịch để gửi Admin duyệt."
               poiId={Number(id)}
               resource="poi-translations"
               token={token}
@@ -691,128 +694,6 @@ function VendorQrContent({ poiId, token }: { poiId: number; token: string }) {
           </table>
         </div>
       ) : null}
-    </section>
-  );
-}
-
-function RelatedContent({
-  action,
-  empty,
-  poiId,
-  resource,
-  token,
-}: {
-  action?: ReactNode;
-  empty: string;
-  poiId: number;
-  resource: 'media' | 'narrations' | 'audio' | 'poi-translations';
-  token: string;
-}) {
-    const [editing, setEditing] = useState<Row | null>();
-  const languages = useResource(useCallback(() => resource === 'narrations' ? api.languages(token) : Promise.resolve([]), [resource, token]));
-  const query = new URLSearchParams({
-    poiId: String(poiId),
-    page: '1',
-    pageSize: '100',
-    ...(resource === 'media' ? { fileType: 'image' } : {}),
-  });
-  const queryString = query.toString();
-  const data = useResource(
-    useCallback(
-      () => api.admin<Page<Row>>(`cms/catalog/${resource}?${queryString}`, token),
-      [queryString, resource, token],
-    ),
-  );
-
-  return (
-    <section className="panel vendor-panel">
-      <div className="vendor-section-heading">
-        <div>
-          <span className="eyebrow">NỘI DUNG TRONG PHẠM VI POI</span>
-          <h2>
-            {resource === 'media'
-              ? 'Hình ảnh'
-              : resource === 'narrations'
-                ? 'Thuyết minh'
-                : resource === 'audio'
-                  ? 'Âm thanh'
-                  : 'Bản dịch'}
-          </h2>
-        </div>
-        {action}
-        {resource === 'narrations' && <button className="primary" disabled={languages.loading || !!languages.error} onClick={() => setEditing(null)}>Thêm thuyết minh</button>}
-      </div>
-      {resource === 'narrations' && <State error={languages.error} retry={() => void languages.reload()}/>}
-      <State
-        loading={data.loading}
-        error={data.error}
-        retry={() => void data.reload()}
-        empty={!data.loading && !data.error && !data.data?.items.length}
-      />
-      {!data.loading && !data.error && !data.data?.items.length ? (
-        <p className="vendor-empty-copy">{empty}</p>
-      ) : null}
-      {data.data?.items.length ? (
-        <div className="vendor-content-list">
-          {data.data.items.map((row) => (
-            <article className="vendor-content-row" key={String(row.Id)}>
-              <div className="vendor-content-main">
-                <strong>
-                  {String(
-                    row.Title ||
-                      row.Name ||
-                      row.OriginalFileName ||
-                      `Nội dung #${row.Id}`,
-                  )}
-                </strong>
-                <small>
-                  {String(row.LanguageCode || row.ContentType || 'Nội dung')}
-                  {row.SubmissionStatus ? ` · ${String(row.SubmissionStatus)}` : ''}
-                </small>
-                {resource === 'narrations' && (
-                  <p className="vendor-content-preview">
-                    {String(row.TextContent || '')}
-                  </p>
-                )}
-                {resource === 'poi-translations' && (
-                  <p className="vendor-content-preview">
-                    {String(row.Description || row.ShortDescription || '')}
-                  </p>
-                )}
-              </div>
-              {resource === 'media' && (
-                <MediaPreview
-                  image
-                  path={`cms/media/images/${row.Id}/stream`}
-                  token={token}
-                />
-              )}
-              {resource === 'audio' && row.FileUrl ? (
-                <MediaPreview
-                  path={`cms/audio-preview/${row.Id}/stream`}
-                  token={token}
-                />
-              ) : null}
-              {statusLabel(row)}
-              {resource === 'narrations' && <button onClick={() => setEditing(row)}>Chỉnh sửa và gửi duyệt</button>}
-            </article>
-          ))}
-        </div>
-      ) : null}
-      {resource === 'narrations' && editing !== undefined && <Editor
-        title={editing ? 'Sửa thuyết minh và gửi duyệt' : 'Thêm thuyết minh và gửi duyệt'}
-        initial={editing || { LanguageCode: 'vi' }}
-        fields={[
-          { key: 'Title', label: 'Tiêu đề', required: true, maxLength: 200 },
-          { key: 'LanguageCode', label: 'Ngôn ngữ', type: 'select', required: true, options: languages.data?.map(language => ({ value: language.code, label: language.nativeName || language.name })) },
-          { key: 'TextContent', label: 'Nội dung thuyết minh', type: 'textarea', required: true },
-        ]}
-        onClose={() => setEditing(undefined)}
-        onSave={async values => {
-          await api.admin(editing ? `narrations/${editing.Id}/content` : 'narrations', token, json(editing ? 'PUT' : 'POST', { ...values, PoiId: poiId }));
-          await data.reload();
-        }}
-      />}
     </section>
   );
 }

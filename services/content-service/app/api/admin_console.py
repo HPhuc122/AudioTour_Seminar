@@ -166,6 +166,47 @@ def console_summary():
     return ok({**counts, "pending": pending, "missingMedia": missing, "expiring": expiring, "expired": expired})
 
 
+@router.get("/device-activity", dependencies=[Depends(require_admin)])
+def device_activity(
+    search: str = Query("", max_length=200),
+    activeOnly: bool = False,
+    page: int = Query(1, ge=1),
+    pageSize: int = Query(20, ge=1, le=100),
+):
+    repo = service._repository
+    recent = "d.LastSeenAt>=DATEADD(minute,-5,SYSUTCDATETIME()) AND d.LastSeenAt<=SYSUTCDATETIME()"
+    visible = "(d.UserId IS NULL OR u.IsActive=1)"
+    source = " FROM Devices d LEFT JOIN Users u ON u.Id=d.UserId LEFT JOIN Roles r ON r.Id=u.RoleId"
+    summary = repo.fetchone(
+        "SELECT COUNT(*) AS totalDevices,"
+        f"COALESCE(SUM(CASE WHEN {recent} THEN 1 ELSE 0 END),0) AS activeDevices,"
+        f"COUNT(DISTINCT CASE WHEN {recent} THEN d.UserId END) AS activeUsers"
+        + source + " WHERE " + visible
+    )
+    where, values = [visible], []
+    if activeOnly:
+        where.append("(" + recent + ")")
+    if search.strip():
+        where.append("(u.Username LIKE %s OR d.DeviceId LIKE %s OR d.Platform LIKE %s)")
+        values += [like(search.strip())] * 3
+    condition = " WHERE " + " AND ".join(where)
+    total = repo.scalar("SELECT COUNT(*)" + source + condition, tuple(values)) or 0
+    rows = repo.fetchall(
+        "SELECT d.Id,d.DeviceId,d.UserId,u.Username,r.Name AS Role,d.Platform,"
+        "d.AppVersion,d.OsVersion,d.RegisteredAt,d.LastSeenAt,"
+        "(SELECT COUNT(*) FROM Devices other WHERE other.UserId=d.UserId AND "
+        + recent.replace('d.', 'other.') + ") AS ActiveDevicesForUser,"
+        +
+        f"CAST(CASE WHEN {recent} THEN 1 ELSE 0 END AS bit) AS IsActive"
+        + source + condition
+        + " ORDER BY d.LastSeenAt DESC,d.Id DESC OFFSET %s ROWS FETCH NEXT %s ROWS ONLY",
+        tuple(values) + ((page - 1) * pageSize, pageSize),
+    )
+    return ok({"summary": summary, "items": rows, "total": total, "page": page,
+               "pageSize": pageSize, "activeWindowMinutes": 5,
+               "serverTime": datetime.now(timezone.utc)})
+
+
 @router.get("/transactions", dependencies=[Depends(require_admin)])
 def transactions(kind: Literal["poi", "access"] = "poi", status: str = "", search: str = Query("", max_length=200), page: int = Query(1, ge=1), pageSize: int = Query(25, ge=1, le=100)):
     if status and status not in {"Pending", "Paid", "Failed", "Expired"}:

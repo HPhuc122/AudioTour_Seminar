@@ -81,10 +81,28 @@ class AccountPermissionTests(unittest.TestCase):
             self.client.get("/api/v1/users", headers=headers).status_code, 401
         )
         self.service._repository.find_by_id.return_value = {
-            "id": 12,
-            "username": "manager",
-            "role": "Vendor",
+            "id": 12, "username": "manager", "role": "Vendor",
         }
-        self.assertEqual(
-            self.client.get("/api/v1/users", headers=headers).status_code, 401
-        )
+        self.assertEqual(self.client.get('/api/v1/users', headers=headers).status_code, 401)
+
+    def test_web_presence_uses_authenticated_owner_and_validates_device_id(self):
+        device = 'web-12345678-1234-1234-1234-123456789abc'
+        headers = {**self.headers('Vendor'), 'X-Web-Device-Id': device}
+        response = self.client.get('/api/v1/auth/me?userId=999', headers=headers)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.service._repository.record_web_presence.assert_called_once_with(12, device)
+        self.assertEqual(response.json()['data']['id'], 12)
+        self.service._repository.record_web_presence.reset_mock()
+        response = self.client.get('/api/v1/auth/me', headers={**headers, 'X-Web-Device-Id': 'bad-id'})
+        self.assertEqual(response.status_code, 422)
+        self.service._repository.record_web_presence.assert_not_called()
+
+    def test_anonymous_presence_cannot_write(self):
+        response = self.client.get('/api/v1/auth/me', headers={'X-Web-Device-Id': 'web-12345678-1234-1234-1234-123456789abc'})
+        self.assertEqual(response.status_code, 401)
+        self.service._repository.record_web_presence.assert_not_called()
+        response = self.client.post('/api/v1/auth/register-device', json={
+            'deviceId': 'web-12345678-1234-1234-1234-123456789abc', 'platform': 'web',
+        })
+        self.assertEqual(response.status_code, 422)
+        self.service.register_device.assert_not_called()

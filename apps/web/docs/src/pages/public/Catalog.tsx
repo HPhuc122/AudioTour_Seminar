@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ArrowUpRight, Headphones, MapPin, Play, Route, Search, QrCode } from 'lucide-react';
-import { api, request, json } from '../../services/api';
+import { api } from '../../services/api';
 import { useSession } from '../../contexts/Session';
 import { useNarration } from '../../contexts/Narration';
 import { useResource } from '../../hooks/useResource';

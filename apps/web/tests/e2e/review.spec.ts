@@ -12,13 +12,15 @@ async function setup(page: Page, role: string) {
 }
 test('Vendor can manage content but has no approval or account controls', async ({ page }) => {
   await setup(page, 'Vendor'); await page.goto('/admin/pois');
-  await expect(page.getByRole('button', { name: 'Thêm mới' })).toBeVisible();
+  await expect(page).toHaveURL(/\/vendor\/dashboard$/);
+  await page.getByRole('link', { name: 'Địa điểm của tôi', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Tạo địa điểm', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Phân quyền', exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Người dùng', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Sửa', exact: true }).click();
+  await page.goto('/vendor/pois/new');
   await expect(page.getByLabel('Trạng thái xuất bản')).toHaveCount(0);
-  await page.goto('/admin/review'); await page.getByRole('button', { name: 'Xem nội dung' }).click();
-  await expect(page.getByText('Nội dung đề xuất mới', { exact: true })).toBeVisible();
+  await page.goto('/vendor/submissions'); await page.getByRole('button', { name: 'Xem nội dung' }).click();
+  await expect(page.getByRole('region', { name: 'Hồ sơ gửi duyệt 7' }).getByText('Nội dung đề xuất mới', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Duyệt nội dung', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Từ chối', exact: true })).toHaveCount(0);
 });
@@ -44,4 +46,20 @@ test('Admin must supply a reason when rejecting a pending proposal', async ({ pa
   const request = page.waitForRequest(r => r.url().endsWith('/submissions/7/reject') && r.method() === 'POST');
   await page.getByRole('button', { name: 'Xác nhận từ chối' }).click();
   expect((await request).postDataJSON()).toEqual({ reason: 'Cần sửa thông tin địa điểm' });
+});
+
+test('approval conflicts are visible in the confirmation and can be retried', async ({ page }) => {
+  await setup(page, 'Admin');
+  let attempts = 0;
+  await page.route('**/api/v1/cms/submissions/7/approve', route => {
+    attempts++;
+    return attempts === 1 ? route.fulfill({ status: 409, json: { detail: 'Phiên bản đã thay đổi. Vui lòng kiểm tra lại.' } }) : route.fulfill({ json: { success: true, data: {} } });
+  });
+  await page.goto('/admin/review'); await page.getByRole('button', { name: 'Xem nội dung' }).click();
+  await page.getByRole('button', { name: 'Duyệt nội dung', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Xác nhận duyệt hồ sơ' });
+  await dialog.getByRole('button', { name: 'Xác nhận duyệt', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Phiên bản đã thay đổi');
+  await dialog.getByRole('button', { name: 'Xác nhận duyệt', exact: true }).click();
+  await expect(dialog).toHaveCount(0); expect(attempts).toBe(2);
 });

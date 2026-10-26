@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-const pages = [['dashboard', 'Tổng quan hệ thống'], ['review', 'Duyệt nội dung'], ['pois', 'Quản lý địa điểm'], ['tours', 'Tour tham quan'], ['translations', 'Nội dung đa ngôn ngữ'], ['media', 'Quản lý hình ảnh'], ['audio', 'Thư viện audio'], ['narrations', 'Nội dung thuyết minh'], ['vendors', 'Hồ sơ chủ sạp'], ['validity', 'Thời hạn sử dụng POI'], ['transactions', 'Giao dịch và thanh toán'], ['users', 'Quản lý người dùng'], ['languages', 'Cấu hình ngôn ngữ'], ['automation', 'Dịch tự động và tạo audio'], ['settings', 'Cấu hình hệ thống'], ['plans', 'Gói dịch vụ']];
+const pages = [['dashboard', 'Tổng quan hệ thống'], ['review', 'Duyệt nội dung'], ['pois', 'Quản lý địa điểm'], ['tours', 'Tour tham quan'], ['translations', 'Nội dung đa ngôn ngữ'], ['media', 'Quản lý hình ảnh'], ['audio', 'Thư viện audio'], ['narrations', 'Nội dung thuyết minh'], ['vendors', 'Hồ sơ chủ sạp'], ['validity', 'Thời hạn sử dụng POI'], ['transactions', 'Giao dịch và thanh toán'], ['users', 'Quản lý người dùng'], ['languages', 'Cấu hình ngôn ngữ'], ['automation', 'Dịch tự động và tạo audio'], ['settings', 'Cấu hình hệ thống']];
 for (const [path, title] of pages) {
   test('live Admin: ' + path, async ({ page }) => {
     test.skip(!process.env.AUDIOTOUR_ADMIN_SESSION, 'Run with a short-lived local Admin session.');

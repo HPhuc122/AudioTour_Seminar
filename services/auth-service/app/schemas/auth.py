@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class LoginRequest(BaseModel):
@@ -16,6 +16,13 @@ class RegisterDeviceRequest(BaseModel):
     app_version: str | None = Field(default=None, alias="appVersion")
     os_version: str | None = Field(default=None, alias="osVersion")
     push_token: str | None = Field(default=None, alias="pushToken")
+
+    @field_validator('device_id')
+    @classmethod
+    def reserve_web_device_ids(cls, value):
+        if value.startswith('web-'):
+            raise ValueError('Web device IDs require authenticated presence')
+        return value
 
 
 class RegisterUserRequest(BaseModel):

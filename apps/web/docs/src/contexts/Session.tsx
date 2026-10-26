@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '../types';
 import { isValidSession } from '../lib/session';
+import { useDevicePresence } from '../hooks/useDevicePresence';
 export const managementRoles = ['Admin', 'SuperAdmin', 'ContentAdmin', 'TourOperator', 'Vendor', 'AnalyticsViewer'];
 export const writeRoles = ['Admin', 'SuperAdmin', 'ContentAdmin', 'TourOperator', 'Vendor'];
 export const adminRoles = ['Admin', 'SuperAdmin'];
@@ -8,6 +9,7 @@ const Context = createContext<{ session: Session | null; login: (s: Session) => 
 function readSession(): Session | null { try { const value: unknown = JSON.parse(sessionStorage.getItem('audiotour:session') || 'null'); if (isValidSession(value)) return value; } catch { /* Invalid or expired persisted session. */ } sessionStorage.removeItem('audiotour:session'); return null; }
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(readSession);
+  useDevicePresence(session && managementRoles.includes(session.role) ? session : null);
   const [language, changeLanguage] = useState(localStorage.getItem('audiotour:language') || 'vi');
   const [guest, changeGuest] = useState(sessionStorage.getItem('audiotour:guest') || '');
   const logout = () => { sessionStorage.removeItem('audiotour:session'); setSession(null); };

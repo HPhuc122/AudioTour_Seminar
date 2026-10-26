@@ -38,7 +38,7 @@ export function ReviewPage() {
     <p className="notice">Duyệt từng hồ sơ để công khai nội dung. Với audio, duyệt file đính kèm trước rồi duyệt bản ghi audio. Thay đổi chờ duyệt không thay thế bản đang công khai.</p>
     {message && <p className="notice" role="status">{message}</p>}
     <section className="panel">
-      <Filters search={search} onSearch={s => { setSearch(s); setPage(1); }}>
+      <Filters search={search} onSearch={s => { setSearch(s); setPage(1); setSelected(undefined); }}>
         <label>Trạng thái<select value={status} onChange={e => { setStatus(e.target.value); setPage(1); setSelected(undefined); }}><option value="Pending">Chờ duyệt</option><option value="Rejected">Bị từ chối</option><option value="Approved">Đã duyệt</option><option value="Superseded">Đã thay bằng bản mới</option></select></label>
         <label>Loại hồ sơ<select value={resource} onChange={e => { setResource(e.target.value); setPage(1); setSelected(undefined); }}><option value="">Tất cả</option>{Object.entries(names).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       </Filters>
@@ -54,13 +54,13 @@ export function ReviewPage() {
         <ReviewStatus row={{ SubmissionStatus: submission?.Status || null, RejectionReason: submission?.RejectionReason || null }}/>
         <div className="table-scroll"><table className="comparison"><thead><tr><th>Thông tin</th><th>Bản hiện tại {detail.data.canonical.ReviewStatus === 'Approved' ? '(đã duyệt)' : '(chưa công khai)'}</th><th>Đề xuất</th></tr></thead><tbody>{Object.entries(fields).filter(([key]) => item[key] !== undefined || detail.data?.canonical[key] !== undefined).map(([key, label]) => <tr key={key}><th>{label}</th><td>{String(detail.data?.canonical[key] ?? '—')}</td><td className={JSON.stringify(item[key]) !== JSON.stringify(detail.data?.canonical[key]) ? 'changed-value' : ''}>{key === '_pois' ? JSON.stringify(item[key]) : String(item[key] ?? '—')}</td></tr>)}</tbody></table></div>
         {(selected.Resource === 'media' || (selected.Resource === 'audio' && item.FileUrl)) && <MediaPreview path={`cms/submissions/${selected.Id}/preview`} token={token} image={String(item.ContentType || item.FileType).toLowerCase().startsWith('image')}/>}</>}
-      {error && <p className="error" role="alert">{error}</p>}
+      {error && !confirming && <p className="error" role="alert">{error}</p>}
       <div className="row-actions">
-        {canReview && submission?.Status === 'Pending' && <><button className="primary" disabled={busy || detail.loading || !!detail.error} onClick={() => setConfirming(true)}>Duyệt nội dung</button><button disabled={busy || detail.loading} onClick={() => setRejecting(true)}>Từ chối</button></>}
+        {canReview && submission?.Status === 'Pending' && <><button className="primary" disabled={busy || detail.loading || !!detail.error} onClick={() => { setError(''); setConfirming(true); }}>Duyệt nội dung</button><button disabled={busy || detail.loading} onClick={() => setRejecting(true)}>Từ chối</button></>}
         {canWrite && submission?.Status === 'Rejected' && <><Link to={editPath}>Chỉnh sửa nội dung</Link><button disabled={busy} onClick={() => void action('resubmit')}>Gửi duyệt lại</button></>}
         <button disabled={busy} onClick={() => setSelected(undefined)}>Đóng</button>
       </div>
       {rejecting && <form className="reject-form" onSubmit={e => { e.preventDefault(); void action('reject', String(new FormData(e.currentTarget).get('reason'))); }}><label>Lý do từ chối<textarea name="reason" required minLength={1} maxLength={1000}/></label><p>Thao tác sẽ lưu lý do và giữ nguyên nội dung đã công khai trước đó.</p><button disabled={busy} className="primary">Xác nhận từ chối</button><button type="button" disabled={busy} onClick={() => setRejecting(false)}>Hủy</button></form>}
     </section>}
-    {confirming && <ConfirmDialog title="Xác nhận duyệt hồ sơ" description={selected?.Operation === 'delete' ? 'Nội dung sẽ bị gỡ khỏi bản công khai. Bạn đã kiểm tra hồ sơ này?' : 'Nội dung đề xuất sẽ trở thành phiên bản đã duyệt. Bạn đã kiểm tra văn bản và các file đính kèm?'} busy={busy} onClose={() => setConfirming(false)} onConfirm={() => void action('approve')}/>}</>;
+    {confirming && <ConfirmDialog title="Xác nhận duyệt hồ sơ" description={selected?.Operation === 'delete' ? 'Nội dung sẽ bị gỡ khỏi bản công khai. Bạn đã kiểm tra hồ sơ này?' : 'Nội dung đề xuất sẽ trở thành phiên bản đã duyệt. Bạn đã kiểm tra văn bản và các file đính kèm?'} busy={busy} error={error} onClose={() => setConfirming(false)} onConfirm={() => void action('approve')}/>}</>;
 }

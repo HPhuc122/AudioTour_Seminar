@@ -100,6 +100,18 @@ class UserRepository:
     def get_device(self, device_id: str) -> dict | None:
         return self._fetchone("SELECT * FROM Devices WHERE DeviceId = %s", (device_id,))
 
+    def record_web_presence(self, user_id: int, device_id: str) -> None:
+        self._execute(
+            """MERGE Devices WITH (HOLDLOCK) AS target
+               USING (SELECT %s AS DeviceId) AS source ON target.DeviceId=source.DeviceId
+               WHEN MATCHED AND target.UserId=%s THEN
+                 UPDATE SET LastSeenAt=SYSUTCDATETIME(), Platform='web'
+               WHEN NOT MATCHED THEN
+                 INSERT (DeviceId,UserId,Platform,RegisteredAt,LastSeenAt)
+                 VALUES (%s,%s,'web',SYSUTCDATETIME(),SYSUTCDATETIME());""",
+            (device_id, user_id, device_id, user_id),
+        )
+
     def devices_by_user(self, user_id: int) -> list[dict]:
         return self._fetchall("SELECT * FROM Devices WHERE UserId = %s ORDER BY LastSeenAt DESC", (user_id,))
 

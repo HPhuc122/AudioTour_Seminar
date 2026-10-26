@@ -71,9 +71,7 @@ export function VendorLayout() {
       <div className="admin-main">
         <header className="admin-top">
           <span>Quản lý địa điểm và nội dung AudioTour</span>
-          <span>
-            Chủ sạp
-          </span>
+          <div className="session-actions"><span>{session.username}</span><button onClick={logout}>Đăng xuất</button></div>
         </header>
         <main>
 

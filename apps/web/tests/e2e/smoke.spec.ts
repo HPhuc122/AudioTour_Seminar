@@ -14,7 +14,7 @@ test('admin pages require login and never substitute sample data', async ({ page
  await page.goto('/'); await expect(page).toHaveURL(/\/login$/);
  for (const path of ['dashboard', 'pois', 'tours', 'media', 'users', 'transactions']) {
   await page.goto('/admin/' + path); await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Đăng nhập AudioTour' })).toBeVisible();
  }
  expect(requests).toBe(0);
  await expect(page.getByText(/dữ liệu mẫu/)).toHaveCount(0);

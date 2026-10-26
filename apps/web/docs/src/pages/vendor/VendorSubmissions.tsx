@@ -6,6 +6,7 @@ import { useSession } from '../../contexts/Session';
 import { useResource } from '../../hooks/useResource';
 import { api, json } from '../../services/api';
 import type { Page, Row } from '../../types';
+import { VendorSubmissionDetail, submissionNames } from './VendorSubmissionDetail';
 
 export function VendorSubmissions() {
   const { session } = useSession();
@@ -16,6 +17,7 @@ export function VendorSubmissions() {
   const [busyId, setBusyId] = useState<number>();
   const [message, setMessage] = useState('');
   const [actionError, setActionError] = useState('');
+  const [selected, setSelected] = useState<number>();
 
   const data = useResource(
     useCallback(
@@ -52,6 +54,7 @@ export function VendorSubmissions() {
       );
       setMessage('Đã gửi nội dung lại để Admin xem xét.');
       await data.reload();
+      setSelected(undefined);
     } catch (reason) {
       setActionError(reason instanceof Error ? reason.message : 'Gửi lại thất bại.');
     } finally {
@@ -87,10 +90,12 @@ export function VendorSubmissions() {
           <label>
             Trạng thái
             <select
+              aria-label="Trạng thái"
               value={status}
               onChange={(event) => {
                 setStatus(event.target.value);
                 setPage(1);
+                setSelected(undefined);
               }}
             >
               <option value="Pending">Chờ duyệt</option>
@@ -125,7 +130,7 @@ export function VendorSubmissions() {
                   <tr key={String(row.Id)}>
                     <td>
                       <strong>
-                        {String(row.Resource)} · #{String(row.EntityId)}
+                        {submissionNames[String(row.Resource)] || String(row.Resource)} · #{String(row.EntityId)}
                       </strong>
                       <small>Hồ sơ #{String(row.Id)}</small>
                     </td>
@@ -143,6 +148,7 @@ export function VendorSubmissions() {
                       />
                     </td>
                     <td>
+                      <button onClick={() => setSelected(Number(row.Id))}>Xem nội dung</button>
                       {row.Status === 'Rejected' ? (
                         <button
                           disabled={busyId === Number(row.Id)}
@@ -180,6 +186,7 @@ export function VendorSubmissions() {
           </div>
         ) : null}
       </section>
+      {selected && <VendorSubmissionDetail key={selected} id={selected} token={token} onClose={() => setSelected(undefined)}/>}
     </>
   );
 }

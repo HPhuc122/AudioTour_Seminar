@@ -17,10 +17,18 @@ Web React dành cho chủ sạp và quản trị viên; khách tham quan dùng M
 - Chưa có tài khoản Vendor thì mở `/register` để tạo tài khoản qua `POST /api/v1/auth/register`; Backend hiện kích hoạt tài khoản ngay và chưa có quy trình xét duyệt hồ sơ Chủ sạp.
 - Trang `/login` chỉ có đăng nhập và liên kết đăng ký Chủ sạp. Phiên cục bộ không hợp lệ hoặc đã hết hạn được xóa và yêu cầu đăng nhập lại.
 - Source frontend hiện được nạp từ `docs/src`; TypeScript và test cũng trỏ về cùng thư mục.
+- Dashboard Admin/SuperAdmin có mục Thiết bị truy cập: tổng thiết bị ghi nhận, thiết bị/tài khoản có tín hiệu trong 5 phút, số thiết bị hoạt động của từng tài khoản, tìm kiếm và phân trang. Web đã đăng nhập cập nhật mỗi 60 giây khi tab hiển thị; bảng đọc lại mỗi 30 giây. Nhiều tab cùng tài khoản/trình duyệt dùng chung ID; không phải nhận diện phần cứng. Mobile chỉ được tính khi đã gửi đăng ký/heartbeat, chưa tự động tích hợp heartbeat native trong thay đổi Web này.
+- DB mới cần chạy `.tooling/python/python.exe scripts/migrate_device_presence.py` từ root để mở thêm Platform `web` trong constraint cũ. Migration đã áp dụng trên DB local. `scripts/check_device_activity.py` kiểm tra Gateway/SQL thật bằng một thiết bị thử riêng rồi xóa; không đổi tài khoản.
+- Xem trước ảnh/audio/văn bản dùng hộp thoại, hỗ trợ Escape, trả focus về nút mở, báo lỗi HTTP và thu hồi blob URL khi đóng. Admin sửa được thông tin audio mà không phải nhập lại đường dẫn file.
+- Chủ sạp có tìm kiếm/lọc/phân trang nội dung theo POI; thêm/sửa bản dịch và thuyết minh, sửa thông tin audio, thay ảnh và gửi yêu cầu xóa. Mọi thay đổi vẫn theo quy trình duyệt.
+- Hồ sơ gửi duyệt của Chủ sạp có so sánh bản hiện tại/đề xuất, lý do từ chối, xem file đề xuất, liên kết đúng tab chỉnh sửa và gửi lại. Thanh đầu trang có đăng xuất ở cả màn hình nhỏ.
+- Kiểm tra chỉ đọc API CMS với DB thật: `.tooling/python/python.exe scripts/check_web_console.py` từ root (cần quyền Windows truy cập SQL Server). Lệnh không khởi động worker, không ghi/duyệt dữ liệu và không in token.
 - Giữ API Mobile và không sửa apps/mobile. Web không có GPS/geofencing/scan QR của khách.
 - 46 file media gốc vẫn thiếu trên máy; upload hoặc khôi phục file thật trước khi demo đầy đủ.
 
 ## Chạy cục bộ
+
+Windows: từ root chạy `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1` để khởi động Auth (8001), Content (8002) và Gateway (8000) dưới nền. Script dùng Python local, bỏ qua dịch vụ đã sẵn sàng và ghi log vào `.runtime`. Cần chạy bằng tài khoản Windows có quyền truy cập SQL Server; chỉ mở Vite chưa đủ để đăng nhập.
 
 Trong root AudioTour_Seminar mở ba terminal cho Backend, dùng Python có dependencies hoặc portable .tooling/python/python.exe:
 

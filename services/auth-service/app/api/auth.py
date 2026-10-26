@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from jose import JWTError, jwt
+from typing import Annotated
 
 from app.core.config import settings
 from app.schemas.auth import LoginRequest, RefreshRequest, RegisterDeviceRequest, RegisterUserRequest, RoleWriteRequest, UserWriteRequest
@@ -54,6 +55,17 @@ def login(request: LoginRequest):
 @router.post("/refresh")
 def refresh(request: RefreshRequest):
     return ok(service.refresh(request.refresh_token), "Token refreshed")
+
+
+@router.get("/me")
+def me(
+    user: dict = Depends(current_user),
+    device_id: Annotated[str | None, Header(alias="X-Web-Device-Id", pattern=r"^web-[a-f0-9-]{36}$")] = None,
+):
+    # The authenticated account supplies ownership; clients cannot choose UserId.
+    if device_id:
+        service._repository.record_web_presence(user['id'], device_id)
+    return ok(user)
 
 
 @router.post("/register-device")
