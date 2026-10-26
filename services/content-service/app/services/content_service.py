@@ -44,12 +44,53 @@ class ContentService:
     def _media_urls(self, poi: dict, language: str) -> dict:
         base = settings.public_api_base_url.rstrip('/')
         poi['languageCode'] = self._lang(language)
+        state = self._repository.narration_state(poi['id'], self._lang(language))
+        published = state['published']
+        if published:
+            poi['description'], poi['name'] = published['description'], published['name']
+            # Prefer the atomic generated text/audio pair over an older read.
+            poi['audioTracks'] = [{k: v for k, v in published.items() if k not in {'description', 'name', 'jobId', 'sourceVersion', 'narrationId'}}]
+        available_audio = []
+        for track in poi.get('audioTracks', []):
+            relative = track.pop('fileUrl', None)
+            track['isAvailable'] = False
+            if relative:
+                try:
+                    self._resolve_media_path(relative, 'uploads/audio')
+                    track['isAvailable'] = True
+                except HTTPException:
+                    continue
+            available_audio.append(track)
+        poi['audioTracks'] = available_audio
+        poi['narration'] = {
+            'languageCode': self._lang(language),
+            'ready': bool(published and available_audio),
+            'publishedVersion': published['sourceVersion'] if published else None,
+            'publishedNarrationId': published['narrationId'] if published else None,
+            'availabilityError': 'AudioFileMissing' if published and not available_audio else None,
+            'latest': state['latest'],
+        }
         if poi.get('thumbnailImageId'):
-            poi['thumbnailUrl'] = f"{base}/api/v1/public/media/images/{poi['thumbnailImageId']}"
+            media = self._repository.get_public_media_file(poi['thumbnailImageId'])
+            try:
+                self._resolve_media_path(media.get('relativePath') if media else None, 'uploads/images')
+                poi['thumbnailUrl'] = f"{base}/api/v1/public/media/images/{poi['thumbnailImageId']}"
+            except HTTPException:
+                poi['thumbnailImageId'] = None
+                poi.pop('thumbnailUrl', None)
+        images = []
         for image in poi.get('images', []):
+            relative = image.pop('relativePath', None)
+            try:
+                self._resolve_media_path(relative, 'uploads/images')
+            except HTTPException:
+                continue
             image['url'] = f"{base}/api/v1/public/media/images/{image['id']}"
+            images.append(image)
+        poi['images'] = images
         for audio in poi.get('audioTracks', []):
-            audio['streamUrl'] = f"{base}/api/v1/public/audio/{audio['id']}"
+            if audio['isAvailable']:
+                audio['streamUrl'] = f"{base}/api/v1/public/audio/{audio['id']}"
         return poi
 
     def get_audio_tour(self, tour_id: int, language: str, token: str | None) -> dict:

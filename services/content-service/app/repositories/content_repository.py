@@ -171,7 +171,7 @@ class ContentRepository:
         query = f"""
         SELECT a.Id AS id, a.Id AS audioTrackId, a.POIId AS poiId, a.LanguageCode AS languageCode,
                a.LanguageCode AS language, COALESCE(a.Title, CONCAT('POI ', a.POIId, ' - ', a.LanguageCode)) AS title,
-               a.AudioType AS audioType, a.TTSText AS ttsText, a.DurationSeconds AS durationSeconds,
+               a.AudioType AS audioType, a.TTSText AS ttsText, a.FileUrl AS fileUrl, a.DurationSeconds AS durationSeconds,
                a.DurationSeconds AS duration, a.FileSizeBytes AS fileSizeBytes, a.MimeType AS mimeType,
                CASE WHEN a.FileUrl IS NULL THEN CAST(0 AS bit) ELSE CAST(1 AS bit) END AS isAvailable
         FROM AudioTracks a
@@ -191,10 +191,30 @@ class ContentRepository:
         """
         return self._fetchone(query, (audio_track_id,))
 
+    def narration_state(self, poi_id, language):
+        if not self._fetchone("SELECT OBJECT_ID('NarrationJobs','U') AS id")["id"]:
+            return {"latest": None, "published": None}
+        latest = self._fetchone("""SELECT TOP 1 Id AS jobId,SourceVersion AS sourceVersion,
+            NarrationId AS narrationId,Status AS status,Attempts AS attempts,ErrorCode AS errorCode
+            FROM NarrationJobs WHERE PoiId=%s AND LanguageCode=%s ORDER BY Id DESC""", (poi_id, language))
+        # A single query binds text and audio to the same completed job.
+        published = self._fetchone("""SELECT j.Id AS jobId,j.NarrationId AS narrationId,
+            j.SourceVersion AS sourceVersion,j.ResultText AS description,j.ResultName AS name,
+            a.Id AS id,a.POIId AS poiId,a.LanguageCode AS languageCode,a.LanguageCode AS language,
+            a.Title AS title,a.AudioType AS audioType,a.FileUrl AS fileUrl,a.MimeType AS mimeType,
+            a.DurationSeconds AS durationSeconds,a.FileSizeBytes AS fileSizeBytes
+            FROM NarrationPublications n JOIN NarrationJobs j ON j.Id=n.JobId
+            JOIN AudioTracks a ON a.Id=n.AudioTrackId
+            JOIN MediaFiles m ON m.RelativePath=a.FileUrl AND m.PoiId=a.POIId
+            WHERE n.PoiId=%s AND n.LanguageCode=%s AND j.Status='Succeeded'
+            AND a.IsActive=1 AND a.DeletedAt IS NULL AND a.ReviewStatus='Approved'
+            AND m.IsDeleted=0 AND m.ReviewStatus='Approved' AND m.ApprovalStatus='Approved'""", (poi_id, language))
+        return {"latest": latest, "published": published}
+
     def list_public_images_for_poi(self, poi_id: int) -> list[dict]:
         query = """
         SELECT Id AS id, FileName AS fileName, OriginalFileName AS originalFileName,
-               ContentType AS contentType, FileSize AS fileSize, ImageCategory AS imageCategory
+               ContentType AS contentType, FileSize AS fileSize, ImageCategory AS imageCategory, RelativePath AS relativePath
         FROM MediaFiles
         WHERE PoiId = %s AND FileType = 'image' AND ApprovalStatus = 'Approved' AND ReviewStatus = 'Approved' AND IsDeleted = 0
         ORDER BY CASE WHEN ImageCategory = 'Highlight' THEN 0 ELSE 1 END, UploadedAt DESC, Id DESC

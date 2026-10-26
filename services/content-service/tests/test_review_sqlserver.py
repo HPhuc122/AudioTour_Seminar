@@ -17,7 +17,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from jose import jwt
 
-from app.api import admin as api, public, web
+from app.api import admin as api, admin_console, public, web
 from app.core.access import actor
 from app.core.config import settings
 from app.core.database import get_connection
@@ -66,6 +66,7 @@ class SqlReviewTests(unittest.TestCase):
         self.content = ContentService(content)
         self.patches = [
             patch.object(api, "service", self.service),
+            patch.object(admin_console, "service", self.service),
             patch.object(web, "management_service", self.service),
             patch.object(public, "service", self.content),
         ]
@@ -121,6 +122,27 @@ class SqlReviewTests(unittest.TestCase):
         )
         self.assertEqual(r.status_code, 200, r.text)
         return r
+
+    def test_poi_review_history_includes_children_and_checks_scope(self):
+        with self.as_user():
+            narration = self.service.create_resource("narrations", {
+                "PoiId": self.poi["Id"], "Title": "History narration",
+                "LanguageCode": "vi", "TextContent": "Pending narration",
+            })
+        # Child ids are unrelated to their parent POI id.
+        response = self.client.get(
+            f"/api/v1/cms/review-queue?poiId={self.poi['Id']}",
+            headers=self.headers(),
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        submissions = response.json()["data"]["items"]
+        self.assertIn(narration["SubmissionId"], [s["Id"] for s in submissions])
+        self.assertNotIn(self.other["SubmissionId"], [s["Id"] for s in submissions])
+        response = self.client.get(
+            f"/api/v1/cms/review-queue?poiId={self.poi['Id']}",
+            headers=self.headers(13),
+        )
+        self.assertEqual(response.status_code, 404)
 
     def test_vendor_lists_only_own_content_and_cannot_mutate_other(self):
         r = self.client.get(
@@ -265,7 +287,7 @@ class SqlReviewTests(unittest.TestCase):
             "Approved story",
         )
         self.approve(r.json()["data"]["SubmissionId"])
-        self.assertEqual(
+        self.assertNotEqual(
             self.client.get(path.replace("lang=en", "lang=vi")).json()["data"][
                 "description"
             ],

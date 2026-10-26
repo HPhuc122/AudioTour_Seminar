@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 async function session(page: Page, role: string) {
- await page.addInitScript(role => sessionStorage.setItem('audiotour:session', JSON.stringify({ username: 'manager', role, accessToken: 'test-token', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })), role);
+ await page.addInitScript(role => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 1, username: 'manager', role, accessToken: 'test.header.signature', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })), role);
 }
 async function mockApi(page: Page) {
  await page.route('**/api/v1/**', route => {

@@ -28,8 +28,20 @@ with get_connection() as connection, connection.cursor() as cursor:
         "SELECT COUNT(*) AS total FROM POIs WHERE IsActive=1 AND DeletedAt IS NULL AND LifecycleStatus=3 AND ApprovalStatus=1 AND ReviewStatus='Approved' AND (ValidFrom IS NULL OR ValidFrom <= SYSUTCDATETIME()) AND (ValidUntil IS NULL OR ValidUntil >= SYSUTCDATETIME())"
     )
     report["publicPois"] = cursor.fetchone()["total"]
-    cursor.execute("SELECT RelativePath FROM MediaFiles WHERE IsDeleted=0")
+    cursor.execute("SELECT Id, PoiId, FileType, RelativePath FROM MediaFiles WHERE IsDeleted=0 ORDER BY Id")
     files = cursor.fetchall()
+    root_path = Path(settings.media_root).resolve()
+    report["missingMedia"] = []
+    for item in files:
+        path = (root_path / str(item["RelativePath"]).replace("\\", "/")).resolve()
+        if root_path not in path.parents or not path.is_file():
+            report["missingMedia"].append({**item, "reason": "outside MEDIA_ROOT" if root_path not in path.parents else "file missing"})
+    cursor.execute("SELECT Id, POIId, FileUrl FROM AudioTracks WHERE DeletedAt IS NULL AND FileUrl IS NOT NULL ORDER BY Id")
+    report["missingAudio"] = []
+    for item in cursor.fetchall():
+        path = (root_path / str(item["FileUrl"]).replace("\\", "/")).resolve()
+        if root_path not in path.parents or not path.is_file():
+            report["missingAudio"].append(item)
     report["mediaFilesPresent"] = sum(
         (
             Path(settings.media_root) / str(f["RelativePath"]).replace("\\", "/")

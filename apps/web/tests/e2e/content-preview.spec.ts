@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 // These responses are isolated UI test fixtures, never a fallback for real media.
 async function setup(page: Page, { submission = false, status = 200, file = true } = {}) {
-  await page.addInitScript(() => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 1, username: 'admin-test', role: 'Admin', accessToken: 'ui-test-session', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })));
+  await page.addInitScript(() => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 1, username: 'admin-test', role: 'Admin', accessToken: 'test.header.signature', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })));
   const streams: string[] = [];
   await page.route('**/api/v1/**', async route => {
     const path = new URL(route.request().url()).pathname;

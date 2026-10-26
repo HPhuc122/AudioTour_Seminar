@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function setup(page: Page, role: string) {
-  await page.addInitScript(role => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 12, username: 'manager', role, accessToken: 'test-token', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })), role);
+  await page.addInitScript(role => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 12, username: 'manager', role, accessToken: 'test.header.signature', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })), role);
   await page.route('**/api/v1/**', route => {
     const path = new URL(route.request().url()).pathname;
     const row = { Id: 1, Name: 'Sạp thử nghiệm', POIId: 1, Code: 'TEST', LanguageCode: 'vi', Description: 'Nội dung cần duyệt', Latitude: 11.7, Longitude: 109.1, RadiusMeters: 50, ReviewStatus: 'Pending' };

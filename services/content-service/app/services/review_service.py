@@ -21,6 +21,7 @@ REVIEWED = {
     "tour-translations",
 }
 CONTROLLED = {
+    "AutomationJobId",
     "PaymentStatus",
     "Id",
     "Version",
@@ -357,6 +358,14 @@ class ReviewService(AdminService):
                     raise HTTPException(409, "Media file does not exist in MEDIA_ROOT")
                 repo.archive(resource, row, reviewer)
                 if submission["Operation"] == "delete":
+                    if resource == "narrations":
+                        from app.services.narration_jobs import require_schema
+                        require_schema(repo)
+                        repo.lock("pois", row["PoiId"])
+                        repo.execute("UPDATE NarrationJobs SET Status='Superseded',LeaseToken=NULL,LeaseUntil=NULL WHERE NarrationId=%s AND Status IN ('Queued','Processing','Failed')", (row["Id"],))
+                        repo.execute("UPDATE AudioTracks SET IsActive=0 WHERE Id IN (SELECT n.AudioTrackId FROM NarrationPublications n JOIN NarrationJobs j ON j.Id=n.JobId WHERE j.NarrationId=%s)", (row["Id"],))
+                        repo.execute("UPDATE POITranslations SET IsDeleted=1 WHERE Id IN (SELECT n.TranslationId FROM NarrationPublications n JOIN NarrationJobs j ON j.Id=n.JobId WHERE j.NarrationId=%s)", (row["Id"],))
+                        repo.execute("DELETE n FROM NarrationPublications n JOIN NarrationJobs j ON j.Id=n.JobId WHERE j.NarrationId=%s", (row["Id"],))
                     if resource == "narrations" and row.get("PublishedTranslationId"):
                         published = repo.lock(
                             "poi-translations", row["PublishedTranslationId"]
@@ -423,46 +432,9 @@ class ReviewService(AdminService):
                                 row["Id"], {"poiId": item["poiId"], "orderIndex": index}
                             )
                     if resource == "narrations":
+                        from app.services.narration_jobs import enqueue
                         final = repo.get_row(resource, row["Id"], True)
-                        existing = repo.fetchone(
-                            "SELECT * FROM POITranslations WHERE POIId=%s AND LanguageCode=%s",
-                            (final["PoiId"], final["LanguageCode"]),
-                        )
-                        translation = {
-                            "POIId": final["PoiId"],
-                            "LanguageCode": final["LanguageCode"],
-                            "Name": existing["Name"]
-                            if existing
-                            else self._get("pois", final["PoiId"], repo)["Name"],
-                            "Description": final["TextContent"],
-                            "ReviewStatus": "Approved",
-                            "RejectionReason": None,
-                        }
-                        if existing:
-                            repo.lock("poi-translations", existing["Id"])
-                            repo.archive("poi-translations", existing, reviewer)
-                            translation["Version"] = existing["Version"] + 1
-                            published = repo.update_row(
-                                "poi-translations", existing["Id"], translation
-                            )
-                            repo.execute(
-                                "UPDATE POITranslations SET IsDeleted=0 WHERE Id=%s",
-                                (existing["Id"],),
-                            )
-                            repo.execute(
-                                "UPDATE ContentSubmissions SET Status='Superseded' WHERE Resource='poi-translations' AND EntityId=%s AND Status='Pending'",
-                                (existing["Id"],),
-                            )
-                        else:
-                            published = repo.create_row("poi-translations", translation)
-                        repo.update_row(
-                            "narrations",
-                            row["Id"],
-                            {
-                                "PublishedTranslationId": published["Id"],
-                                "PublishedTranslationVersion": published["Version"],
-                            },
-                        )
+                        enqueue(repo, final, submission_id, reviewer)
             elif row.get("ReviewStatus") != "Approved":
                 change = {"ReviewStatus": "Rejected", "RejectionReason": reason}
                 if resource == "media":

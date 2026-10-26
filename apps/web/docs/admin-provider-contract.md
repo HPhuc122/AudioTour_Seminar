@@ -1,5 +1,7 @@
 # Adapter dịch/TTS thật cho Admin
 
+> Luồng mới dùng hàng đợi bền vững, duyệt nguồn một lần và công bố cặp dịch/audio theo ngôn ngữ. Xem [hợp đồng hiện hành](../../../docs/api-contracts/narration-automation.md). Phần bên dưới là mô tả adapter và hành vi automation cũ, không dùng để xác định trạng thái duyệt hiện tại.
+
 Backend hỗ trợ adapter HTTP do máy chủ cấu hình. Không có provider mặc định và không tạo file/audio hoặc bản dịch mô phỏng. Admin xem trạng thái tại /admin/automation. Cần triển khai adapter thực tế của nhà cung cấp được chọn để đáp ứng contract này.
 
 Biến môi trường root .env (không commit secrets):

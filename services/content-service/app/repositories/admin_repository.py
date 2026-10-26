@@ -23,6 +23,8 @@ class AdminRepository:
     TABLES['tour-translations'] = {'table': 'TourTranslations', 'id': 'Id', 'soft_delete': 'IsDeleted', 'fields': ['TourId', 'LanguageCode', 'Name', 'Description', 'Version']}
     TABLES['tours']['fields'].append('UserId')
     TABLES['narrations']['fields'] += ['PublishedTranslationId', 'PublishedTranslationVersion']
+    TABLES['narrations']['soft_delete'] = 'IsDeleted'
+    TABLES['audio']['fields'].append('AutomationJobId')
     for resource in ('pois', 'tours', 'audio', 'media', 'narrations', 'poi-translations', 'tour-translations'):
         TABLES[resource]['fields'] += ['ReviewStatus', 'RejectionReason']
         if 'Version' not in TABLES[resource]['fields']:

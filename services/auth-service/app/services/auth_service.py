@@ -32,7 +32,7 @@ class AuthService:
         if not vendor_role:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Vendor role is not configured")
         data = {"username": payload["username"], "email": payload["email"], "roleId": vendor_role["id"], "preferredLanguage": payload.get("preferred_language", "vi"), "isActive": True}
-        return self._repository.create_user(data, self._hash_password(payload["password"]))
+        return self.create_user({**data, "password": payload["password"]})
 
     def register_device(self, device: dict) -> None:
         self._repository.upsert_device(device)

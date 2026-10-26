@@ -38,6 +38,7 @@ logs/
 uploads/
 media/
 generated-audio/
+services/narration-service/data/
 *.mp3
 *.wav
 *.ogg

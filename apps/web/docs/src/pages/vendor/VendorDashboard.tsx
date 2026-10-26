@@ -175,13 +175,6 @@ export function VendorDashboard() {
         ) : null}
       </section>
 
-      <div className="vendor-limit-note">
-        <strong>Hồ sơ sạp và gói dịch vụ</strong>
-        <p>
-          Các nghiệp vụ duyệt hồ sơ, mua gói và gia hạn chưa có API hoàn chỉnh.
-          Hiện chưa hỗ trợ thao tác các nghiệp vụ này trên giao diện.
-        </p>
-      </div>
     </>
   );
 }

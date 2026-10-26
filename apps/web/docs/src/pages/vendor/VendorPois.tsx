@@ -16,7 +16,9 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
+import { Editor } from '../../components/Editor';
 import { AudioUploadDialog } from '../../components/AudioUploadDialog';
+import { AutomationStatus } from '../../components/AutomationStatus';
 import { MediaPreview } from '../../components/MediaPreview';
 import { ReviewStatus } from '../../components/ReviewStatus';
 import { PageTitle, State } from '../../components/States';
@@ -418,10 +420,11 @@ type PoiTab = 'overview' | 'images' | 'narrations' | 'audio' | 'translations' | 
 
 export function VendorPoiDetail() {
   const { id } = useParams();
-  const { session, preview } = useSession();
+  const { session } = useSession();
   const token = session!.accessToken;
   const [tab, setTab] = useState<PoiTab>('overview');
   const [uploading, setUploading] = useState(false);
+  const [contentVersion, setContentVersion] = useState(0);
   const [audioDialog, setAudioDialog] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -442,6 +445,7 @@ export function VendorPoiDetail() {
     setMessage('');
     try {
       await api.upload(file, Number(id), token);
+      setContentVersion(value => value + 1);
       setMessage('Ảnh đã tải lên và được gửi chờ duyệt.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Tải ảnh thất bại.');
@@ -466,15 +470,7 @@ export function VendorPoiDetail() {
             eyebrow={`ĐỊA ĐIỂM · ${String(poi.data.Code || `#${id}`)}`}
             title={String(poi.data.Name || 'Chi tiết địa điểm')}
           >
-            {preview ? (
-              <button disabled title="Thao tác bị khóa trong chế độ xem thử">
-                Chỉnh sửa thông tin
-              </button>
-            ) : (
-              <Link className="button" to={`/vendor/pois/${id}/edit`}>
-                Chỉnh sửa thông tin
-              </Link>
-            )}
+            <Link className="button" to={`/vendor/pois/${id}/edit`}>Chỉnh sửa thông tin</Link>
           </PageTitle>
 
           <div className="vendor-detail-summary panel">
@@ -547,7 +543,8 @@ export function VendorPoiDetail() {
 
           {tab === 'images' && (
             <RelatedContent
-              action={!preview ? (
+              key={`images-${contentVersion}`}
+              action={(
                 <label className="vendor-upload-button">
                   <ImagePlus size={17} />
                   {uploading ? 'Đang tải ảnh…' : 'Tải ảnh lên'}
@@ -563,7 +560,7 @@ export function VendorPoiDetail() {
                     }}
                   />
                 </label>
-              ) : undefined}
+              )}
               empty="Chưa có hình ảnh cho địa điểm này."
               poiId={Number(id)}
               resource="media"
@@ -571,25 +568,22 @@ export function VendorPoiDetail() {
             />
           )}
           {tab === 'narrations' && (
-            <RelatedContent
+            <><AutomationStatus poiId={Number(id)}/><RelatedContent
               empty="Chưa có nội dung thuyết minh."
               poiId={Number(id)}
               resource="narrations"
               token={token}
-            />
+            /></>
           )}
           {tab === 'audio' && (
-            <RelatedContent
-              action={!preview ? (
-                <button className="primary" onClick={() => setAudioDialog(true)}>
-                  <Plus size={17} /> Thêm file âm thanh
-                </button>
-              ) : undefined}
+            <><p className="notice">Nhập nội dung tại tab Thuyết minh để gửi duyệt. Âm thanh và bản dịch được xử lý từ văn bản đã duyệt khi dịch vụ tự động được cấu hình.</p><RelatedContent
+              key={`audio-${contentVersion}`}
+              action={<button onClick={() => setAudioDialog(true)}>Thêm file âm thanh</button>}
               empty="Chưa có file âm thanh."
               poiId={Number(id)}
               resource="audio"
               token={token}
-            />
+            /></>
           )}
           {tab === 'translations' && (
             <RelatedContent
@@ -605,16 +599,9 @@ export function VendorPoiDetail() {
           {tab === 'history' && (
             <SubmissionHistory poiId={Number(id)} token={token} />
           )}
+          {audioDialog && <AudioUploadDialog token={token} initialPoi={Number(id)} lockPoi onClose={() => setAudioDialog(false)} onSaved={async () => { setContentVersion(value => value + 1); setMessage('File tải lên được gửi duyệt thủ công, độc lập với audio tự sinh.'); }}/>}
 
-          {audioDialog && !preview && (
-            <AudioUploadDialog
-              initialPoi={Number(id)}
-              lockPoi
-              token={token}
-              onClose={() => setAudioDialog(false)}
-              onSaved={async () => setMessage('Audio đã được tạo và gửi chờ duyệt.')}
-            />
-          )}
+
         </>
       ) : null}
     </>
@@ -721,6 +708,8 @@ function RelatedContent({
   resource: 'media' | 'narrations' | 'audio' | 'poi-translations';
   token: string;
 }) {
+    const [editing, setEditing] = useState<Row | null>();
+  const languages = useResource(useCallback(() => resource === 'narrations' ? api.languages(token) : Promise.resolve([]), [resource, token]));
   const query = new URLSearchParams({
     poiId: String(poiId),
     page: '1',
@@ -751,7 +740,9 @@ function RelatedContent({
           </h2>
         </div>
         {action}
+        {resource === 'narrations' && <button className="primary" disabled={languages.loading || !!languages.error} onClick={() => setEditing(null)}>Thêm thuyết minh</button>}
       </div>
+      {resource === 'narrations' && <State error={languages.error} retry={() => void languages.reload()}/>}
       <State
         loading={data.loading}
         error={data.error}
@@ -803,10 +794,25 @@ function RelatedContent({
                 />
               ) : null}
               {statusLabel(row)}
+              {resource === 'narrations' && <button onClick={() => setEditing(row)}>Chỉnh sửa và gửi duyệt</button>}
             </article>
           ))}
         </div>
       ) : null}
+      {resource === 'narrations' && editing !== undefined && <Editor
+        title={editing ? 'Sửa thuyết minh và gửi duyệt' : 'Thêm thuyết minh và gửi duyệt'}
+        initial={editing || { LanguageCode: 'vi' }}
+        fields={[
+          { key: 'Title', label: 'Tiêu đề', required: true, maxLength: 200 },
+          { key: 'LanguageCode', label: 'Ngôn ngữ', type: 'select', required: true, options: languages.data?.map(language => ({ value: language.code, label: language.nativeName || language.name })) },
+          { key: 'TextContent', label: 'Nội dung thuyết minh', type: 'textarea', required: true },
+        ]}
+        onClose={() => setEditing(undefined)}
+        onSave={async values => {
+          await api.admin(editing ? `narrations/${editing.Id}/content` : 'narrations', token, json(editing ? 'PUT' : 'POST', { ...values, PoiId: poiId }));
+          await data.reload();
+        }}
+      />}
     </section>
   );
 }
@@ -820,7 +826,7 @@ function SubmissionHistory({ poiId, token }: { poiId: number; token: string }) {
             api.admin<Page<Row>>(
               `cms/review-queue?${new URLSearchParams({
                 status,
-                search: String(poiId),
+                poiId: String(poiId),
                 page: '1',
                 pageSize: '100',
               })}`,
@@ -832,7 +838,6 @@ function SubmissionHistory({ poiId, token }: { poiId: number; token: string }) {
             .flatMap((page) => page.items)
             .filter(
               (row) =>
-                Number(row.EntityId) === poiId &&
                 ['pois', 'media', 'audio', 'narrations', 'poi-translations'].includes(
                   String(row.Resource),
                 ),

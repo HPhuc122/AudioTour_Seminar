@@ -107,39 +107,26 @@ class ConsoleTests(unittest.TestCase):
         r = self.client.get('/api/v1/cms/catalog/languages', headers=self.headers(1, 'Admin'))
         self.assertEqual(r.status_code, 200, r.text)
 
-    def test_automation_rejects_pending_and_unconfigured_provider(self):
-        path = f"/api/v1/cms/automation/pois/{self.poi['Id']}"
-        self.assertEqual(self.client.post(path, headers=self.headers(1, 'Admin'), json={'generateAudio': True}).status_code, 409)
-        self.approve(self.poi['SubmissionId'])
-        with self.as_user(1, 'Admin'):
-            self.repo.execute('UPDATE POIs SET Description=%s WHERE Id=%s', ('Approved source', self.poi['Id']))
-        with patch.dict(os.environ, {'ADMIN_TTS_URL': '', 'ADMIN_TRANSLATION_URL': ''}):
-            r = self.client.post(path, headers=self.headers(1, 'Admin'), json={'generateAudio': True})
-            self.assertEqual(r.status_code, 503, r.text)
-
-    def test_automation_uses_approved_text_and_stages_real_audio(self):
-        self.approve(self.poi['SubmissionId'])
-        with self.as_user(1, 'Admin'):
-            self.repo.execute('UPDATE POIs SET Description=%s WHERE Id=%s', ('Canonical approved text', self.poi['Id']))
+    def test_automation_rejects_pending_and_reports_missing_configuration(self):
         with self.as_user():
-            self.service.update_resource('pois', self.poi['Id'], {'Description': 'Pending text must not be processed'})
-        buf = io.BytesIO()
-        with wave.open(buf, 'wb') as wav:
-            wav.setnchannels(1); wav.setsampwidth(2); wav.setframerate(8000); wav.writeframes(b'\x00\x00' * 80)
-        import httpx
-        response = httpx.Response(200, content=buf.getvalue(), headers={'content-type': 'audio/wav'}, request=httpx.Request('POST', 'http://adapter.test'))
-        with patch.dict(os.environ, {'ADMIN_TTS_URL': 'http://adapter.test', 'ADMIN_TRANSLATION_URL': ''}), patch.object(automation.httpx, 'Client') as provider:
-            provider.return_value.__enter__.return_value.post.return_value = response
-            with self.as_user(1, 'Admin'):
-                result = automation.run('pois', self.poi['Id'], [], True, self.repo)
-                audio = self.repo.get_row('audio', result['generated'][0]['entityId'])
-                self.files.append(automation.Path(settings.media_root) / audio['FileUrl'])
-                self.assertTrue(self.files[-1].is_file())
-                self.assertEqual(audio['ReviewStatus'], 'Pending')
-                self.assertEqual(provider.return_value.__enter__.return_value.post.call_args.kwargs['json']['text'], 'Canonical approved text')
-                with self.assertRaises(HTTPException) as duplicate:
-                    automation.run('pois', self.poi['Id'], [], True, self.repo)
-                self.assertEqual(duplicate.exception.status_code, 409)
+            narration = self.service.create_resource('narrations', {'PoiId': self.poi['Id'], 'Title': 'Original', 'LanguageCode': 'vi', 'TextContent': 'Approved source'})
+        path = f"/api/v1/cms/automation/narrations/{narration['Id']}"
+        self.assertEqual(self.client.post(path, headers=self.headers(1, 'Admin'), json={}).status_code, 409)
+        self.approve(narration['SubmissionId'])
+        with patch.dict(os.environ, {'ADMIN_TTS_URL': '', 'ADMIN_TRANSLATION_URL': ''}):
+            response = self.client.get('/api/v1/cms/automation/status', headers=self.headers())
+            self.assertIn('ADMIN_TTS_URL', response.json()['data']['missingConfiguration'])
+            self.assertEqual(self.client.post(path, headers=self.headers(1, 'Admin'), json={}).status_code, 200)
+
+    def test_automation_reenqueue_does_not_duplicate_jobs(self):
+        with self.as_user():
+            narration = self.service.create_resource('narrations', {'PoiId': self.poi['Id'], 'Title': 'Original', 'LanguageCode': 'vi', 'TextContent': 'Approved source'})
+        self.approve(narration['SubmissionId'])
+        count = self.repo.scalar('SELECT COUNT(*) FROM NarrationJobs WHERE PoiId=%s', (self.poi['Id'],))
+        path = f"/api/v1/cms/automation/narrations/{narration['Id']}"
+        response = self.client.post(path, headers=self.headers(1, 'Admin'), json={})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(self.repo.scalar('SELECT COUNT(*) FROM NarrationJobs WHERE PoiId=%s', (self.poi['Id'],)), count)
 
     def test_statistics_range_validation_and_summary(self):
         r = self.client.get('/api/v1/cms/statistics?startDate=2027-01-01&endDate=2026-01-01', headers=self.headers())

@@ -722,10 +722,7 @@ def submission_detail(id: int):
 
 @router.post("/api/v1/cms/submissions/{id}/approve")
 def approve_submission(id: int, tasks: BackgroundTasks, reviewer: dict = Depends(require_admin)):
-    from app.api.admin_automation import after_approval
-
     result = service.review(id, "approve")
-    tasks.add_task(after_approval, result, reviewer)
     return ok(result)
 
 

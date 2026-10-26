@@ -17,7 +17,7 @@ const navigation = [
 ];
 
 export function VendorLayout() {
-  const { session, logout, preview } = useSession();
+  const { session, logout } = useSession();
 
   if (!session) {
     return <Navigate to="/login" replace />;
@@ -72,19 +72,11 @@ export function VendorLayout() {
         <header className="admin-top">
           <span>Quản lý địa điểm và nội dung AudioTour</span>
           <span>
-            {preview
-              ? 'Chế độ xem thử · Dữ liệu mẫu'
-              : 'Chỉ hiển thị dữ liệu trong phạm vi tài khoản'}
+            Chủ sạp
           </span>
         </header>
         <main>
-          {preview && (
-            <div className="vendor-preview-banner" role="status">
-              Bạn đang xem thử giao diện Chủ sạp bằng dữ liệu mẫu. Thay đổi và
-              tải file lên đã bị khóa; đăng nhập bằng tài khoản thật để thao
-              tác với dữ liệu hệ thống.
-            </div>
-          )}
+
           <Outlet />
         </main>
       </div>

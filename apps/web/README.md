@@ -2,7 +2,7 @@
 
 Web React dành cho chủ sạp và quản trị viên; khách tham quan dùng Mobile React Native. Web gọi Gateway FastAPI, không kết nối SQL Server trực tiếp.
 
-- Trang Admin yêu cầu đăng nhập. Không dùng dữ liệu mẫu thay cho dữ liệu thật hoặc lỗi Backend.
+- Admin và Chủ sạp đăng nhập bằng tài khoản hệ thống. Mọi dữ liệu quản lý được lấy qua Gateway; lỗi kết nối được thông báo để người dùng thử lại.
 - Sidebar chia nhóm tổng quan, hồ sơ/duyệt, nội dung, dịch vụ/thanh toán, quản trị hệ thống.
 - Dashboard có tổng POI/tour/audio/media, hàng đợi duyệt, cảnh báo file thiếu và thời hạn. Thống kê lọc ngày UTC, dùng tên POI thật; nhật ký kích hoạt không được coi là lượt nghe hoàn tất.
 - POI, Tour, người dùng, nội dung, ảnh/audio và ngôn ngữ có tìm kiếm/lọc/phân trang qua SQL. POI đã xóa mềm không xuất hiện trong danh sách mặc định.
@@ -11,11 +11,11 @@ Web React dành cho chủ sạp và quản trị viên; khách tham quan dùng M
 - Thời hạn POI dùng ValidFrom/ValidUntil; thay đổi gửi duyệt. Danh mục gói dịch vụ/mua gói/gia hạn thanh toán chưa triển khai vì cần xác nhận nghiệp vụ và migration.
 - Giao dịch tra cứu PoiPaymentSessions/AccessPaymentSessions. Paid trong DB không chứng minh đã đối soát; SimulatedMoMo được ghi rõ là mô phỏng. Không có nút xác nhận thanh toán giả; Backend chặn mark-paid và payload sửa PaymentStatus.
 - Thư viện Âm thanh có nút Thêm file âm thanh: chọn MP3/WAV/OGG/M4A/AAC/FLAC, POI, tên và ngôn ngữ rồi lưu. Backend lưu file thật và bản ghi AudioTracks vào Pending. Không cần nhập đường dẫn file; khi tạo bản ghi lỗi, thử lại dùng file đã tải lên để tránh tải trùng.
-- Ngôn ngữ có API cấu hình thật. Dịch/TTS có adapter và hook chạy sau duyệt, nhưng provider thật chưa cấu hình; chưa bật tự động. Kết quả tạo vào Pending, audio cần duyệt media trước.
+- Ngôn ngữ có API cấu hình thật. Duyệt thuyết minh tạo tác vụ DB theo từng ngôn ngữ; dịch và TTS tự sinh kế thừa lần duyệt nguồn, công khai cùng nhau khi hoàn tất, giữ cặp cũ trong lúc chờ. Upload thủ công vẫn Pending và cần duyệt riêng. Provider thật chưa cấu hình, chưa bật tự động. Xem [contract và cách chạy](../../docs/api-contracts/narration-automation.md).
 - Admin/SuperAdmin duyệt và quản lý hệ thống. Vendor/ContentAdmin/TourOperator sửa nội dung sở hữu hoặc được cấp quyền; AnalyticsViewer chỉ đọc. Backend kiểm tra role/scope độc lập với Web.
 - Khu vực Chủ sạp dùng route `/vendor`: tổng quan trong scope, danh sách/tạo/sửa POI, ảnh, audio, trạng thái gửi duyệt, QR chỉ xem/tải theo POI và thống kê. Hồ sơ sạp, gói dịch vụ/gia hạn chưa có API đầy đủ nên không hiển thị như chức năng hoàn chỉnh.
 - Chưa có tài khoản Vendor thì mở `/register` để tạo tài khoản qua `POST /api/v1/auth/register`; Backend hiện kích hoạt tài khoản ngay và chưa có quy trình xét duyệt hồ sơ Chủ sạp.
-- Từ trang `/login` có nút **Xem thử giao diện Chủ sạp** dùng fixture cục bộ; chế độ này không gọi Backend để đọc dữ liệu và chặn mọi thao tác ghi/tải file.
+- Trang `/login` chỉ có đăng nhập và liên kết đăng ký Chủ sạp. Phiên cục bộ không hợp lệ hoặc đã hết hạn được xóa và yêu cầu đăng nhập lại.
 - Source frontend hiện được nạp từ `docs/src`; TypeScript và test cũng trỏ về cùng thư mục.
 - Giữ API Mobile và không sửa apps/mobile. Web không có GPS/geofencing/scan QR của khách.
 - 46 file media gốc vẫn thiếu trên máy; upload hoặc khôi phục file thật trước khi demo đầy đủ.

@@ -104,13 +104,21 @@ def catalog(resource: str, search: str = Query("", max_length=200), status: str 
 
 
 @router.get("/review-queue")
-def review_queue(status: Literal["Pending", "Approved", "Rejected", "Superseded"] = "Pending", resource: str = "", search: str = Query("", max_length=200), page: int = Query(1, ge=1), pageSize: int = Query(25, ge=1, le=100)):
+def review_queue(status: Literal["Pending", "Approved", "Rejected", "Superseded"] = "Pending", resource: str = "", search: str = Query("", max_length=200), page: int = Query(1, ge=1), pageSize: int = Query(25, ge=1, le=100), poiId: int | None = Query(None, ge=1)):
     if resource and resource not in REVIEWED:
         raise HTTPException(422, "Loại hồ sơ không hợp lệ")
     visible, params = [], [status]
+    if poiId is not None:
+        service._get("pois", poiId)
     for kind in sorted(REVIEWED):
+        if poiId is not None and kind not in {"pois", "media", "audio", "narrations", "poi-translations"}:
+            continue
         cfg = service._repository._cfg(kind)
         clause, values = scope(kind)
+        if poiId is not None:
+            parent = "Id" if kind == "pois" else "PoiId" if kind in {"media", "narrations"} else "POIId"
+            clause += f" AND {parent}=%s"
+            values += (poiId,)
         visible.append("(s.Resource='" + kind + "' AND EXISTS (SELECT 1 FROM " + cfg["table"] + " WHERE Id=s.EntityId AND (" + clause + ")))")
         params.extend(values)
     sql = "SELECT s.*,u.Username AS SubmittedBy FROM ContentSubmissions s LEFT JOIN Users u ON u.Id=s.SubmittedByUserId WHERE s.Status=%s AND (" + " OR ".join(visible) + ")"

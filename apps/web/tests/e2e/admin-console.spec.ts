@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 async function setup(page: Page) {
-  await page.addInitScript(() => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 1, username: 'admin-test', role: 'Admin', accessToken: 'test-token', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })));
+  await page.addInitScript(() => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 1, username: 'admin-test', role: 'Admin', accessToken: 'test.header.signature', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })));
   await page.route('**/api/v1/**', route => {
     const url = new URL(route.request().url()); const path = url.pathname;
     const poi = { Id: 1, Name: 'POI từ API', Code: 'REAL', ReviewStatus: 'Approved', ValidFrom: null, ValidUntil: null };

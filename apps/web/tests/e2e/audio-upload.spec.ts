@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 async function setup(page: Page, failOnce = false) {
-  await page.addInitScript(() => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 1, username: 'admin-test', role: 'Admin', accessToken: 'test-token', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })));
+  await page.addInitScript(() => sessionStorage.setItem('audiotour:session', JSON.stringify({ userId: 1, username: 'admin-test', role: 'Admin', accessToken: 'test.header.signature', expiresAtUtc: new Date(Date.now() + 3600000).toISOString() })));
   let uploads = 0; let creates = 0; const rows: Record<string, unknown>[] = [];
   await page.route('**/api/v1/**', async route => {
     const request = route.request(); const url = new URL(request.url()); const path = url.pathname;
