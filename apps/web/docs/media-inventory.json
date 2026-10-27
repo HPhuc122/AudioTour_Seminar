@@ -1,0 +1,496 @@
+﻿{
+  "database": "VinhHyAudioTourDB",
+  "mediaRoot": "C:\\xampp\\htdocs\\AudioTour_Seminar\\services\\content-service",
+  "POIs": [
+    {
+      "ReviewStatus": "Approved",
+      "total": 21
+    },
+    {
+      "ReviewStatus": "Rejected",
+      "total": 2
+    }
+  ],
+  "Tours": [
+    {
+      "ReviewStatus": "Pending",
+      "total": 8
+    }
+  ],
+  "AudioTracks": [
+    {
+      "ReviewStatus": "Pending",
+      "total": 20
+    }
+  ],
+  "MediaFiles": [
+    {
+      "ReviewStatus": "Approved",
+      "total": 38
+    },
+    {
+      "ReviewStatus": "Pending",
+      "total": 3
+    },
+    {
+      "ReviewStatus": "Rejected",
+      "total": 6
+    }
+  ],
+  "POITranslations": [
+    {
+      "ReviewStatus": "Pending",
+      "total": 35
+    }
+  ],
+  "TourTranslations": [
+    {
+      "ReviewStatus": "Pending",
+      "total": 7
+    }
+  ],
+  "NarrationDrafts": [
+    {
+      "ReviewStatus": "Approved",
+      "total": 8
+    },
+    {
+      "ReviewStatus": "Pending",
+      "total": 20
+    },
+    {
+      "ReviewStatus": "Rejected",
+      "total": 1
+    }
+  ],
+  "publicPois": 4,
+  "missingMedia": [
+    {
+      "Id": 1,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/a041e7b7ffc045f894aac883f92bd13e.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 2,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/b4bd286d1aea4672ab60d07d0bfba53a.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 3,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/ca71c9b287b245f6b012c5bdb3312344.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 4,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/3c54deee23d74639a36be52a8f6acab2.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 5,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/dbb7da96dc514cc79496779fae023188.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 6,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/911cad0941704fef9d7ee6dd3db97dd0.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 7,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/825823f8398d44c58baf856363093c25.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 8,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/541d6cecc4d9444d80d47d98f81e14fb.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 9,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/25567f3a87ce43268177f8c38bde49b5.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 10,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/15bdb2e0e3f44310bede76021af7ce9a.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 11,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/60b589de70234c1ca084cc20d6b373cf.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 12,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/c3c2cc7327ee45c2a54fd539ff85a20e.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 13,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/59e36ff303394fc9a6d4278d7dda2f14.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 14,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/4b66387728f64c7a953e3e3996222f40.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 15,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/a344f24685e143ac9eebd5a1594add28.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 16,
+      "PoiId": null,
+      "FileType": "image",
+      "RelativePath": "uploads/images/38db878cbf7046c0b3f7c1d6d87a130b.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 17,
+      "PoiId": 5,
+      "FileType": "image",
+      "RelativePath": "uploads/images/410bf8c507a64e2ba08ac94a7411adcb.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 18,
+      "PoiId": 5,
+      "FileType": "image",
+      "RelativePath": "uploads/images/3e5c6260444c43069ca7eef7972751a2.jpeg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 19,
+      "PoiId": 5,
+      "FileType": "image",
+      "RelativePath": "uploads/images/83a24a0522a24024b7f102fe318546eb.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 20,
+      "PoiId": 5,
+      "FileType": "image",
+      "RelativePath": "uploads/images/3206dde0589f4a5e9dfb948f9dcbc767.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 21,
+      "PoiId": 5,
+      "FileType": "image",
+      "RelativePath": "uploads/images/516d136a61344b12ad5a8ec0b761eb46.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 22,
+      "PoiId": 8,
+      "FileType": "image",
+      "RelativePath": "uploads/images/khanhhoi_dinh_khanh_hoi-approved.png",
+      "reason": "file missing"
+    },
+    {
+      "Id": 23,
+      "PoiId": 9,
+      "FileType": "image",
+      "RelativePath": "uploads/images/khanhhoi_cong_vien-approved.png",
+      "reason": "file missing"
+    },
+    {
+      "Id": 24,
+      "PoiId": 10,
+      "FileType": "image",
+      "RelativePath": "uploads/images/khanhhoi_ben_van_don-approved.png",
+      "reason": "file missing"
+    },
+    {
+      "Id": 25,
+      "PoiId": 11,
+      "FileType": "image",
+      "RelativePath": "uploads/images/khanhhoi_cau_khanh_hoi-approved.png",
+      "reason": "file missing"
+    },
+    {
+      "Id": 26,
+      "PoiId": 12,
+      "FileType": "image",
+      "RelativePath": "uploads/images/khanhhoi_cafe_ben_song-approved.png",
+      "reason": "file missing"
+    },
+    {
+      "Id": 27,
+      "PoiId": 13,
+      "FileType": "image",
+      "RelativePath": "uploads/images/khanhhoi_am_thuc_dia_phuong-approved.png",
+      "reason": "file missing"
+    },
+    {
+      "Id": 28,
+      "PoiId": 14,
+      "FileType": "image",
+      "RelativePath": "uploads/images/khanhhoi_luu_niem_cau_cang-approved.png",
+      "reason": "file missing"
+    },
+    {
+      "Id": 29,
+      "PoiId": 15,
+      "FileType": "image",
+      "RelativePath": "uploads/images/khanhhoi_vendor_cho_duyet-pending.png",
+      "reason": "file missing"
+    },
+    {
+      "Id": 30,
+      "PoiId": 20,
+      "FileType": "image",
+      "RelativePath": "uploads/images/6a6edc7b66be432b982300a6b319f638.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 31,
+      "PoiId": 13,
+      "FileType": "image",
+      "RelativePath": "uploads/images/b6918206e0734129b67d2b65c41653bd.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 32,
+      "PoiId": 13,
+      "FileType": "image",
+      "RelativePath": "uploads/images/3dcc4991b67a4c44af244ba22d0f042a.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 33,
+      "PoiId": 13,
+      "FileType": "image",
+      "RelativePath": "uploads/images/64072b3e3c8d43cbaf958285f72d386f.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 34,
+      "PoiId": 13,
+      "FileType": "image",
+      "RelativePath": "uploads/images/9480746a7837462193f5dfb76b7fc896.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 35,
+      "PoiId": 13,
+      "FileType": "image",
+      "RelativePath": "uploads/images/bf7a44e20112491fb5afd7bc8ffc5a5d.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 36,
+      "PoiId": 13,
+      "FileType": "image",
+      "RelativePath": "uploads/images/50de095bfa754330b266bb01adc0a58e.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 37,
+      "PoiId": 12,
+      "FileType": "image",
+      "RelativePath": "uploads/images/e1063825e1d54da7ba6faa5df630a240.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 38,
+      "PoiId": 12,
+      "FileType": "image",
+      "RelativePath": "uploads/images/2a57b5eb0e68481a9cf55eadc52ab9d4.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 39,
+      "PoiId": 12,
+      "FileType": "image",
+      "RelativePath": "uploads/images/ad345298854041dbb0c824c74fd608a3.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 40,
+      "PoiId": 12,
+      "FileType": "image",
+      "RelativePath": "uploads/images/c6ebcab2611f4a97a7585fb4823d6deb.webp",
+      "reason": "file missing"
+    },
+    {
+      "Id": 41,
+      "PoiId": 12,
+      "FileType": "image",
+      "RelativePath": "uploads/images/0c3ecf384b6849cba4e08235fab003c7.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 42,
+      "PoiId": 12,
+      "FileType": "image",
+      "RelativePath": "uploads/images/15056c62a84c46ddb00e945a9e956aab.webp",
+      "reason": "file missing"
+    },
+    {
+      "Id": 43,
+      "PoiId": 21,
+      "FileType": "image",
+      "RelativePath": "uploads/images/6107c5641ab2447e996708a2edbb279f.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 44,
+      "PoiId": 23,
+      "FileType": "image",
+      "RelativePath": "uploads/images/fcb3dbf831d64d379ca8fb16bf02cd71.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 45,
+      "PoiId": 23,
+      "FileType": "image",
+      "RelativePath": "uploads/images/1e452df4b2324cec93e3596f8d37592c.jpg",
+      "reason": "file missing"
+    },
+    {
+      "Id": 46,
+      "PoiId": 23,
+      "FileType": "image",
+      "RelativePath": "uploads/images/1a661a2d559b48a0bcd237908ec09f2b.jpg",
+      "reason": "file missing"
+    }
+  ],
+  "missingAudio": [
+    {
+      "Id": 1,
+      "POIId": 2,
+      "FileUrl": "uploads/audio/c957aa37fab4478ca87bf4cc3a7e6453.mp3"
+    },
+    {
+      "Id": 2,
+      "POIId": 6,
+      "FileUrl": "uploads/audio/a542eb1fabd0481192fe2c74992e64e3.mp3"
+    },
+    {
+      "Id": 3,
+      "POIId": 10,
+      "FileUrl": "uploads/audio/9c35c71e01c74043a63eec361e2596e7.mp3"
+    },
+    {
+      "Id": 4,
+      "POIId": 5,
+      "FileUrl": "uploads/audio/85009b36d957455ba32766d842a28ae0.mp3"
+    },
+    {
+      "Id": 5,
+      "POIId": 5,
+      "FileUrl": "uploads/audio/c9491cba272348fba82e6fd0384ac761.mp3"
+    },
+    {
+      "Id": 1004,
+      "POIId": 13,
+      "FileUrl": "uploads/audio/834191d102314654b4a4de7222f6a6a4.mp3"
+    },
+    {
+      "Id": 1005,
+      "POIId": 13,
+      "FileUrl": "uploads/audio/689719943b0348cea122938f5e94caad.mp3"
+    },
+    {
+      "Id": 1006,
+      "POIId": 13,
+      "FileUrl": "uploads/audio/4cde8cab0be644af91e8e637b802c31f.mp3"
+    },
+    {
+      "Id": 1007,
+      "POIId": 13,
+      "FileUrl": "uploads/audio/41a08fdadcf84fe0aa6cf4a4b2b86e1f.mp3"
+    },
+    {
+      "Id": 1008,
+      "POIId": 13,
+      "FileUrl": "uploads/audio/8681b0e104b145489b964277263a3f86.mp3"
+    },
+    {
+      "Id": 1009,
+      "POIId": 13,
+      "FileUrl": "uploads/audio/9a5e255bb17347718523406fd8cf7a8d.mp3"
+    },
+    {
+      "Id": 1010,
+      "POIId": 21,
+      "FileUrl": "uploads/audio/eee5f0801c6d442492421724ec276016.mp3"
+    },
+    {
+      "Id": 1011,
+      "POIId": 12,
+      "FileUrl": "uploads/audio/f86a026b620e473dbd1b602982beaba0.mp3"
+    },
+    {
+      "Id": 1012,
+      "POIId": 21,
+      "FileUrl": "uploads/audio/cd26ab54172f42939e6def8cea937499.mp3"
+    },
+    {
+      "Id": 1013,
+      "POIId": 23,
+      "FileUrl": "uploads/audio/27aa1d464da744d0973f4723ee96c28a.mp3"
+    },
+    {
+      "Id": 1014,
+      "POIId": 23,
+      "FileUrl": "uploads/audio/82c8583c67414625b784c746d66f8c47.mp3"
+    },
+    {
+      "Id": 1015,
+      "POIId": 23,
+      "FileUrl": "uploads/audio/169678bf49114a0ab1a08db4d49271bb.mp3"
+    },
+    {
+      "Id": 1016,
+      "POIId": 23,
+      "FileUrl": "uploads/audio/e1326f304dca4db7914837d1b888072a.mp3"
+    },
+    {
+      "Id": 1017,
+      "POIId": 23,
+      "FileUrl": "uploads/audio/264985b61f634fd595e9e8a24aa3450b.mp3"
+    },
+    {
+      "Id": 1018,
+      "POIId": 23,
+      "FileUrl": "uploads/audio/c196ed18de5d4243b6e3cd5f4c10897c.mp3"
+    }
+  ],
+  "mediaFilesPresent": 1,
+  "mediaFilesMissing": 46,
+  "expiredPois": 0
+}

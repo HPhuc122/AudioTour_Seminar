@@ -1,0 +1,96 @@
+{
+  "database": "VinhHyAudioTourDB",
+  "tables": {
+    "pois": {
+      "total": 23,
+      "notDeleted": 4,
+      "publicCount": 4,
+      "withoutOwner": 0
+    },
+    "tours": {
+      "total": 8,
+      "notDeleted": 3,
+      "publicCount": 0
+    },
+    "audio": {
+      "total": 20,
+      "notDeleted": 20,
+      "approvedActive": 0
+    },
+    "users": {
+      "total": 9,
+      "active": 7
+    },
+    "languages": {
+      "total": 6,
+      "active": 6
+    },
+    "qr": {
+      "total": 28,
+      "active": 5
+    },
+    "offline": {
+      "total": 0
+    },
+    "logs": {
+      "plays": 211,
+      "durationSeconds": 0
+    },
+    "poiPayments": {
+      "total": 3
+    },
+    "accessPayments": {
+      "total": 39
+    }
+  },
+  "providers": {
+    "routeConfigured": false,
+    "translationConfigured": false,
+    "ttsConfigured": false,
+    "automationEnabled": false
+  },
+  "services": {
+    "8000": 200,
+    "8001": 200,
+    "8002": 200,
+    "8003": "not reachable"
+  },
+  "submissions": [
+    {
+      "Status": "Pending",
+      "total": 90
+    },
+    {
+      "Status": "Superseded",
+      "total": 1
+    }
+  ],
+  "audioReview": [
+    {
+      "ReviewStatus": "Pending",
+      "total": 20
+    }
+  ],
+  "mediaTypes": [
+    {
+      "FileType": "audio",
+      "total": 1
+    },
+    {
+      "FileType": "image",
+      "total": 46
+    }
+  ],
+  "media": {
+    "total": 47,
+    "present": 1,
+    "missing": 46
+  },
+  "audioFiles": {
+    "tracks": 20,
+    "withFileUrl": 20,
+    "present": 0
+  },
+  "audioMediaCanonicalLinks": 0,
+  "audioMediaProposalLinks": 0
+}

@@ -27,6 +27,7 @@ Thumbs.db
 *.log
 
 coverage/
+.tooling/
 logs/
 
 # Python tooling and package artifacts
@@ -37,6 +38,7 @@ logs/
 uploads/
 media/
 generated-audio/
+services/narration-service/data/
 *.mp3
 *.wav
 *.ogg

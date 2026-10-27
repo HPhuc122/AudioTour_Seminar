@@ -15,6 +15,7 @@ class TargetAccessTests(unittest.TestCase):
         self.service = ContentService(self.repo)
         self.repo.get_public_poi.return_value = {"id": 12}
         self.repo.get_public_tour.return_value = {"id": 5}
+        self.repo.narration_state.return_value = {"published": None, "latest": None}
 
     def test_free_target_issues_scoped_pass(self):
         self.repo.get_target_qr.return_value = {"code": "FREE", "requiresPayment": False}

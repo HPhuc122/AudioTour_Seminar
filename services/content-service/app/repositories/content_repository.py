@@ -9,7 +9,7 @@ class ContentRepository:
     PUBLIC_POI_WHERE = """
         p.IsActive = 1
         AND p.DeletedAt IS NULL
-        AND p.LifecycleStatus = 3
+        AND p.LifecycleStatus = 3 AND p.ApprovalStatus = 1 AND p.ReviewStatus = 'Approved'
         AND (p.ValidFrom IS NULL OR p.ValidFrom <= SYSUTCDATETIME())
         AND (p.ValidUntil IS NULL OR p.ValidUntil >= SYSUTCDATETIME())
     """
@@ -42,14 +42,14 @@ class ContentRepository:
 
     def list_public_tours(self, language: str, name: str | None = None) -> list[dict]:
         query = """
-        SELECT t.Id AS id, t.Code AS code,
+        SELECT t.Id AS id, t.Code AS code, t.DefaultLanguage AS defaultLanguage,
                COALESCE(tt.Name, ttvi.Name, t.Code) AS name,
                COALESCE(tt.Description, ttvi.Description) AS description,
                t.EstimatedMinutes AS estimatedMinutes
         FROM Tours t
-        LEFT JOIN TourTranslations tt ON tt.TourId = t.Id AND tt.LanguageCode = %s
-        LEFT JOIN TourTranslations ttvi ON ttvi.TourId = t.Id AND ttvi.LanguageCode = 'vi'
-        WHERE t.IsActive = 1 AND t.DeletedAt IS NULL
+        LEFT JOIN TourTranslations tt ON tt.TourId = t.Id AND tt.LanguageCode = %s AND tt.ReviewStatus = 'Approved' AND tt.IsDeleted = 0
+        LEFT JOIN TourTranslations ttvi ON ttvi.TourId = t.Id AND ttvi.LanguageCode = 'vi' AND ttvi.ReviewStatus = 'Approved' AND ttvi.IsDeleted = 0
+        WHERE t.IsActive = 1 AND t.DeletedAt IS NULL AND t.ReviewStatus = 'Approved'
         ORDER BY COALESCE(tt.Name, ttvi.Name, t.Code)
         """
         params = [language]
@@ -65,9 +65,9 @@ class ContentRepository:
                COALESCE(tt.Description, ttvi.Description) AS description,
                t.EstimatedMinutes AS estimatedMinutes
         FROM Tours t
-        LEFT JOIN TourTranslations tt ON tt.TourId = t.Id AND tt.LanguageCode = %s
-        LEFT JOIN TourTranslations ttvi ON ttvi.TourId = t.Id AND ttvi.LanguageCode = 'vi'
-        WHERE t.Id = %s AND t.IsActive = 1 AND t.DeletedAt IS NULL
+        LEFT JOIN TourTranslations tt ON tt.TourId = t.Id AND tt.LanguageCode = %s AND tt.ReviewStatus = 'Approved' AND tt.IsDeleted = 0
+        LEFT JOIN TourTranslations ttvi ON ttvi.TourId = t.Id AND ttvi.LanguageCode = 'vi' AND ttvi.ReviewStatus = 'Approved' AND ttvi.IsDeleted = 0
+        WHERE t.Id = %s AND t.IsActive = 1 AND t.DeletedAt IS NULL AND t.ReviewStatus = 'Approved'
         """
         tour = self._fetchone(query, (language, tour_id))
         if tour:
@@ -81,17 +81,18 @@ class ContentRepository:
                COALESCE(pt.ShortDescription, ptvi.ShortDescription, p.ShortDescription) AS shortDescription,
                COALESCE(pt.Description, ptvi.Description, p.Description) AS narrationText,
                p.Latitude AS latitude, p.Longitude AS longitude, p.ImageUrl AS imageUrl,
-               p.Category AS category, tp.OrderIndex AS orderIndex
+               p.Category AS category, p.RadiusMeters AS radiusMeters, p.Priority AS priority, p.CooldownSeconds AS cooldownSeconds, p.MinDwellSeconds AS minDwellSeconds, tp.OrderIndex AS orderIndex
         FROM TourPOIs tp
         INNER JOIN POIs p ON p.Id = tp.POIId
-        LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s
-        LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi'
+        LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s AND pt.ReviewStatus = 'Approved' AND pt.IsDeleted = 0
+        LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi' AND ptvi.ReviewStatus = 'Approved' AND ptvi.IsDeleted = 0
         WHERE tp.TourId = %s AND {self.PUBLIC_POI_WHERE}
         ORDER BY tp.OrderIndex, COALESCE(pt.Name, ptvi.Name, p.Name, p.Code)
         """
         pois = self._fetchall(query, (language, tour_id))
         for poi in pois:
             poi["audioTracks"] = self.list_audio_tracks_for_poi(poi["id"], language)
+            poi["images"] = self.list_public_images_for_poi(poi["id"])
         return pois
 
     def list_public_pois(self, language: str, page: int = 1, page_size: int = 20, search: str | None = None, category: str | None = None, name: str | None = None) -> dict:
@@ -113,8 +114,8 @@ class ContentRepository:
         count_query = f"""
         SELECT COUNT(1) AS total
         FROM POIs p
-        LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s
-        LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi'
+        LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s AND pt.ReviewStatus = 'Approved' AND pt.IsDeleted = 0
+        LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi' AND ptvi.ReviewStatus = 'Approved' AND ptvi.IsDeleted = 0
         WHERE {where_sql}
         """
         total = self._scalar(count_query, tuple(params)) or 0
@@ -127,13 +128,13 @@ class ContentRepository:
                p.Priority AS priority, p.ImageUrl AS imageUrl, p.Category AS category,
                (SELECT TOP 1 m.Id FROM MediaFiles m
                 WHERE m.PoiId = p.Id AND m.FileType = 'image'
-                  AND m.ApprovalStatus = 'Approved' AND m.IsDeleted = 0
+                  AND m.ApprovalStatus = 'Approved' AND m.ReviewStatus = 'Approved' AND m.IsDeleted = 0
                 ORDER BY CASE WHEN m.ImageCategory = 'Highlight' THEN 0 ELSE 1 END,
                          m.UploadedAt DESC, m.Id DESC) AS thumbnailImageId,
                p.CooldownSeconds AS cooldownSeconds, p.MinDwellSeconds AS minDwellSeconds
         FROM POIs p
-        LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s
-        LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi'
+        LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s AND pt.ReviewStatus = 'Approved' AND pt.IsDeleted = 0
+        LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi' AND ptvi.ReviewStatus = 'Approved' AND ptvi.IsDeleted = 0
         WHERE {where_sql}
         ORDER BY p.Priority DESC, COALESCE(pt.Name, ptvi.Name, p.Name, p.Code), p.Id
         OFFSET %s ROWS FETCH NEXT %s ROWS ONLY
@@ -151,8 +152,8 @@ class ContentRepository:
                p.Priority AS priority, p.ImageUrl AS imageUrl, p.Category AS category,
                p.CooldownSeconds AS cooldownSeconds, p.MinDwellSeconds AS minDwellSeconds
         FROM POIs p
-        LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s
-        LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi'
+        LEFT JOIN POITranslations pt ON pt.POIId = p.Id AND pt.LanguageCode = %s AND pt.ReviewStatus = 'Approved' AND pt.IsDeleted = 0
+        LEFT JOIN POITranslations ptvi ON ptvi.POIId = p.Id AND ptvi.LanguageCode = 'vi' AND ptvi.ReviewStatus = 'Approved' AND ptvi.IsDeleted = 0
         WHERE p.Id = %s AND {self.PUBLIC_POI_WHERE}
         """
         poi = self._fetchone(query, (language, poi_id))
@@ -170,11 +171,12 @@ class ContentRepository:
         query = f"""
         SELECT a.Id AS id, a.Id AS audioTrackId, a.POIId AS poiId, a.LanguageCode AS languageCode,
                a.LanguageCode AS language, COALESCE(a.Title, CONCAT('POI ', a.POIId, ' - ', a.LanguageCode)) AS title,
-               a.AudioType AS audioType, a.DurationSeconds AS durationSeconds,
+               a.AudioType AS audioType, a.TTSText AS ttsText, a.FileUrl AS fileUrl, a.DurationSeconds AS durationSeconds,
                a.DurationSeconds AS duration, a.FileSizeBytes AS fileSizeBytes, a.MimeType AS mimeType,
                CASE WHEN a.FileUrl IS NULL THEN CAST(0 AS bit) ELSE CAST(1 AS bit) END AS isAvailable
         FROM AudioTracks a
-        WHERE a.POIId = %s AND a.IsActive = 1 AND a.DeletedAt IS NULL {language_filter}
+        INNER JOIN POIs p ON p.Id=a.POIId
+        WHERE {self.PUBLIC_POI_WHERE} AND a.POIId = %s AND a.IsActive = 1 AND a.DeletedAt IS NULL AND a.ReviewStatus = 'Approved' AND (a.AudioType = 'tts' OR EXISTS (SELECT 1 FROM MediaFiles am WHERE am.RelativePath=a.FileUrl AND am.PoiId=a.POIId AND am.FileType='audio' AND am.ReviewStatus='Approved' AND am.ApprovalStatus='Approved' AND am.IsDeleted=0)) {language_filter}
         ORDER BY a.LanguageCode, a.Id
         """
         return self._fetchall(query, tuple(params))
@@ -185,16 +187,36 @@ class ContentRepository:
                a.MimeType AS mimeType, a.IsActive AS isActive
         FROM AudioTracks a
         INNER JOIN POIs p ON p.Id = a.POIId
-        WHERE a.Id = %s AND a.IsActive = 1 AND a.DeletedAt IS NULL AND {self.PUBLIC_POI_WHERE}
+        WHERE a.Id = %s AND a.IsActive = 1 AND a.DeletedAt IS NULL AND a.ReviewStatus = 'Approved' AND (a.AudioType = 'tts' OR EXISTS (SELECT 1 FROM MediaFiles am WHERE am.RelativePath=a.FileUrl AND am.PoiId=a.POIId AND am.FileType='audio' AND am.ReviewStatus='Approved' AND am.ApprovalStatus='Approved' AND am.IsDeleted=0)) AND {self.PUBLIC_POI_WHERE}
         """
         return self._fetchone(query, (audio_track_id,))
+
+    def narration_state(self, poi_id, language):
+        if not self._fetchone("SELECT OBJECT_ID('NarrationJobs','U') AS id")["id"]:
+            return {"latest": None, "published": None}
+        latest = self._fetchone("""SELECT TOP 1 Id AS jobId,SourceVersion AS sourceVersion,
+            NarrationId AS narrationId,Status AS status,Attempts AS attempts,ErrorCode AS errorCode
+            FROM NarrationJobs WHERE PoiId=%s AND LanguageCode=%s ORDER BY Id DESC""", (poi_id, language))
+        # A single query binds text and audio to the same completed job.
+        published = self._fetchone("""SELECT j.Id AS jobId,j.NarrationId AS narrationId,
+            j.SourceVersion AS sourceVersion,j.ResultText AS description,j.ResultName AS name,
+            a.Id AS id,a.POIId AS poiId,a.LanguageCode AS languageCode,a.LanguageCode AS language,
+            a.Title AS title,a.AudioType AS audioType,a.FileUrl AS fileUrl,a.MimeType AS mimeType,
+            a.DurationSeconds AS durationSeconds,a.FileSizeBytes AS fileSizeBytes
+            FROM NarrationPublications n JOIN NarrationJobs j ON j.Id=n.JobId
+            JOIN AudioTracks a ON a.Id=n.AudioTrackId
+            JOIN MediaFiles m ON m.RelativePath=a.FileUrl AND m.PoiId=a.POIId
+            WHERE n.PoiId=%s AND n.LanguageCode=%s AND j.Status='Succeeded'
+            AND a.IsActive=1 AND a.DeletedAt IS NULL AND a.ReviewStatus='Approved'
+            AND m.IsDeleted=0 AND m.ReviewStatus='Approved' AND m.ApprovalStatus='Approved'""", (poi_id, language))
+        return {"latest": latest, "published": published}
 
     def list_public_images_for_poi(self, poi_id: int) -> list[dict]:
         query = """
         SELECT Id AS id, FileName AS fileName, OriginalFileName AS originalFileName,
-               ContentType AS contentType, FileSize AS fileSize, ImageCategory AS imageCategory
+               ContentType AS contentType, FileSize AS fileSize, ImageCategory AS imageCategory, RelativePath AS relativePath
         FROM MediaFiles
-        WHERE PoiId = %s AND FileType = 'image' AND ApprovalStatus = 'Approved' AND IsDeleted = 0
+        WHERE PoiId = %s AND FileType = 'image' AND ApprovalStatus = 'Approved' AND ReviewStatus = 'Approved' AND IsDeleted = 0
         ORDER BY CASE WHEN ImageCategory = 'Highlight' THEN 0 ELSE 1 END, UploadedAt DESC, Id DESC
         """
         return self._fetchall(query, (poi_id,))
@@ -205,7 +227,7 @@ class ContentRepository:
         FROM MediaFiles m
         INNER JOIN POIs p ON p.Id = m.PoiId
         WHERE m.Id = %s AND m.FileType = 'image' AND m.ApprovalStatus = 'Approved'
-          AND m.IsDeleted = 0 AND {self.PUBLIC_POI_WHERE}
+          AND m.IsDeleted = 0 AND m.ReviewStatus = 'Approved' AND {self.PUBLIC_POI_WHERE}
         """
         return self._fetchone(query, (media_file_id,))
 
@@ -231,11 +253,11 @@ class ContentRepository:
         """, (target_id,))
 
     def list_public_packages(self) -> list[dict]:
-        query = """
+        query = f"""
         SELECT Code AS code, Name AS name, RequiresPayment AS requiresPayment,
                PriceAmount AS priceAmount, AccessDurationMinutes AS accessDurationMinutes
         FROM QRLocations
-        WHERE IsActive = 1 AND DeletedAt IS NULL
+        WHERE IsActive = 1 AND DeletedAt IS NULL AND ((PoiId IS NULL AND TourId IS NULL) OR EXISTS (SELECT 1 FROM POIs p WHERE p.Id=QRLocations.PoiId AND {self.PUBLIC_POI_WHERE}) OR EXISTS (SELECT 1 FROM Tours t WHERE t.Id=QRLocations.TourId AND t.IsActive=1 AND t.DeletedAt IS NULL AND t.ReviewStatus='Approved'))
         ORDER BY PriceAmount, Code
         """
         return self._fetchall(query)

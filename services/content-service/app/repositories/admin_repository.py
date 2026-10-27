@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from app.core.database import get_connection
@@ -20,6 +19,17 @@ class AdminRepository:
         "narration_logs": {"table": "NarrationLogs", "id": "Id", "soft_delete": False, "fields": ["UserId", "POIId", "TriggerType", "LanguageCode", "PlayedAt", "DurationPlayedSeconds", "DeviceId", "Synced"]},
     }
 
+    TABLES['poi-translations'] = {'table': 'POITranslations', 'id': 'Id', 'soft_delete': 'IsDeleted', 'fields': ['POIId', 'LanguageCode', 'Name', 'Description', 'ShortDescription', 'Version', 'CreatedAt', 'UpdatedAt']}
+    TABLES['tour-translations'] = {'table': 'TourTranslations', 'id': 'Id', 'soft_delete': 'IsDeleted', 'fields': ['TourId', 'LanguageCode', 'Name', 'Description', 'Version']}
+    TABLES['tours']['fields'].append('UserId')
+    TABLES['narrations']['fields'] += ['PublishedTranslationId', 'PublishedTranslationVersion']
+    TABLES['narrations']['soft_delete'] = 'IsDeleted'
+    TABLES['audio']['fields'].append('AutomationJobId')
+    for resource in ('pois', 'tours', 'audio', 'media', 'narrations', 'poi-translations', 'tour-translations'):
+        TABLES[resource]['fields'] += ['ReviewStatus', 'RejectionReason']
+        if 'Version' not in TABLES[resource]['fields']:
+            TABLES[resource]['fields'].append('Version')
+
     def fetchall(self, query: str, params: tuple = ()) -> list[dict]:
         with get_connection() as connection, connection.cursor() as cursor:
             cursor.execute(query, params)
@@ -28,7 +38,13 @@ class AdminRepository:
     def fetchone(self, query: str, params: tuple = ()) -> dict | None:
         with get_connection() as connection, connection.cursor() as cursor:
             cursor.execute(query, params)
-            return cursor.fetchone()
+            row = cursor.fetchone()
+            # SQL Server OUTPUT returns rows, but INSERT still needs a commit.
+            # Existing create_* methods use this helper and otherwise roll back
+            # when the connection is closed.
+            if query.lstrip().upper().startswith(("INSERT ", "UPDATE ", "DELETE ", "MERGE ")):
+                connection.commit()
+            return row
 
     def execute(self, query: str, params: tuple = ()) -> None:
         with get_connection() as connection, connection.cursor() as cursor:
@@ -139,6 +155,21 @@ class AdminRepository:
             "plays": self.scalar("SELECT COUNT(1) AS total FROM NarrationLogs") or 0,
             "devices": self.scalar("SELECT COUNT(1) AS total FROM Devices") or 0,
         }
+
+    def tour_translations(self, tour_id: int) -> list[dict]:
+        return self.fetchall("SELECT * FROM TourTranslations WHERE TourId = %s ORDER BY LanguageCode", (tour_id,))
+
+    def tour_members(self, tour_id: int) -> list[dict]:
+        return self.fetchall("SELECT tp.POIId, tp.OrderIndex, p.Name, p.Code FROM TourPOIs tp INNER JOIN POIs p ON p.Id = tp.POIId WHERE tp.TourId = %s ORDER BY tp.OrderIndex, tp.POIId", (tour_id,))
+
+    def web_duration(self) -> dict:
+        # No migration or duplicate event store: aggregate existing logs.
+        row = self.fetchone("SELECT COALESCE(SUM(CAST(DurationPlayedSeconds AS bigint)), 0) AS durationSeconds FROM NarrationLogs") or {}
+        # Legacy logs do not distinguish TTS from files, so expose that limitation.
+        return {"durationSeconds": row.get("durationSeconds", 0), "ttsPlays": None}
+
+    def web_tts_tracks(self, poi_id: int, language_code: str) -> list[dict]:
+        return self.fetchall("SELECT Id AS id, TTSText AS ttsText FROM AudioTracks WHERE POIId = %s AND LanguageCode = %s AND IsActive = 1 AND DeletedAt IS NULL AND ReviewStatus = 'Approved' AND AudioType = 'tts'", (poi_id, language_code))
 
     def save_media_file(self, file_name: str, original_name: str, content_type: str, file_size: int, relative_path: str, uploaded_by: int | None, poi_id: int | None, image_category: str | None, approval_status: str) -> dict:
         row = self.fetchone(

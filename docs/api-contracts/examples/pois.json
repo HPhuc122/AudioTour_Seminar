@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "message": "Success",
+  "data": {
+    "items": [
+      {
+        "id": 101,
+        "code": "POI-101",
+        "name": "Sạp hải sản Vịnh Hy",
+        "shortDescription": "Ẩm thực địa phương",
+        "description": "Nội dung đã được Admin duyệt",
+        "latitude": 11.733,
+        "longitude": 109.19,
+        "radiusMeters": 50,
+        "priority": 1,
+        "cooldownSeconds": 120,
+        "minDwellSeconds": 3,
+        "category": "Ẩm thực",
+        "languageCode": "vi",
+        "imageUrl": null,
+        "thumbnailImageId": 401,
+        "thumbnailUrl": "/api/v1/public/media/images/401"
+      }
+    ],
+    "page": 1,
+    "pageSize": 100,
+    "total": 1
+  }
+}

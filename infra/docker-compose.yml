@@ -12,6 +12,9 @@ services:
       context: ../services/content-service
     env_file:
       - ../.env
+    environment:
+      ADMIN_TRANSLATION_URL: http://narration-service:8000/translate
+      ADMIN_TTS_URL: http://narration-service:8000/tts
     ports:
       - "${CONTENT_SERVICE_PORT:-8002}:8000"
 
@@ -20,5 +23,12 @@ services:
       context: ../services/narration-service
     env_file:
       - ../.env
+    environment:
+      NARRATION_ADAPTER_CACHE_PATH: /app/data/adapter.sqlite3
+    volumes:
+      - narration-adapter-data:/app/data
     ports:
       - "${NARRATION_SERVICE_PORT:-8003}:8000"
+
+volumes:
+  narration-adapter-data:

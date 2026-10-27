@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from jose import JWTError, jwt
+from typing import Annotated
 
 from app.core.config import settings
 from app.schemas.auth import LoginRequest, RefreshRequest, RegisterDeviceRequest, RegisterUserRequest, RoleWriteRequest, UserWriteRequest
@@ -24,7 +25,14 @@ def current_user(authorization: str | None = Header(default=None, alias="Authori
         payload = jwt.decode(authorization.split(" ", 1)[1].strip(), settings.jwt_secret, algorithms=["HS256"])
     except JWTError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
-    return {"id": int(payload.get("sub") or 0), "username": payload.get("username"), "role": payload.get("role")}
+    try:
+        uid = int(payload.get('sub') or 0)
+    except (TypeError, ValueError):
+        raise HTTPException(401, 'Invalid subject')
+    record = service._repository.find_by_id(uid)
+    if not record or record['role'] != payload.get('role'):
+        raise HTTPException(401, 'Account disabled or role changed')
+    return {'id': uid, 'username': record['username'], 'role': record['role']}
 
 
 def require_admin(user: dict = Depends(current_user)) -> dict:
@@ -47,6 +55,17 @@ def login(request: LoginRequest):
 @router.post("/refresh")
 def refresh(request: RefreshRequest):
     return ok(service.refresh(request.refresh_token), "Token refreshed")
+
+
+@router.get("/me")
+def me(
+    user: dict = Depends(current_user),
+    device_id: Annotated[str | None, Header(alias="X-Web-Device-Id", pattern=r"^web-[a-f0-9-]{36}$")] = None,
+):
+    # The authenticated account supplies ownership; clients cannot choose UserId.
+    if device_id:
+        service._repository.record_web_presence(user['id'], device_id)
+    return ok(user)
 
 
 @router.post("/register-device")
