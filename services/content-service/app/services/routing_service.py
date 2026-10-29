@@ -32,7 +32,7 @@ class RoutingService:
         if not settings.open_route_service_api_key:
             raise HTTPException(503, "Dịch vụ tìm đường chưa được cấu hình.")
         request = Request(
-            f"https://api.openrouteservice.org/v2/directions/{self.PROFILES[mode]}/geojson",
+            f"https://api.heigit.org/openrouteservice/v2/directions/{self.PROFILES[mode]}/geojson",
             data=json.dumps({"coordinates": coordinates, "instructions": False}).encode(),
             headers={"Authorization": settings.open_route_service_api_key,
                      "Content-Type": "application/json", "Accept": "application/geo+json",

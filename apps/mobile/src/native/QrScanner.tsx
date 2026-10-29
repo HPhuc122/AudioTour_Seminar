@@ -1,9 +1,10 @@
 import { useTranslator } from "./i18n"
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Button,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -56,7 +57,7 @@ export function QrScanner({ onCodeScanned, onClose }: QrScannerProps) {
           {t("Bạn có thể nhập mã trên vé hoặc bảng thông tin nếu không dùng camera.")}</Text>
         {permission.canAskAgain && (
           <View style={styles.buttonSpacing}>
-            <Button title={t("Cho phép dùng camera")} onPress={() => void requestPermission()} />
+            <Pressable onPress={() => void requestPermission()} style={styles.primary}><Text style={styles.primaryText}>{t("Cho phép dùng camera")}</Text></Pressable>
           </View>
         )}
         <TextInput
@@ -69,9 +70,9 @@ export function QrScanner({ onCodeScanned, onClose }: QrScannerProps) {
           value={manualCode}
         />
         <View style={styles.buttonSpacing}>
-          <Button title={t("Xác nhận mã")} disabled={!manualCode.trim()} onPress={() => submitCode(manualCode)} />
+          <Pressable accessibilityRole="button" disabled={!manualCode.trim()} onPress={() => submitCode(manualCode)} style={[styles.primary, !manualCode.trim() && styles.disabled]}><Text style={styles.primaryText}>{t("Xác nhận mã")}</Text></Pressable>
         </View>
-        <Button color="#456253" title={t("Đóng")} onPress={onClose} />
+        <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeFallback}><Text style={styles.closeFallbackText}>{t("Đóng")}</Text></Pressable>
       </View>
     );
   }
@@ -84,11 +85,11 @@ export function QrScanner({ onCodeScanned, onClose }: QrScannerProps) {
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.cameraOverlay}>
+        <Text style={styles.cameraEyebrow}>AUDIOTOUR</Text>
         <Text style={styles.cameraTitle}>{t("Đưa mã QR vào khung hình")}</Text>
-        <View style={styles.scanFrame} />
-        <View style={styles.closeButton}>
-          <Button color="#FFFFFF" title={t("Đóng")} onPress={onClose} />
-        </View>
+        <View style={styles.scanFrame}><Ionicons name="qr-code-outline" size={64} color="#FFFFFF66" /></View>
+        <Text style={styles.cameraHint}>{t("Đặt mã QR trong khung để bắt đầu thuyết minh")}</Text>
+        <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}><Ionicons name="close" size={20} color="#FFFFFF" /><Text style={styles.closeText}>{t("Đóng")}</Text></Pressable>
       </View>
     </View>
   );
@@ -102,13 +103,13 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   fallback: {
-    backgroundColor: "#F7FDF9",
+    backgroundColor: "#F5FAFA",
     flex: 1,
     justifyContent: "center",
     padding: 24,
   },
   title: {
-    color: "#173B2A",
+    color: "#0F2124",
     fontSize: 28,
     fontWeight: "700",
   },
@@ -120,8 +121,8 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: "#FFFFFF",
-    borderColor: "#9CCCB0",
-    borderRadius: 12,
+    borderColor: "#D6E9E9",
+    borderRadius: 16,
     borderWidth: 1,
     fontSize: 16,
     marginTop: 24,
@@ -131,6 +132,11 @@ const styles = StyleSheet.create({
   buttonSpacing: {
     marginTop: 16,
   },
+  primary: { backgroundColor: "#058578", borderRadius: 15, minHeight: 50, alignItems: "center", justifyContent: "center" },
+  primaryText: { color: "#FFFFFF", fontSize: 15, fontWeight: "800" },
+  disabled: { opacity: .45 },
+  closeFallback: { alignItems: "center", padding: 16, marginTop: 10 },
+  closeFallbackText: { color: "#058578", fontSize: 15, fontWeight: "700" },
   cameraScreen: {
     backgroundColor: "#000000",
     flex: 1,
@@ -140,22 +146,35 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 24,
+    backgroundColor: "#001E2466",
   },
+  cameraEyebrow: { color: "#B2EEE4", fontSize: 12, fontWeight: "800", letterSpacing: 2, marginBottom: 8 },
   cameraTitle: {
     color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 22,
+    fontWeight: "800",
     marginBottom: 24,
     textAlign: "center",
   },
   scanFrame: {
     borderColor: "#FFFFFF",
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 3,
-    height: 250,
-    width: 250,
+    height: 260,
+    width: 260,
+    alignItems: "center",
+    justifyContent: "center",
   },
+  cameraHint: { color: "#E0F7F5", textAlign: "center", fontSize: 13, lineHeight: 19, marginTop: 22, maxWidth: 270 },
   closeButton: {
-    marginTop: 32,
+    marginTop: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF33",
+    paddingHorizontal: 24,
+    minHeight: 46,
   },
+  closeText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
 });
