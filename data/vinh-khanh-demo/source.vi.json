@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "dataset": "ho-chi-minh-food-photo-demo",
+  "language": "vi",
+  "area": {
+    "name": "Các địa điểm ẩm thực có ảnh thật tại Thành phố Hồ Chí Minh",
+    "administrativeArea": "Thành phố Hồ Chí Minh",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/Category:Restaurants_in_Ho_Chi_Minh_City"
+  },
+  "poiCount": 12,
+  "tourCount": 3,
+  "poi": [
+    {
+      "code": "VK-ALO-333",
+      "name": "Dim Tu Tac – 55 Đông Du",
+      "address": "55 Đông Du, phường Sài Gòn, Thành phố Hồ Chí Minh",
+      "category": "Ẩm thực Quảng Đông",
+      "shortDescription": "Nhà hàng Quảng Đông với dim sum và vịt quay.",
+      "narration": "Dim Tu Tac tại 55 Đông Du là nhà hàng Quảng Đông ở trung tâm thành phố. Ảnh menu minh họa món vịt quay được chụp tại hệ thống Dim Tu Tac.",
+      "latitude": 10.775722,
+      "longitude": 106.704217,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dim_Tu_Tac_flagship_location,_55_%C4%90%C3%B4ng_Du_Street.jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/dim-tu-tac-storefront.jpg",
+        "images/dim-tu-tac-peking-duck.jpg"
+      ]
+    },
+    {
+      "code": "VK-OC-DAO-232-123",
+      "name": "Ốc La Cà – Đồng Đen",
+      "address": "248A Đồng Đen, phường Tân Bình, Thành phố Hồ Chí Minh",
+      "category": "Ốc và hải sản",
+      "shortDescription": "Quán ốc và hải sản trên đường Đồng Đen.",
+      "narration": "Ốc La Cà ở Đồng Đen là điểm ăn ốc tại khu vực Tân Bình. Ảnh bìa và ảnh món đều được ghi nhận tại quán.",
+      "latitude": 10.79,
+      "longitude": 106.6419,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Qu%C3%A1n_%E1%BB%91c_La_C%C3%A0_-_%C4%90%E1%BB%93ng_%C4%90en,_T%C3%A2n_B%C3%ACnh,_snH_201_(1).JPG",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/oc-la-ca-storefront.jpg",
+        "images/oc-la-ca-menu.jpg"
+      ]
+    },
+    {
+      "code": "VK-BUN-CA-DI-TU-75",
+      "name": "Ốc Hai Lùn – Lê Đại Hành",
+      "address": "Đường Lê Đại Hành, phường Hòa Bình, Thành phố Hồ Chí Minh",
+      "category": "Ốc và hải sản",
+      "shortDescription": "Quán ốc lâu năm trên đường Lê Đại Hành.",
+      "narration": "Ốc Hai Lùn trên đường Lê Đại Hành phục vụ các món ốc và hải sản. Bộ ảnh tư liệu được chụp tại quán; địa chỉ số nhà cần xác nhận lại.",
+      "latitude": 10.763,
+      "longitude": 106.6495,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Qu%C3%A1n_%E1%BB%91c_Hai_L%C3%B9n-L%C3%AA_%C4%90%E1%BA%A1i_H%C3%A0nh,_Qu%E1%BA%ADn_11-_sn_2012_(1).JPG",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/oc-hai-lun-storefront.jpg",
+        "images/oc-hai-lun-menu.jpg"
+      ]
+    },
+    {
+      "code": "VK-BUN-THIT-NUONG-CO-NGA-14",
+      "name": "Hum Lounge · 34 Võ Văn Tần",
+      "address": "34 Võ Văn Tần, phường Xuân Hòa, Thành phố Hồ Chí Minh",
+      "category": "Ẩm thực thực vật",
+      "shortDescription": "Nhà hàng thực vật trong không gian kiến trúc xanh.",
+      "narration": "Hum Lounge là nhà hàng thực vật tại 34 Võ Văn Tần. Ảnh món ăn kèm là ảnh ẩm thực chay tại Thành phố Hồ Chí Minh, dùng minh họa và không xác nhận là món trong thực đơn Hum.",
+      "latitude": 10.778481,
+      "longitude": 106.692128,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Man_Moi_Thao_Dien.jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/hum-lounge-storefront.jpg",
+        "images/hum-lounge-menu-sample.jpg"
+      ]
+    },
+    {
+      "code": "VK-OC-VU-37",
+      "name": "Cơm Tấm Cali – Hoàng Diệu",
+      "address": "235 Hoàng Diệu, phường Khánh Hội, Thành phố Hồ Chí Minh",
+      "category": "Cơm tấm",
+      "shortDescription": "Cơm tấm và món ăn Việt tại chi nhánh Quận 4.",
+      "narration": "Ảnh bìa ghi lại không gian Cơm Tấm Cali tại Quận 4; ảnh menu là món bún thịt nướng chụp tại chi nhánh Hoàng Diệu.",
+      "latitude": 10.7585,
+      "longitude": 106.7047,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:N%E1%BB%99i_th%E1%BA%A5t_qu%C3%A1n_c%C6%A1m_t%E1%BA%A5m_Cali_Qu%E1%BA%ADn_4_(2).jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/com-tam-cali-q4-storefront.jpg",
+        "images/com-tam-cali-q4-menu.jpg"
+      ]
+    },
+    {
+      "code": "VK-LANG-531",
+      "name": "Quán bánh xèo Đinh Công Tráng",
+      "address": "Đường Đinh Công Tráng, phường Tân Định, Thành phố Hồ Chí Minh",
+      "category": "Bánh xèo",
+      "shortDescription": "Quán bánh xèo trên đường Đinh Công Tráng.",
+      "narration": "Ảnh bìa được chụp tại một nhà hàng bánh xèo trên đường Đinh Công Tráng. Ảnh menu là ảnh minh họa món bánh xèo, chưa xác nhận là món của đúng quán trong ảnh bìa.",
+      "latitude": 10.78955,
+      "longitude": 106.691344,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Banh_xeo_restaurant_on_Dinh_Cong_Trang_Street_(49355818807).jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/banh-xeo-dinh-cong-trang-storefront.jpg",
+        "images/banh-xeo-menu.jpg"
+      ]
+    },
+    {
+      "code": "VK-OT-XIEM-568",
+      "name": "Bún Bò 1980 – Tân Phú",
+      "address": "Đường Nguyễn Sơn, phường Tân Phú, Thành phố Hồ Chí Minh",
+      "category": "Bún bò Huế",
+      "shortDescription": "Quán bún bò Huế tại khu vực Tân Phú.",
+      "narration": "Ảnh bìa ghi lại một quán bún bò 1980 tại Tân Phú. Ảnh menu là tô bún bò Huế chụp tại một quán ăn ở Thành phố Hồ Chí Minh.",
+      "latitude": 10.7983,
+      "longitude": 106.635,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Qu%C3%A1n_b%C3%BAn_b%C3%B2_1980_tr%C3%AAn_%C4%91%C6%B0%E1%BB%9Dng_NS_t%E1%BA%A1i_T%C3%A2n_Ph%C3%BA,_ng11th5n2021_(C%E1%BB%ADa_s%E1%BB%95_ki%E1%BB%83u_Ph%C3%A1p)_(1).jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/bun-bo-1980-storefront.jpg",
+        "images/bun-bo-hue-menu.jpg"
+      ]
+    },
+    {
+      "code": "VK-A-FAT-668",
+      "name": "Chiang Rai – Nhà hàng Thái",
+      "address": "710/5 Lũy Bán Bích, phường Tân Phú, Thành phố Hồ Chí Minh",
+      "category": "Ẩm thực Thái",
+      "shortDescription": "Nhà hàng Thái tại khu vực Tân Phú.",
+      "narration": "Ảnh bìa ghi lại nhà hàng Thái tại Tân Phú. Ảnh menu minh họa món lẩu phù hợp với nhóm món nóng của nhà hàng.",
+      "latitude": 10.7828,
+      "longitude": 106.6268,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nh%C3%A0_h%C3%A0ng_Th%C3%A1i_t%E1%BA%A1i_T%C3%A2n_Ph%C3%BA,_th%C3%A1ng_12_n%C4%83m_2021_(1).jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/chiang-rai-storefront.jpg",
+        "images/chiang-rai-hotpot-menu.jpg"
+      ]
+    },
+    {
+      "code": "VK-SUON-MUOI-OT-712",
+      "name": "Anan Saigon",
+      "address": "89 Tôn Thất Đạm, phường Sài Gòn, Thành phố Hồ Chí Minh",
+      "category": "Ẩm thực Việt Nam",
+      "shortDescription": "Nhà hàng Việt Nam trong khu chợ cũ Tôn Thất Đạm.",
+      "narration": "Anan Saigon nằm tại 89 Tôn Thất Đạm. Ảnh món trong bộ demo là ảnh gà kho nước dừa tại một quán ăn ở Thành phố Hồ Chí Minh, không khẳng định đây là món hiện có của Anan.",
+      "latitude": 10.7686,
+      "longitude": 106.7036,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anan_Saigon.jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/anan-saigon-storefront.jpg",
+        "images/anan-saigon-menu-sample.jpg"
+      ]
+    },
+    {
+      "code": "VK-CHILLI-232-105",
+      "name": "Maison Marou – Quận 1",
+      "address": "Khu vực Calmette, phường Bến Thành, Thành phố Hồ Chí Minh",
+      "category": "Cà phê và sô-cô-la",
+      "shortDescription": "Cửa hàng cà phê và sô-cô-la Marou tại Quận 1.",
+      "narration": "Ảnh bìa là cửa hàng Maison Marou ở Quận 1. Ảnh menu là bánh sô-cô-la minh họa, không khẳng định là sản phẩm hiện có tại cửa hàng.",
+      "latitude": 10.769536,
+      "longitude": 106.698006,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Maison_Marou_Ho_Chi_Minh_City.jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/maison-marou-storefront.jpg",
+        "images/maison-marou-menu-sample.jpg"
+      ]
+    },
+    {
+      "code": "VK-THAO-OC-383",
+      "name": "Café City Garden – Tân Bình",
+      "address": "Café City Garden, phường Tân Bình, Thành phố Hồ Chí Minh",
+      "category": "Cà phê",
+      "shortDescription": "Quán cà phê City Garden tại Tân Bình.",
+      "narration": "Ảnh bìa và ảnh cà phê được chụp tại Café City Garden ở Tân Bình.",
+      "latitude": 10.8,
+      "longitude": 106.65,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cafe_City_Garden_T%C3%A2n_B%C3%ACnh_ng%C3%A0y_31_th%C3%A1ng_12_n%C4%83m_2018_(1).jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/city-garden-storefront.jpg",
+        "images/city-garden-coffee-menu.jpg"
+      ]
+    },
+    {
+      "code": "VK-OC-OANH-534",
+      "name": "Café 30/4 – Nam Kỳ Khởi Nghĩa",
+      "address": "135 Nam Kỳ Khởi Nghĩa, phường Sài Gòn, Thành phố Hồ Chí Minh",
+      "category": "Cà phê",
+      "shortDescription": "Quán cà phê trên đường Nam Kỳ Khởi Nghĩa.",
+      "narration": "Ảnh bìa ghi lại Café 30/4 tại số 135 Nam Kỳ Khởi Nghĩa. Ảnh menu minh họa cà phê và bánh mì tại Sài Gòn.",
+      "latitude": 10.778606,
+      "longitude": 106.696094,
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2023-12-10_Caf%C3%A9_30%EF%BC%8F4,_Nam_K%E1%BB%B3_Kh%E1%BB%9Fi_Ngh%C4%A9a_Street,_Ho_Chi_Minh_City.jpg",
+      "coordinateStatus": "approximate_demo_coordinate; verify before public launch",
+      "imageStatus": "real_venue_and_menu_photos",
+      "imageFiles": [
+        "images/cafe-30-4-storefront.jpg",
+        "images/cafe-30-4-menu-sample.jpg"
+      ]
+    }
+  ],
+  "tours": [
+    {
+      "code": "VK-TOUR-QUANH-PHO",
+      "name": "Ẩm thực trung tâm Sài Gòn",
+      "description": "Các điểm ăn uống tại trung tâm, từ nhà hàng Quảng Đông đến món Việt và cà phê.",
+      "estimatedMinutes": 100,
+      "transportMode": "walking",
+      "poiCodes": [
+        "VK-ALO-333",
+        "VK-SUON-MUOI-OT-712",
+        "VK-CHILLI-232-105",
+        "VK-OC-OANH-534"
+      ]
+    },
+    {
+      "code": "VK-TOUR-OC-HAI-SAN",
+      "name": "Ốc, hải sản và món chay",
+      "description": "Các quán ốc và hải sản kết hợp với trải nghiệm ẩm thực thực vật tại Hum Lounge.",
+      "estimatedMinutes": 150,
+      "transportMode": "driving",
+      "poiCodes": [
+        "VK-OC-DAO-232-123",
+        "VK-BUN-CA-DI-TU-75",
+        "VK-BUN-THIT-NUONG-CO-NGA-14",
+        "VK-THAO-OC-383"
+      ]
+    },
+    {
+      "code": "VK-TOUR-LAU-NUONG",
+      "name": "Món Việt và món nóng",
+      "description": "Cơm tấm, bánh xèo, bún bò và lẩu Thái ở các khu vực trong thành phố.",
+      "estimatedMinutes": 120,
+      "transportMode": "driving",
+      "poiCodes": [
+        "VK-OC-VU-37",
+        "VK-LANG-531",
+        "VK-OT-XIEM-568",
+        "VK-A-FAT-668"
+      ]
+    }
+  ],
+  "translationAndAudio": {
+    "targetLanguages": [
+      "en",
+      "zh",
+      "ko",
+      "ja",
+      "fr"
+    ],
+    "workflow": "existing-content-service-approval-and-narration-automation",
+    "poiAudioPerLanguage": true,
+    "tourAudio": false,
+    "status": "blocked_until_new_database_and_confirmed_no_charge_azure_quota"
+  },
+  "demoAccessPriceVnd": 100000
+}

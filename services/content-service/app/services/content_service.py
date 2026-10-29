@@ -202,10 +202,11 @@ class ContentService:
         self._require_access_for_poi(token, track["poiId"])
         return self._resolve_media_path(track["fileUrl"], "uploads/audio"), track.get("mimeType") or "audio/mpeg"
 
-    def record_play(self, audio_track_id: int, language: str, trigger_type: str, device_id: str | None, duration: int | None = None) -> dict:
+    def record_play(self, audio_track_id: int, language: str, trigger_type: str, device_id: str | None, duration: int, token: str | None) -> dict:
         track = self._repository.get_audio_track(audio_track_id)
         if track is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio track not found")
+        self._require_access_for_poi(token, track["poiId"])
         self._repository.record_play_log(track["poiId"], self._lang(language), self._trigger(trigger_type), device_id, duration)
         return {"recorded": True}
 

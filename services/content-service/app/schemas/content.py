@@ -13,6 +13,7 @@ class PoiResponse(BaseModel):
     id: int
     code: str
     name: str
+    address: str | None = None
     latitude: float
     longitude: float
     category: str | None = None

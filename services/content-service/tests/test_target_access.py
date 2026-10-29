@@ -15,6 +15,7 @@ class TargetAccessTests(unittest.TestCase):
         self.service = ContentService(self.repo)
         self.repo.get_public_poi.return_value = {"id": 12}
         self.repo.get_public_tour.return_value = {"id": 5}
+        self.repo.narration_state.return_value = {"published": None, "latest": None}
 
     def test_free_target_issues_scoped_pass(self):
         self.repo.get_target_qr.return_value = {"code": "FREE", "requiresPayment": False}
@@ -34,6 +35,26 @@ class TargetAccessTests(unittest.TestCase):
         self.assertNotIn("accessToken", result)
         self.repo.create_guest_pass.assert_not_called()
         self.repo.create_payment_session.assert_not_called()
+
+    def test_paid_qr_simulation_grants_access_only_after_success(self):
+        self.repo.get_qr_by_code.return_value = {"id": 9, "poiId": 12, "requiresPayment": True, "priceAmount": 50000, "accessDurationMinutes": 30}
+        self.repo.create_guest_pass.return_value = 21
+        self.repo.create_payment_session.return_value = 31
+        started = self.service.start_access("PAID", "test-device")
+        self.assertEqual(started["paymentSessionId"], 31)
+        self.assertIsNone(started["accessToken"])
+        self.repo.record_play_log.assert_not_called()
+
+        self.repo.get_payment_session.return_value = {
+            "sessionStatus": "Pending", "passStatus": "PendingPayment", "passId": 21,
+            "sessionExpiresAt": datetime.utcnow() + timedelta(minutes=10),
+            "accessDurationMinutes": 30, "poiId": 12,
+        }
+        paid = self.service.simulate_payment(31, True)
+        self.assertTrue(paid["accessToken"])
+        self.assertEqual(paid["status"], "Active")
+        self.assertEqual(self.repo.mark_payment_session.call_args.args[:4], (31, 21, "Paid", "Active"))
+        self.assertEqual(self.repo.mark_payment_session.call_args.args[4], self.service._hash_token(paid["accessToken"]))
 
     def test_missing_configuration_does_not_grant_access(self):
         self.repo.get_target_qr.return_value = None
@@ -74,6 +95,24 @@ class TargetAccessTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as caught:
             self.service.stream_audio_info(1, "token")
         self.assertEqual(caught.exception.status_code, 403)
+
+    def test_play_duration_requires_scoped_guest_access(self):
+        self.repo.get_audio_track.return_value = {"poiId": 12}
+        self.service.validate_access = Mock(return_value={"isValid": False})
+        with self.assertRaises(HTTPException) as caught:
+            self.service.record_play(7, "vi", "gps", None, 12, None)
+        self.assertEqual(caught.exception.status_code, 401)
+        self.repo.record_play_log.assert_not_called()
+
+        self.service.validate_access.return_value = {"isValid": True, "poiId": 99}
+        with self.assertRaises(HTTPException) as caught:
+            self.service.record_play(7, "vi", "gps", None, 12, "other-poi")
+        self.assertEqual(caught.exception.status_code, 403)
+        self.repo.record_play_log.assert_not_called()
+
+        self.service.validate_access.return_value = {"isValid": True, "poiId": 12}
+        self.assertEqual(self.service.record_play(7, "vi", "gps", None, 12, "valid"), {"recorded": True})
+        self.repo.record_play_log.assert_called_once_with(12, "vi", "gps", None, 12)
 
     def test_request_rejects_invalid_targets(self):
         for payload in ({"targetType": "admin", "targetId": 1}, {"targetType": "poi", "targetId": 0}, {}):

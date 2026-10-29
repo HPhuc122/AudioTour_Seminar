@@ -50,7 +50,7 @@ export function NarrationProvider({ children }: { children: ReactNode }) {
           speechSynthesis.speak(utterance);
         });
       }
-      if (played) { try { if (track.isAvailable) await api.playLog(track.audioTrackId || track.id, entry.language, entry.trigger, seconds); else await api.ttsLog(entry.id, entry.language, entry.trigger, seconds, entry.token); } catch { if (run === version.current) setError('Đã phát, nhưng chưa gửi được nhật ký lượt nghe.'); } }
+      if (played && seconds >= 1) { try { if (track.isAvailable) await api.playLog(track.audioTrackId || track.id, entry.language, entry.trigger, seconds, entry.token); else await api.ttsLog(entry.id, entry.language, entry.trigger, seconds, entry.token); } catch { if (run === version.current) setError('Đã phát, nhưng chưa gửi được nhật ký lượt nghe.'); } }
     } catch (e) { if (run === version.current) setError(e instanceof Error ? e.message : 'Không phát được thuyết minh.'); }
     finally { if (objectUrl) URL.revokeObjectURL(objectUrl); if (run === version.current) { audio.current = null; speaking.current = null; running.current = false; activeId.current = undefined; setPlaying(false); setBusy(false); setCurrent(null); void pump.current(); } }
   };

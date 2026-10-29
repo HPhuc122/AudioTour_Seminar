@@ -4,6 +4,9 @@ services:
       context: ../services/auth-service
     env_file:
       - ../.env
+    environment:
+      SQLSERVER_HOST: host.docker.internal
+      SQLSERVER_USE_WINDOWS_AUTH: "false"
     ports:
       - "${AUTH_SERVICE_PORT:-8001}:8000"
 
@@ -13,8 +16,13 @@ services:
     env_file:
       - ../.env
     environment:
+      SQLSERVER_HOST: host.docker.internal
+      SQLSERVER_USE_WINDOWS_AUTH: "false"
+      MEDIA_ROOT: /app
       ADMIN_TRANSLATION_URL: http://narration-service:8000/translate
       ADMIN_TTS_URL: http://narration-service:8000/tts
+    volumes:
+      - ../services/content-service/uploads:/app/uploads
     ports:
       - "${CONTENT_SERVICE_PORT:-8002}:8000"
 

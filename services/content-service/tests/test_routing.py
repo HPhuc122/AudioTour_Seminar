@@ -83,7 +83,8 @@ class RoutingTests(unittest.TestCase):
 
     def test_tour_keeps_stop_order(self):
         repo = Mock()
-        repo.get_public_tour.return_value = {"pois": [{**self.points[1], "orderIndex": 2}, {**self.points[0], "orderIndex": 1}]}
+        repo.get_public_tour.return_value = {"pois": [{**self.points[1], "id": 2, "orderIndex": 2}, {**self.points[0], "id": 1, "orderIndex": 1}]}
+        repo.narration_state.return_value = {"published": None, "latest": None}
         with patch.object(RoutingService, "calculate", return_value={"latLngs": []}) as calculate:
             ContentService(repo).route_tour(5, "walking")
             self.assertEqual([p["orderIndex"] for p in calculate.call_args.args[0]], [1, 2])

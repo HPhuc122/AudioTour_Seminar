@@ -1,10 +1,10 @@
 import { useTranslator } from "./i18n"
 import { useEffect, useRef, useState } from "react"
-import { ActivityIndicator, AppState, Button, StyleSheet, Text, View } from "react-native"
+import { ActivityIndicator, Alert, AppState, Button, StyleSheet, Text, View } from "react-native"
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio"
 import Slider from "@react-native-community/slider"
-import { ApiError, audioTourApi, type PublicTargetDetail } from "./api"
-import { loadPaidAccessSession } from "./paidAccessStore"
+import { ApiError, audioTourApi, type AccessPackage, type PublicTargetDetail } from "./api"
+import { loadPaidAccessSession, savePaidAccessSession } from "./paidAccessStore"
 
 type Track = NonNullable<PublicTargetDetail["audioTracks"]>[number]
 type Session = {
@@ -17,10 +17,14 @@ const time = (seconds: number) =>
 function Player({
   token,
   track,
+  languageCode,
+  triggerType,
   onRetry,
 }: {
   token: string
   track: Track
+  languageCode: string
+  triggerType: "qr" | "gps" | "manual"
   onRetry: () => void
 }) {
   const t = useTranslator()
@@ -36,14 +40,31 @@ function Player({
   const [seeking, setSeeking] = useState(false)
   const [preview, setPreview] = useState<number | null>(null)
   const [controlError, setControlError] = useState<string | null>(null)
+  const listenedMs = useRef(0)
+  const lastTickMs = useRef<number | null>(null)
+  const wasPlaying = useRef(false)
   const duration = Math.max(0, status.duration || track.durationSeconds || 0)
   const position = Math.min(duration, Math.max(0, preview ?? status.currentTime))
   const finished = status.didJustFinish || (duration > 0 && status.currentTime >= duration)
   const disabled = !status.isLoaded || Boolean(status.error) || seeking
   useEffect(() => {
     mounted.current = true
-    return () => { mounted.current = false }
+    return () => {
+      mounted.current = false
+      if (wasPlaying.current && lastTickMs.current !== null && AppState.currentState === "active")
+        listenedMs.current += Math.min(1000, Math.max(0, Date.now() - lastTickMs.current))
+      const listenedSeconds = Math.floor(listenedMs.current / 1000)
+      if (listenedSeconds > 0)
+        void audioTourApi.recordPlay(track.audioTrackId, languageCode, triggerType, listenedSeconds, token).catch(() => {})
+    }
   }, [])
+  useEffect(() => {
+    const now = Date.now()
+    if (wasPlaying.current && lastTickMs.current !== null)
+      listenedMs.current += Math.min(2000, Math.max(0, now - lastTickMs.current))
+    lastTickMs.current = now
+    wasPlaying.current = status.playing && status.isLoaded && !status.isBuffering && !status.error && !seekingRef.current && AppState.currentState === "active"
+  }, [status.currentTime, status.playing, status.isLoaded, status.isBuffering, status.error])
   useEffect(() => {
     if (status.isLoaded && !status.error && !started.current && AppState.currentState === "active") {
       started.current = true
@@ -122,16 +143,20 @@ export function DetailAudio({
   languageCode,
   qrCode,
   autoStart = false,
+  triggerType = "manual",
   requiresPayment = false,
   onScan,
+  onPackagePurchased,
 }: {
   detail: PublicTargetDetail
   kind: "poi" | "tour"
   languageCode: string
   qrCode?: string
   autoStart?: boolean
+  triggerType?: "qr" | "gps" | "manual"
   requiresPayment?: boolean
   onScan: () => void
+  onPackagePurchased: (expiresAt: string) => void
 }) {
   const t = useTranslator()
 
@@ -139,9 +164,14 @@ export function DetailAudio({
   const [trackIndex, setTrackIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [purchaseNotice, setPurchaseNotice] = useState<string | null>(null)
   const [locked, setLocked] = useState(requiresPayment)
+  const [accessPackage, setAccessPackage] = useState<AccessPackage | null>(null)
+  const [hasActivePackage, setHasActivePackage] = useState(false)
+  const [purchaseLoading, setPurchaseLoading] = useState(false)
   const startRequest = useRef(0)
   const busy = useRef(false)
+  const buying = useRef(false)
   const mounted = useRef(true)
   const autoRequested = useRef(false)
   const publicTracks =
@@ -149,6 +179,34 @@ export function DetailAudio({
       ? detail.audioTracks
       : detail.pois?.flatMap((poi) => poi.audioTracks ?? [])
   const hasTracks = publicTracks?.some((track) => track.isAvailable)
+
+  useEffect(() => {
+    let current = true
+    void (async () => {
+      try {
+        const packages = await audioTourApi.listAccessPackages()
+        const globalPackage = packages.find(
+          (item) => item.requiresPayment && item.poiId === null && item.tourId === null,
+        )
+        if (current) {
+          setAccessPackage(globalPackage ?? null)
+          setLocked(requiresPayment || Boolean(globalPackage))
+        }
+        const saved = await loadPaidAccessSession()
+        if (saved) {
+          const validation = await audioTourApi.validateGuestAccess(saved.accessToken)
+          if (current && validation.isValid) {
+            setHasActivePackage(true)
+            setLocked(false)
+          }
+        }
+      } catch (reason) {
+        if (current)
+          setError(reason instanceof Error ? reason.message : t("Không thể tải gói truy cập."))
+      }
+    })()
+    return () => { current = false }
+  }, [requiresPayment, t])
 
   useEffect(() => {
     mounted.current = true
@@ -168,7 +226,7 @@ export function DetailAudio({
     }
   }, [])
 
-  async function start(automatic = false) {
+  async function start() {
     if (busy.current || AppState.currentState !== "active") return
     const request = ++startRequest.current
     const isCurrent = () => mounted.current && request === startRequest.current && AppState.currentState === "active"
@@ -206,7 +264,6 @@ export function DetailAudio({
         if (qrCode && requiresPayment) {
           if (isCurrent()) {
             setLocked(true)
-            if (!automatic) onScan()
           }
           return
         }
@@ -216,7 +273,6 @@ export function DetailAudio({
         if (access.requiresPayment) {
           if (isCurrent()) {
             setLocked(true)
-            onScan()
           }
           return
         }
@@ -250,10 +306,52 @@ export function DetailAudio({
     }
   }
 
+  async function completePackagePurchase() {
+    if (!accessPackage || buying.current) return
+    buying.current = true
+    setPurchaseLoading(true)
+    setError(null)
+    try {
+      const started = await audioTourApi.startGuestAccess(accessPackage.code)
+      if (!started.requiresPayment || !started.paymentSessionId)
+        throw new Error(t("Gói không tạo được phiên thanh toán mô phỏng."))
+      const payment = await audioTourApi.simulatePayment(started.paymentSessionId)
+      if (!payment.accessToken || !payment.expiresAt)
+        throw new Error(t("Thanh toán mô phỏng chưa hoàn tất."))
+      await savePaidAccessSession({ accessToken: payment.accessToken, expiresAt: payment.expiresAt })
+      onPackagePurchased(payment.expiresAt)
+      setHasActivePackage(true)
+      setLocked(false)
+      setPurchaseNotice(
+        hasTracks
+          ? t("Gói đã mở khóa. Nhấn Phát audio khi bạn sẵn sàng.")
+          : t("Đã mua gói mô phỏng. Audio chưa có sẵn trong dữ liệu demo."),
+      )
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t("Không thể mua gói mô phỏng."))
+    } finally {
+      buying.current = false
+      setPurchaseLoading(false)
+    }
+  }
+
+  function confirmPackagePurchase() {
+    if (!accessPackage || purchaseLoading) return
+    const price = new Intl.NumberFormat("vi-VN").format(accessPackage.priceAmount)
+    Alert.alert(
+      t("Mua gói toàn bộ POI"),
+      `${accessPackage.name}\n${price} VND · ${t("{0} phút", accessPackage.accessDurationMinutes)}\n${t("Đây là thanh toán mô phỏng; không thu tiền thật.")}`,
+      [
+        { text: t("Hủy"), style: "cancel" },
+        { text: t("Xác nhận mua mô phỏng"), onPress: () => void completePackagePurchase() },
+      ],
+    )
+  }
+
   useEffect(() => {
     if (autoStart && hasTracks && !autoRequested.current) {
       autoRequested.current = true
-      void start(true)
+      void start()
     }
   }, [autoStart, hasTracks])
 
@@ -271,6 +369,8 @@ export function DetailAudio({
                 key={`${session.accessToken}:${trackIndex}`}
                 token={session.accessToken}
                 track={session.tracks[trackIndex]}
+                languageCode={languageCode}
+                triggerType={triggerType}
                 onRetry={() => void start()}
               />
               {kind === "tour" && (
@@ -300,7 +400,7 @@ export function DetailAudio({
             <>
               <Text style={styles.text}>
                 {locked
-                  ? t("Audio trả phí cần quyền nghe hợp lệ. Quét QR tại điểm tham quan để mở quyền nghe.")
+                  ? t("Audio cần gói truy cập. Mua gói để mở khóa toàn bộ POI trong 60 phút.")
                   : t("Bấm phát để nghe thuyết minh.")}
               </Text>
               <Button
@@ -314,17 +414,26 @@ export function DetailAudio({
                 }
                 onPress={() => void start()}
               />
-              {locked && <Button title={t("Quét QR")} onPress={onScan} />}
+              {locked && <Button title={t("Quét QR khác")} onPress={onScan} />}
             </>
           )}
           {loading && <ActivityIndicator color="#15803D" />}
-          {error && (
-            <Text accessibilityRole="alert" style={styles.error}>
-              {t(error)}
-            </Text>
-          )}
         </>
       )}
+      {accessPackage && !hasActivePackage && (
+        <View style={styles.packageBox}>
+          <Text style={styles.text}>{t("Một gói mở khóa audio của toàn bộ POI và Tour trong thời hạn gói.")}</Text>
+          <Button
+            disabled={purchaseLoading || loading}
+            title={purchaseLoading ? t("Đang xử lý thanh toán mô phỏng…") : `${t("Mua gói toàn bộ POI")} · ${new Intl.NumberFormat("vi-VN").format(accessPackage.priceAmount)} VND / ${t("{0} phút", accessPackage.accessDurationMinutes)}`}
+            onPress={confirmPackagePurchase}
+          />
+        </View>
+      )}
+      {hasActivePackage && <Text style={styles.text}>{t("Gói truy cập toàn bộ POI đang hoạt động.")}</Text>}
+      {purchaseNotice && <Text style={styles.text}>{purchaseNotice}</Text>}
+      {purchaseLoading && <ActivityIndicator color="#15803D" />}
+      {error && <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>}
     </View>
   )
 }
@@ -340,6 +449,7 @@ const styles = StyleSheet.create({
     padding: 18,
     marginTop: 20,
   },
+  packageBox: { gap: 8, marginTop: 12 },
   title: { color: "#173B2A", fontSize: 17, fontWeight: "700" },
   text: { color: "#456253", lineHeight: 22, marginVertical: 12 },
   error: { color: "#B42318", marginTop: 12 },

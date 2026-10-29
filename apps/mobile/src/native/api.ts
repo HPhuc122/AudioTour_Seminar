@@ -16,6 +16,30 @@ export type GuestAccessResult = {
   expiresAt?: string
 
   accessDurationMinutes: number
+
+  paymentSessionId?: number
+
+  amount?: number
+
+  currency?: string
+}
+
+export type AccessPackage = {
+  code: string
+  name: string
+  poiId: number | null
+  tourId: number | null
+  requiresPayment: boolean
+  priceAmount: number
+  accessDurationMinutes: number
+}
+
+export type SimulatedPaymentResult = {
+  status: string
+  accessToken?: string
+  expiresAt?: string
+  poiId?: number | null
+  tourId?: number | null
 }
 
 export type ApiLanguage = {
@@ -231,6 +255,16 @@ export const audioTourApi = {
       method: "POST",
     }),
 
+  listAccessPackages: () =>
+    request<AccessPackage[]>("/api/v1/public/packages"),
+
+  simulatePayment: (paymentSessionId: number) =>
+    request<SimulatedPaymentResult>("/api/v1/public/access/simulate-payment", {
+      body: JSON.stringify({ paymentSessionId, success: true }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }),
+
   getAudioPoi: (
     id: number,
     languageCode: string,
@@ -253,6 +287,11 @@ export const audioTourApi = {
 
     uri: `${getBaseUrl()}/api/v1/public/audio/${audioTrackId}`,
   }),
+  recordPlay: (audioTrackId: number, languageCode: string, triggerType: "qr" | "gps" | "manual", durationPlayedSeconds: number, accessToken: string) =>
+    request<{ recorded: boolean }>(
+      `/api/v1/public/audio/${audioTrackId}/play-log?languageCode=${encodeURIComponent(languageCode)}&triggerType=${triggerType}&durationPlayedSeconds=${Math.floor(durationPlayedSeconds)}`,
+      { method: "POST", headers: { "X-Guest-Access-Token": accessToken } },
+    ),
   validateGuestAccess: (accessToken: string) =>
     request<{
       isValid: boolean

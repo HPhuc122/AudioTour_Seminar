@@ -93,10 +93,11 @@ def record_play(
     audio_track_id: int,
     language_code: str = Query(default="vi", alias="languageCode"),
     trigger_type: str = Query(default="manual", alias="triggerType"),
-    duration: int | None = Query(default=None, alias="durationPlayedSeconds"),
+    duration: int = Query(ge=1, le=86400, alias="durationPlayedSeconds"),
     device_id: str | None = Header(default=None, alias="X-Guest-Device-Id"),
+    guest_token: str | None = Header(default=None, alias="X-Guest-Access-Token"),
 ):
-    return ok(service.record_play(audio_track_id, language_code, trigger_type, device_id, duration), "Audio play recorded")
+    return ok(service.record_play(audio_track_id, language_code, trigger_type, device_id, duration, guest_token), "Audio play recorded")
 
 
 @router.get("/api/v1/public/media/images/{media_file_id}")

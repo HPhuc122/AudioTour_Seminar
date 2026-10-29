@@ -1,14 +1,16 @@
 # Tích hợp Mobile, Web và database AudioTour
 
+> **Phạm vi mới:** tài liệu này còn ghi lại một đợt tích hợp/test với database cũ. Không dùng dữ liệu hoặc lệnh import SQL Server cũ làm database đích. Bộ demo hiện tại tạo database SQL Server local `AudioTourVinhKhanh` từ baseline và seed riêng; `apps/VinhHyAudioTourDB.sql` chỉ được giữ làm tài liệu tham khảo.
+
 ## Kiến trúc và tương thích
 
-Mobile React Native là giao diện khách; Web React.js là CMS. Cả hai gọi Gateway FastAPI, Gateway chuyển tiếp Auth/Content service và cùng sử dụng SQL Server `VinhHyAudioTourDB`. Web không đọc file SQL trực tiếp. Chế độ xem thử dùng dữ liệu mẫu; đăng nhập mới quản lý dữ liệu thật.
+Mobile React Native là giao diện khách; Web React.js là CMS. Web gọi Gateway FastAPI; Expo hiện gọi Content Service trực tiếp cho API nội dung. Auth/Content service cùng dùng database SQL Server local. Web/Mobile không đọc file SQL trực tiếp.
 
-Đã đối chiếu endpoint trong `apps/mobile/src/native/api.ts`, không sửa Mobile. Giữ đường dẫn, query `lang`, `languageCode`, `pageSize`, `name`, envelope và field cũ. Bổ sung URL media, ngôn ngữ, bán kính/thứ tự trong điểm dừng. Nội dung chưa duyệt trả 404/không có trong danh sách theo chính sách công khai mới.
+Các endpoint trong `apps/mobile/src/native/api.ts` giữ đường dẫn, query `lang`, `languageCode`, `pageSize`, `name`, envelope và field tương thích. API bổ sung URL media, ngôn ngữ, bán kính/thứ tự trong điểm dừng. Nội dung chưa duyệt trả 404/không có trong danh sách theo chính sách công khai mới.
 
-## Database và media cục bộ
+## Database legacy và media của đợt test cũ
 
-File gốc `apps/VinhHyAudioTourDB.sql` (UTF-16) có schema và seed cũ, không chứa file ảnh/audio. Lệnh CREATE DATABASE của dump chứa đường dẫn MDF tuyệt đối của máy cũ. File gốc giữ nguyên; `scripts/prepare_database.py` tạo bản import portable và từ chối ghi đè DB có sẵn.
+File gốc `apps/VinhHyAudioTourDB.sql` (UTF-16) có schema và seed cũ, không chứa file ảnh/audio. Lệnh CREATE DATABASE của dump chứa đường dẫn MDF tuyệt đối của máy cũ. File gốc giữ nguyên để tham khảo; import data cũ đã bị ngắt khỏi quy trình cài mới.
 
 Đã import SQL Server `localhost`, áp dụng `infra/sql/001_scope_and_review.sql` và `002_narration_publication.sql`. `.env` tại root dùng Windows Authentication, JWT secret chung Auth/Content, MEDIA_ROOT trỏ đến thư mục `services/content-service` bằng đường dẫn tuyệt đối. `.env` được Git bỏ qua. Backend đọc `.env` root độc lập thư mục chạy. Docker dùng SQL Authentication, `SQLSERVER_HOST=host.docker.internal`, `SQLSERVER_USE_WINDOWS_AUTH=false`, mount media và đặt MEDIA_ROOT theo đường dẫn container.
 
@@ -29,8 +31,8 @@ Migration giữ các POI/Media/Narration có trạng thái đã duyệt, không 
 ## Kết nối
 
 - Gateway `http://localhost:8000`; Web dev `http://localhost:5173`, proxy `/api` sang Gateway.
-- Điện thoại thật: nhóm Mobile cấu hình `EXPO_PUBLIC_API_BASE_URL=http://<IPv4 máy Backend>:8000`, cùng mạng và truy cập được cổng 8000.
-- Android emulator có thể dùng `http://10.0.2.2:8000`.
+- Điện thoại thật: Expo hiện gọi Content Service trực tiếp tại cổng `8002`. Chạy `npm start` trong `apps/mobile`; script LAN tự chọn IPv4 máy Backend và truyền `EXPO_PUBLIC_API_BASE_URL` cho tiến trình Expo. Điện thoại và máy Backend cần cùng mạng và truy cập được cổng 8002.
+- Android emulator có thể dùng `http://10.0.2.2:8002` cho Content Service.
 - `PUBLIC_API_BASE_URL` quyết định URL bổ sung trong JSON. Để trống thì URL dạng `/api/v1/...`, ghép với Gateway base URL. Mobile hiện dựng URL từ ID nên vẫn tương thích.
 - Web/Mobile không kết nối trực tiếp SQL Server.
 
@@ -95,15 +97,11 @@ CRUD và các API duyệt cũ giữ đường dẫn, bổ sung scope/submission.
 
 ## Chạy và kiểm thử
 
+Không chạy `scripts/prepare_database.py` để nhập database cũ. Tạo database local mới theo `docs/guides/local-database-bootstrap.md`; script chỉ nạp schema và seed Vĩnh Khánh, không xóa `VinhHyAudioTourDB`.
+
 Từ root, dùng `python` thông thường hoặc `.tooling/python/python.exe` portable:
 
 ```powershell
-python scripts/prepare_database.py
-# Chỉ import trên DB mới; từ chối ghi đè:
-sqlcmd -S localhost -E -C -b -f 65001 -i .tooling/import-audiotour.sql
-sqlcmd -S localhost -E -C -b -d VinhHyAudioTourDB -i infra/sql/001_scope_and_review.sql
-sqlcmd -S localhost -E -C -b -d VinhHyAudioTourDB -i infra/sql/002_narration_publication.sql
-python scripts/check_database.py
 # Ba terminal:
 python scripts/serve.py auth
 python scripts/serve.py content

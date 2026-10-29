@@ -14,10 +14,13 @@ except Exception:
 class Settings:
     sqlserver_host: str = os.getenv("SQLSERVER_HOST", "localhost")
     sqlserver_port: int = int(os.getenv("SQLSERVER_PORT", "1433"))
-    sqlserver_database: str = os.getenv("SQLSERVER_DATABASE", "VinhHyAudioTourDB")
+    sqlserver_database: str = os.getenv("SQLSERVER_DATABASE", "AudioTourVinhKhanh")
     sqlserver_user: str = os.getenv("SQLSERVER_USER", "sa")
     sqlserver_password: str = os.getenv("SQLSERVER_PASSWORD", "")
     use_windows_auth: bool = os.getenv("SQLSERVER_USE_WINDOWS_AUTH", "false").lower() in {"1", "true", "yes"}
+    sqlserver_odbc_driver: str = os.getenv("SQLSERVER_ODBC_DRIVER", "")
+    sqlserver_encrypt: bool = os.getenv("SQLSERVER_ENCRYPT", "true").lower() in {"1", "true", "yes"}
+    sqlserver_trust_server_certificate: bool = os.getenv("SQLSERVER_TRUST_SERVER_CERTIFICATE", "true").lower() in {"1", "true", "yes"}
     jwt_secret: str = os.getenv("JWT_SECRET", "replace-this-development-secret")
 
 

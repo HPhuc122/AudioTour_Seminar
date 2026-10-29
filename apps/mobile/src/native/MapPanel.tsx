@@ -7,6 +7,7 @@ import * as Location from "expo-location";
 import { audioTourApi, type MapPoint, type MapRoute, type PublicPoiSummary, type PublicTargetDetail, type TravelMode } from "./api";
 import { DetailAudio } from "./DetailAudio";
 import { MAP_HTML } from "./mapHtml";
+import { nearestPoiWithinRadius } from "./proximity";
 export type MapTarget = {
     kind: "poi" | "tour";
     detail: PublicTargetDetail;
@@ -19,7 +20,11 @@ type Props = {
     languageCode: string;
     target: MapTarget | null;
     onScan: () => void;
+    onPackagePurchased: (expiresAt: string) => void;
     onDetail: (id: number) => void;
+    nearbyEnabled: boolean;
+    onNearbyToggle: (enabled: boolean) => void;
+    onNearbyPoi: (id: number) => void;
 };
 const validPoint = (point: {
     latitude?: number;
@@ -27,7 +32,7 @@ const validPoint = (point: {
 }): point is MapPoint => Number.isFinite(point.latitude) && Number.isFinite(point.longitude) && Math.abs(point.latitude!) <= 90 && Math.abs(point.longitude!) <= 180;
 const distance = (meters: number) => meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
 const duration = (seconds: number, t: Translator) => { const mins = Math.max(1, Math.ceil(seconds / 60)); return mins < 60 ? t("{0} phút", mins) : t("{0} giờ {1} phút", Math.floor(mins / 60), mins % 60); };
-export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props) {
+export function MapPanel({ pois, languageCode, target, onScan, onPackagePurchased, onDetail, nearbyEnabled, onNearbyToggle, onNearbyPoi }: Props) {
   const t = useTranslator()
 
     const web = useRef<WebView>(null);
@@ -54,10 +59,23 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
     const [routing, setRouting] = useState(false);
     const [tour, setTour] = useState<PublicTargetDetail | null>(target?.kind === "tour" ? target.detail : null);
     const [selected, setSelected] = useState<PublicTargetDetail | null>(null);
+    const selectedRef = useRef(selected);
+    selectedRef.current = selected;
     const [loadingPoi, setLoadingPoi] = useState(false);
     const [focus, setFocus] = useState<MapPoint[]>(target?.kind === "poi" && validPoint(target.detail) ? [target.detail] : []);
     const [fitKey, setFitKey] = useState(0);
     const mapPois = useMemo(() => pois.filter((poi): poi is PublicPoiSummary & MapPoint => validPoint(poi)), [pois]);
+    const mapPoisRef = useRef(mapPois);
+    mapPoisRef.current = mapPois;
+    const nearbyEnabledRef = useRef(nearbyEnabled);
+    nearbyEnabledRef.current = nearbyEnabled;
+    const onNearbyPoiRef = useRef(onNearbyPoi);
+    onNearbyPoiRef.current = onNearbyPoi;
+    function notifyNearby(point: MapPoint & { accuracy: number }, monitor: boolean) {
+        if (!monitor || !nearbyEnabledRef.current || selectedRef.current || AppState.currentState !== "active") return;
+        const nearest = nearestPoiWithinRadius(mapPoisRef.current, point);
+        if (nearest) onNearbyPoiRef.current(nearest.id);
+    }
     function clearRoute() { routeRequest.current++; setRoute(null); setRouting(false); setError(null); }
     function choose(which: "from" | "to", point: Endpoint) {
         clearRoute();
@@ -82,7 +100,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
         if (!otherPoint)
             setPicker(other);
     }
-    async function locate(endpoint?: "from" | "to") {
+    async function locate(endpoint?: "from" | "to", monitor = nearbyEnabled) {
         const request = ++locationRequest.current;
         setLocating(true);
         setLocationError(null);
@@ -102,6 +120,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
                 return;
             const point = { latitude: result.coords.latitude, longitude: result.coords.longitude, accuracy: result.coords.accuracy ?? 0 };
             setLocation(point);
+            notifyNearby(point, monitor);
             if (endpoint)
                 choose(endpoint, { ...point, label: t("Vị trí hiện tại") });
             else {
@@ -110,8 +129,11 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
             }
             subscription.current?.remove();
             const watcher = await Location.watchPositionAsync({ accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 10000 }, (next) => {
-                if (mounted.current && AppState.currentState === "active")
-                    setLocation({ latitude: next.coords.latitude, longitude: next.coords.longitude, accuracy: next.coords.accuracy ?? 0 });
+                if (mounted.current && AppState.currentState === "active") {
+                    const point = { latitude: next.coords.latitude, longitude: next.coords.longitude, accuracy: next.coords.accuracy ?? 0 };
+                    setLocation(point);
+                    notifyNearby(point, monitor);
+                }
             });
             if (!mounted.current || request !== locationRequest.current || AppState.currentState !== "active")
                 watcher.remove();
@@ -121,6 +143,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
         catch (reason) {
             if (mounted.current && request === locationRequest.current)
                 setLocationError(reason instanceof Error ? reason.message : t("Không lấy được vị trí. Vui lòng thử lại."));
+            if (monitor && mounted.current && request === locationRequest.current) onNearbyToggle(false);
         }
         finally {
             if (mounted.current && request === locationRequest.current)
@@ -136,9 +159,12 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
                 subscription.current = null;
                 setLocating(false);
             }
+            if (state === "active" && nearbyEnabledRef.current && !subscription.current)
+                void locate(undefined, true);
         });
         return () => { mounted.current = false; routeRequest.current++; detailRequest.current++; locationRequest.current++; subscription.current?.remove(); listener.remove(); };
     }, []);
+    useEffect(() => { if (nearbyEnabled) void locate(undefined, true); }, [nearbyEnabled]);
     async function calculate(tourDetail = tour, travelMode = mode) {
         const request = ++routeRequest.current;
         setRoute(null);
@@ -207,7 +233,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
       <View style={styles.row}>{(["walking", "driving"] as TravelMode[]).map((value) => <Pressable accessibilityRole="button" accessibilityState={{ selected: mode === value }} key={value} style={[styles.mode, mode === value && styles.active]} onPress={() => { if (mode !== value) {
         clearRoute();
         setMode(value);
-    } }}><Text style={styles.modeText}>{value === "walking" ? t("Đi bộ") : t("Ô tô")}</Text></Pressable>)}<Button title={locating ? t("Đang định vị…") : t("Vị trí tôi")} disabled={locating} onPress={() => void locate()}/></View>
+    } }}><Text style={styles.modeText}>{value === "walking" ? t("Đi bộ") : t("Ô tô")}</Text></Pressable>)}<Button title={locating ? t("Đang định vị…") : t("Vị trí tôi")} disabled={locating} onPress={() => void locate()}/><Button title={t(nearbyEnabled ? "Tắt tự phát gần POI" : "Tự phát gần POI")} onPress={() => onNearbyToggle(!nearbyEnabled)}/></View>
       {tour ? <View style={styles.row}><Text style={styles.tourName} numberOfLines={2}>{t("Tour: {0}", tour.name)}</Text><Button title={t("Đổi tuyến")} onPress={() => { clearRoute(); setTour(null); }}/></View> : <View style={styles.row}>
         <Pressable accessibilityRole="button" onPress={() => setPicker("from")} style={styles.endpoint}><Text numberOfLines={1}>A · {from?.label ?? t("Chọn điểm đi")}</Text></Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel={t("Đảo điểm đi và đến")} onPress={() => { clearRoute(); setFrom(to); setTo(from); }} style={styles.swap}><Text>⇄</Text></Pressable>
@@ -252,7 +278,7 @@ export function MapPanel({ pois, languageCode, target, onScan, onDetail }: Props
         <View style={styles.poiAction}><Button title={t("Điểm bắt đầu")} disabled={!validPoint(selected)} onPress={() => chooseSelectedPoi("from")}/></View>
         <View style={styles.poiAction}><Button title={t("Điểm đến")} disabled={!validPoint(selected)} onPress={() => chooseSelectedPoi("to")}/></View>
       </View>
-      <DetailAudio key={`${selected.id}:${languageCode}`} detail={selected} kind="poi" languageCode={languageCode} autoStart onScan={onScan}/>
+      <DetailAudio key={`${selected.id}:${languageCode}`} detail={selected} kind="poi" languageCode={languageCode} onScan={onScan} onPackagePurchased={onPackagePurchased}/>
     </ScrollView>}
     <Modal visible={picker !== null} animationType="slide" onRequestClose={() => setPicker(null)}><SafeAreaView style={styles.modal}>
       <Text style={styles.title}>{picker === "from" ? t("Chọn điểm đi A") : t("Chọn điểm đến B")}</Text>

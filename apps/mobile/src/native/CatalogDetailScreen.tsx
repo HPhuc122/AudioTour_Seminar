@@ -10,7 +10,9 @@ type Props = {
   languageCode: string
   qrCode?: string
   autoStart?: boolean
+  triggerType?: "qr" | "gps" | "manual"
   requiresPayment?: boolean
+  onPackagePurchased: (expiresAt: string) => void
   onScan: () => void
   onBack: () => void
   onMap: () => void
@@ -21,7 +23,9 @@ export function CatalogDetailScreen({
   languageCode,
   qrCode,
   autoStart,
+  triggerType,
   requiresPayment,
+  onPackagePurchased,
   onScan,
   onBack,
   onMap,
@@ -46,7 +50,9 @@ export function CatalogDetailScreen({
         languageCode={languageCode}
         qrCode={qrCode}
         autoStart={autoStart}
+        triggerType={triggerType}
         requiresPayment={requiresPayment}
+        onPackagePurchased={onPackagePurchased}
         onScan={onScan}
       />
       <Text style={styles.description}>

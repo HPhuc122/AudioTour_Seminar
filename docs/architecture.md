@@ -1,6 +1,6 @@
 # AudioTour Architecture
 
-AudioTour uses a monorepo layout with React web and React Native mobile clients, shared TypeScript packages, and independently deployable Python services. Persistent server-side data is stored in Microsoft SQL Server.
+AudioTour uses a monorepo layout with React web and React Native mobile clients, shared TypeScript packages, and independently deployable Python services. The Vĩnh Khánh demo uses a fresh local SQL Server database and local media files; each developer seeds their own copy from the repository.
 
 ## Services
 
@@ -11,8 +11,8 @@ AudioTour uses a monorepo layout with React web and React Native mobile clients,
 
 ## Layering
 
-Each service follows `api -> services -> repositories -> SQL Server`. Routes validate and map requests; services own business rules; repositories are the only layer that queries or writes the database. `schemas`, `models`, and `core` hold DTOs, entities, and shared configuration.
+Each service follows `api -> services -> repositories -> local SQL Server`. Routes validate and map requests; services own business rules; repositories are the only layer that queries or writes the database. `schemas`, `models`, and `core` hold DTOs, entities, and shared configuration.
 
 ## Data layer
 
-Use `SQLSERVER_*` values from `.env`; never commit a real SQL Server password. See `docs/api-contracts/legacy-api-migration.md` for legacy contract mapping.
+Use `SQLSERVER_*` values from a local ignored `.env`; never commit credentials. Create `AudioTourVinhKhanh` with `scripts/initialize_local_database.py`, which applies the new schema-only baseline, project migrations, and Vĩnh Khánh seed. It never imports data from `apps/VinhHyAudioTourDB.sql`. Media lives under `services/content-service/uploads`; only the intentionally versioned demo assets are in Git.

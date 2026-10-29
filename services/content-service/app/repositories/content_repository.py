@@ -78,6 +78,7 @@ class ContentRepository:
         query = f"""
         SELECT p.Id AS id, p.Code AS code,
                COALESCE(pt.Name, ptvi.Name, p.Name, p.Code) AS name,
+               p.Address AS address,
                COALESCE(pt.ShortDescription, ptvi.ShortDescription, p.ShortDescription) AS shortDescription,
                COALESCE(pt.Description, ptvi.Description, p.Description) AS narrationText,
                p.Latitude AS latitude, p.Longitude AS longitude, p.ImageUrl AS imageUrl,
@@ -122,6 +123,7 @@ class ContentRepository:
         query = f"""
         SELECT p.Id AS id, p.Code AS code,
                COALESCE(pt.Name, ptvi.Name, p.Name, p.Code) AS name,
+               p.Address AS address,
                COALESCE(pt.ShortDescription, ptvi.ShortDescription, p.ShortDescription) AS shortDescription,
                COALESCE(pt.Description, ptvi.Description, p.Description) AS description,
                p.Latitude AS latitude, p.Longitude AS longitude, p.RadiusMeters AS radiusMeters,
@@ -146,6 +148,7 @@ class ContentRepository:
         query = f"""
         SELECT p.Id AS id, p.Code AS code,
                COALESCE(pt.Name, ptvi.Name, p.Name, p.Code) AS name,
+               p.Address AS address,
                COALESCE(pt.ShortDescription, ptvi.ShortDescription, p.ShortDescription) AS shortDescription,
                COALESCE(pt.Description, ptvi.Description, p.Description) AS description,
                p.Latitude AS latitude, p.Longitude AS longitude, p.RadiusMeters AS radiusMeters,
@@ -243,21 +246,23 @@ class ContentRepository:
         return self._fetchone(query, (code,))
 
     def get_target_qr(self, target_type: str, target_id: int) -> dict | None:
-        # Only exact targets qualify; a tour QR must not also resolve to a POI.
+        # Prefer a target-specific QR; a global package is the fallback for every target.
         target_filter = "PoiId = %s" if target_type == "poi" else "TourId = %s AND PoiId IS NULL"
         return self._fetchone(f"""
             SELECT TOP 1 Code AS code, RequiresPayment AS requiresPayment
             FROM QRLocations
-            WHERE {target_filter} AND IsActive = 1 AND DeletedAt IS NULL
-            ORDER BY RequiresPayment ASC, Id ASC
-        """, (target_id,))
+            WHERE ({target_filter} OR (PoiId IS NULL AND TourId IS NULL))
+              AND IsActive = 1 AND DeletedAt IS NULL
+            ORDER BY CASE WHEN {target_filter} THEN 0 ELSE 1 END, RequiresPayment ASC, Id ASC
+        """, (target_id, target_id))
 
     def list_public_packages(self) -> list[dict]:
         query = f"""
-        SELECT Code AS code, Name AS name, RequiresPayment AS requiresPayment,
+        SELECT Code AS code, Name AS name, PoiId AS poiId, TourId AS tourId,
+               RequiresPayment AS requiresPayment,
                PriceAmount AS priceAmount, AccessDurationMinutes AS accessDurationMinutes
         FROM QRLocations
-        WHERE IsActive = 1 AND DeletedAt IS NULL AND ((PoiId IS NULL AND TourId IS NULL) OR EXISTS (SELECT 1 FROM POIs p WHERE p.Id=QRLocations.PoiId AND {self.PUBLIC_POI_WHERE}) OR EXISTS (SELECT 1 FROM Tours t WHERE t.Id=QRLocations.TourId AND t.IsActive=1 AND t.DeletedAt IS NULL AND t.ReviewStatus='Approved'))
+        WHERE IsActive = 1 AND DeletedAt IS NULL AND PoiId IS NULL AND TourId IS NULL
         ORDER BY PriceAmount, Code
         """
         return self._fetchall(query)
@@ -366,9 +371,7 @@ class ContentRepository:
             data["qrLocations"] = self._fetchall("SELECT Id AS id, Code AS code, PoiId AS poiId, TourId AS tourId, IsActive AS isActive, CreatedAt AS createdAt, UpdatedAt AS updatedAt, DeletedAt AS deletedAt FROM QRLocations WHERE UpdatedAt >= %s OR DeletedAt >= %s", (since, since))
         if include("Language"):
             data["languages"] = self.list_languages(active_only=False)
-        if include("OfflinePackage"):
-            data["offlinePackages"] = self._fetchall("SELECT Id AS id, TourId AS tourId, LanguageCode AS languageCode, PackageVersion AS packageVersion, DownloadUrl AS downloadUrl, FileSizeBytes AS fileSizeBytes, Checksum AS checksum, IsActive AS isActive, PublishedAt AS publishedAt FROM OfflinePackages WHERE PublishedAt >= %s", (since,))
-        data["deletedRecords"] = self._fetchall("SELECT Id AS id, EntityType AS entityType, EntityId AS entityId, DeletedAt AS deletedAt FROM DeletedRecords WHERE DeletedAt >= %s", (since,))
+        # Offline package/delta sync is intentionally not part of the fresh local schema yet.
         return data
 
     def sync_push_logs(self, user_id: int | None, device_id: str | None, logs: list[dict]) -> dict:

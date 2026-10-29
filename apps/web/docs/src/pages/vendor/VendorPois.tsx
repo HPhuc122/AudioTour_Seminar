@@ -153,6 +153,7 @@ export function VendorPoiList() {
                     {String(poi.Code || `POI #${poi.Id}`)}
                     {poi.Category ? ` · ${String(poi.Category)}` : ''}
                   </p>
+                  {poi.Address && <p className="vendor-poi-code">{String(poi.Address)}</p>}
                   <p className="vendor-poi-description">
                     {String(poi.ShortDescription || poi.Description || 'Chưa có mô tả.')}
                   </p>
@@ -202,6 +203,7 @@ type VendorPoiField = {
 const formFields: VendorPoiField[] = [
   { key: 'Code', label: 'Mã địa điểm', required: true },
   { key: 'Name', label: 'Tên địa điểm', required: true },
+  { key: 'Address', label: 'Địa chỉ' },
   { key: 'Category', label: 'Danh mục' },
   { key: 'ShortDescription', label: 'Mô tả ngắn', wide: true },
   { key: 'Description', label: 'Giới thiệu', wide: true, textarea: true },

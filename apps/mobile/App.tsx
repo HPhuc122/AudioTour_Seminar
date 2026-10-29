@@ -38,6 +38,7 @@ import {
   loadPaidAccessSession,
 } from "./src/native/paidAccessStore"
 import { createQrVisit } from "./src/native/qrFlow"
+import { canTriggerNearby } from "./src/native/proximity"
 
 import type {
   AudioEntryAction,
@@ -57,6 +58,9 @@ type CatalogDetailKind = "poi" | "tour"
 export default function App() {
   const [activeSection, setActiveSection] = useState<AppSection>("dashboard")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [nearbyEnabled, setNearbyEnabled] = useState(false)
+  const nearbyLastTriggered = useRef(new Map<number, number>())
+  const [detailFromNearby, setDetailFromNearby] = useState(false)
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false)
   const [languages, setLanguages] = useState<ApiLanguage[]>([])
   const languageRequest = useRef(0)
@@ -208,6 +212,7 @@ export default function App() {
     setCatalogDetailKind(null)
     setAudioEntryAction(null)
     setQrCode(null)
+    setDetailFromNearby(false)
   }
 
   const openSection = (section: AppSection) => {
@@ -218,7 +223,7 @@ export default function App() {
     setIsSidebarOpen(false)
   }
 
-  const openCatalogDetail = async (kind: CatalogDetailKind, id: number, fromMap = false) => {
+  const openCatalogDetail = async (kind: CatalogDetailKind, id: number, fromMap = false, fromNearby = false) => {
     if (!languageCode) return
     const request = ++detailRequest.current
     setLoadingDetail(true)
@@ -231,11 +236,13 @@ export default function App() {
       if (request !== detailRequest.current) return
       setDetail(target)
       setDetailFromMap(fromMap)
+      setDetailFromNearby(fromNearby)
       setCatalogDetailKind(kind)
     } catch (reason) {
       if (request !== detailRequest.current) return
       errorSource.current = "detail"
-      retryAction.current = () => openCatalogDetail(kind, id, fromMap)
+      if (fromNearby) nearbyLastTriggered.current.delete(id)
+      retryAction.current = () => openCatalogDetail(kind, id, fromMap, fromNearby)
       setError(
         reason instanceof Error ? reason.message : t("Không thể mở chi tiết."),
       )
@@ -322,6 +329,14 @@ export default function App() {
     setIsQrScannerOpen(true)
   }
 
+  const openNearbyPoi = (id: number) => {
+    if (!nearbyEnabled || isQrScannerOpen || pendingQrVisit || detail || activeSection !== "dashboard") return
+    const now = Date.now()
+    if (!canTriggerNearby(nearbyLastTriggered.current.get(id), now)) return
+    nearbyLastTriggered.current.set(id, now)
+    void openCatalogDetail("poi", id, true, true)
+  }
+
   const chooseLanguage = (code: string) => {
     const pending = pendingQrVisit
     setIsLanguagePickerOpen(false)
@@ -360,8 +375,14 @@ export default function App() {
         kind={detailKind}
         languageCode={destination?.languageCode ?? languageCode ?? ""}
         qrCode={qrCode ?? undefined}
-        autoStart={Boolean(destination)}
+        autoStart={detailFromNearby}
+        triggerType={destination ? "qr" : detailFromNearby ? "gps" : "manual"}
         requiresPayment={audioEntryAction === "show-payment"}
+        onPackagePurchased={(expiresAt) => {
+          setPaidAccessRemainingSeconds(
+            Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)),
+          )
+        }}
         onScan={openQr}
         onMap={() => {
           setMapTarget({ kind: detailKind, detail })
@@ -387,7 +408,7 @@ export default function App() {
         poiTotal={poiTotal}
         tourTotal={tours.length}
       >
-        {languageCode && <MapPanel key={languageCode} pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onDetail={(id) => void openCatalogDetail("poi", id, true)} />}
+        {languageCode && <MapPanel key={languageCode} pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onPackagePurchased={(expiresAt) => { setPaidAccessRemainingSeconds(Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000))) }} onDetail={(id) => void openCatalogDetail("poi", id, true)} nearbyEnabled={nearbyEnabled} onNearbyToggle={setNearbyEnabled} onNearbyPoi={openNearbyPoi} />}
       </DashboardScreen>
     ) : (
       <CatalogListScreen

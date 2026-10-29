@@ -60,10 +60,20 @@ class OdbcConnection:
 
 @contextmanager
 def get_connection() -> Iterator[pymssql.Connection | OdbcConnection]:
-    if settings.use_windows_auth:
+    if settings.use_windows_auth or settings.sqlserver_odbc_driver:
+        encrypt = "yes" if settings.sqlserver_encrypt else "no"
+        trust_certificate = "yes" if settings.sqlserver_trust_server_certificate else "no"
+        server = f"tcp:{settings.sqlserver_host},{settings.sqlserver_port}"
+        driver = settings.sqlserver_odbc_driver or "ODBC Driver 17 for SQL Server"
+        authentication = (
+            "Trusted_Connection=yes;"
+            if settings.use_windows_auth
+            else f"UID={_odbc_value(settings.sqlserver_user)};PWD={_odbc_value(settings.sqlserver_password)};"
+        )
         connection = OdbcConnection(
             pyodbc.connect(
-                f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={settings.sqlserver_host};DATABASE={settings.sqlserver_database};Trusted_Connection=yes;TrustServerCertificate=yes;",
+                f"DRIVER={_odbc_value(driver)};SERVER={_odbc_value(server)};DATABASE={_odbc_value(settings.sqlserver_database)};"
+                f"{authentication}Encrypt={encrypt};TrustServerCertificate={trust_certificate};",
                 timeout=10,
             )
         )
@@ -75,3 +85,8 @@ def get_connection() -> Iterator[pymssql.Connection | OdbcConnection]:
         yield connection
     finally:
         connection.close()
+
+
+def _odbc_value(value: str) -> str:
+    """Quote ODBC connection values, including passwords containing semicolons."""
+    return "{" + value.replace("}", "}}") + "}"

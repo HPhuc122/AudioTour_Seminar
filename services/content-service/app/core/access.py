@@ -55,7 +55,6 @@ def scope(resource: str, value: dict | None = None) -> tuple[str, tuple]:
         "narrations": ("pois", "NarrationDrafts.PoiId"),
         "poi-translations": ("pois", "POITranslations.POIId"),
         "tour-translations": ("tours", "TourTranslations.TourId"),
-        "offline_packages": ("tours", "OfflinePackages.TourId"),
         "narration_logs": ("pois", "NarrationLogs.POIId"),
     }
     if resource in parents:

@@ -8,12 +8,11 @@ from app.core.database import get_connection
 
 class AdminRepository:
     TABLES: dict[str, dict[str, Any]] = {
-        "pois": {"table": "POIs", "id": "Id", "soft_delete": True, "fields": ["Code", "Name", "ShortDescription", "Description", "ApprovalStatus", "UserId", "Latitude", "Longitude", "RadiusMeters", "Priority", "IsActive", "LifecycleStatus", "PaymentRequired", "PaymentStatus", "ValidFrom", "ValidUntil", "ImageUrl", "ImageUrls", "Category", "CooldownSeconds", "MinDwellSeconds", "Version"]},
+        "pois": {"table": "POIs", "id": "Id", "soft_delete": True, "fields": ["Code", "Name", "Address", "ShortDescription", "Description", "ApprovalStatus", "UserId", "Latitude", "Longitude", "RadiusMeters", "Priority", "IsActive", "LifecycleStatus", "PaymentRequired", "PaymentStatus", "ValidFrom", "ValidUntil", "ImageUrl", "ImageUrls", "Category", "CooldownSeconds", "MinDwellSeconds", "Version"]},
         "tours": {"table": "Tours", "id": "Id", "soft_delete": True, "fields": ["Code", "DefaultLanguage", "IsActive", "EstimatedMinutes", "Version"]},
         "audio": {"table": "AudioTracks", "id": "Id", "soft_delete": True, "fields": ["POIId", "LanguageCode", "Title", "AudioType", "FileUrl", "TTSText", "DurationSeconds", "FileSizeBytes", "MimeType", "IsActive", "Version"]},
         "qr": {"table": "QRLocations", "id": "Id", "soft_delete": True, "fields": ["Code", "Name", "PoiId", "TourId", "IsActive", "RequiresPayment", "PriceAmount", "AccessDurationMinutes"]},
         "languages": {"table": "Languages", "id": "Code", "soft_delete": False, "fields": ["Code", "Name", "NativeName", "IsActive", "SortOrder"]},
-        "offline_packages": {"table": "OfflinePackages", "id": "Id", "soft_delete": False, "fields": ["TourId", "LanguageCode", "PackageVersion", "DownloadUrl", "FileSizeBytes", "Checksum", "IsActive", "PublishedAt"]},
         "media": {"table": "MediaFiles", "id": "Id", "soft_delete": "IsDeleted", "fields": ["FileName", "OriginalFileName", "FileType", "ContentType", "FileSize", "RelativePath", "UploadedAt", "UploadedByUserId", "PoiId", "ImageCategory", "ApprovalStatus", "SubmittedAt", "ReviewedByUserId", "ReviewedAt", "RejectionReason", "IsDeleted"]},
         "narrations": {"table": "NarrationDrafts", "id": "Id", "soft_delete": False, "fields": ["Title", "LanguageCode", "TextContent", "Voice", "PoiId", "Status", "SubmittedByUserId", "SubmittedAt", "ReviewedByUserId", "ReviewedAt", "RejectionReason", "GeneratedAudioTrackId", "AudioGeneratedAt", "SimulatedAudioUrl", "CreatedAt", "UpdatedAt"]},
         "narration_logs": {"table": "NarrationLogs", "id": "Id", "soft_delete": False, "fields": ["UserId", "POIId", "TriggerType", "LanguageCode", "PlayedAt", "DurationPlayedSeconds", "DeviceId", "Synced"]},

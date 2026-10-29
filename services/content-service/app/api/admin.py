@@ -343,51 +343,6 @@ def delete_language(code: str, _: dict = Depends(require_admin)):
     return ok("Language deleted")
 
 
-@router.get("/api/v1/offline-packages/{id}")
-def get_offline_package(id: int):
-    return ok(service.get_resource("offline_packages", id))
-
-
-@router.get("/api/v1/offline-packages/latest")
-def latest_offline_package(tourId: int | None = None, languageCode: str | None = None):
-    data = service.list_resource(
-        "offline_packages",
-        False,
-        filters(TourId=tourId, LanguageCode=languageCode),
-        1,
-        1,
-    )
-    return ok(data["items"][0] if data["items"] else None)
-
-
-@router.get("/api/v1/offline-packages/by-tour/{tourId}")
-def offline_packages_by_tour(tourId: int):
-    return ok(service.by_column("offline_packages", "TourId", tourId))
-
-
-@router.post("/api/v1/offline-packages")
-def create_offline_package(payload: dict = Body(...), _: dict = Depends(require_write)):
-    return ok(
-        service.create_resource("offline_packages", payload), "Offline package created"
-    )
-
-
-@router.put("/api/v1/offline-packages/{id}")
-def update_offline_package(
-    id: int, payload: dict = Body(...), _: dict = Depends(require_write)
-):
-    return ok(
-        service.update_resource("offline_packages", id, payload),
-        "Offline package updated",
-    )
-
-
-@router.delete("/api/v1/offline-packages/{id}")
-def delete_offline_package(id: int, _: dict = Depends(require_write)):
-    service.delete_resource("offline_packages", id)
-    return ok("Offline package deleted")
-
-
 @router.get("/api/v1/geofence/by-poi/{poiId}")
 def get_geofence(poiId: int):
     return ok(service.geofence_by_poi(poiId))
