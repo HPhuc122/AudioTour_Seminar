@@ -1,5 +1,5 @@
 import { useTranslator } from "./i18n"
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { PublicTargetDetail } from "./api"
 import { DetailAudio } from "./DetailAudio"
@@ -17,6 +17,9 @@ type Props = {
   onScan: () => void
   onBack: () => void
   onMap: () => void
+  onRefresh?: () => void
+  refreshing?: boolean
+  refreshError?: string | null
 }
 export function CatalogDetailScreen({
   detail,
@@ -30,11 +33,15 @@ export function CatalogDetailScreen({
   onScan,
   onBack,
   onMap,
+  onRefresh,
+  refreshing = false,
+  refreshError,
 }: Props) {
   const t = useTranslator()
 
   return (
-    <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
+    <ScrollView contentContainerStyle={styles.content} style={styles.screen} refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/> : undefined}>
+      {refreshError && <Text accessibilityRole="alert">{t(refreshError)}</Text>}
       <Pressable accessibilityRole="button" onPress={onBack} style={styles.back}><Ionicons name="arrow-back" size={20} color="#058578" /><Text style={styles.backText}>{t("Quay lại")}</Text></Pressable>
       {kind === "poi" && (
         <PoiImages images={detail.images} name={detail.name} />

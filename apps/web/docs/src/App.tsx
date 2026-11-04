@@ -1,5 +1,5 @@
 import { Navigate, NavLink, Outlet, Route, Routes, Link } from 'react-router-dom';
-import { Headphones, LayoutDashboard, MapPin, Route as RouteIcon, Languages, Music, QrCode, Map, ChartNoAxesCombined, Users, LogOut, Store, Calendar, CreditCard, Settings, WandSparkles } from 'lucide-react';
+import { Headphones, LayoutDashboard, MapPin, Route as RouteIcon, Languages, Music, QrCode, Map, Users, LogOut } from 'lucide-react';
 import { managementRoles, adminRoles, useSession } from './contexts/Session';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/admin/DashboardConsole';
@@ -8,8 +8,6 @@ import { ContentPage } from './pages/admin/ContentConsole';
 import { TourEditor } from './pages/admin/TourEditor';
 import { ReviewPage } from './pages/admin/ReviewConsole';
 import { AdminMap } from './pages/admin/AdminMap';
-import { OperationsPage, SystemPage } from './pages/admin/OperationsPage';
-import { AutomationPage } from './pages/admin/AutomationPage';
 import { roleLabels } from './components/AdminTable';
 import { VendorLayout } from './layouts/VendorLayout';
 import { VendorDashboard } from './pages/vendor/VendorDashboard';
@@ -20,17 +18,16 @@ import { Register } from './pages/Register';
 const links = [
   ['dashboard', 'Tổng quan', LayoutDashboard], ['pois', 'Địa điểm', MapPin], ['tours', 'Tour tham quan', RouteIcon],
   ['narrations', 'Thuyết minh', Languages], ['review', 'Duyệt nội dung', Languages], ['translations', 'Đa ngôn ngữ', Languages], ['media', 'Hình ảnh', MapPin], ['audio', 'Âm thanh', Music], ['qr', 'Mã QR', QrCode],
-  ['map', 'Bản đồ POI', Map], ['analytics', 'Thống kê', ChartNoAxesCombined], ['users', 'Người dùng', Users],
-  ['vendors', 'Hồ sơ chủ sạp', Store], ['validity', 'Thời hạn POI', Calendar], ['transactions', 'Giao dịch', CreditCard], ['settings', 'Cấu hình hệ thống', Settings], ['automation', 'Dịch và tạo audio', WandSparkles], ['languages', 'Ngôn ngữ', Languages],
+  ['map', 'Bản đồ POI', Map], ['users', 'Người dùng', Users],
+  ['languages', 'Ngôn ngữ', Languages],
 ] as const;
 const groups = [
-  { title: 'TỔNG QUAN', paths: ['dashboard', 'analytics'] },
-  { title: 'HỒ SƠ VÀ DUYỆT', paths: ['vendors', 'review'] },
-  { title: 'NỘI DUNG THAM QUAN', paths: ['pois', 'tours', 'map', 'narrations', 'translations', 'media', 'audio', 'automation', 'qr'] },
-  { title: 'DỊCH VỤ VÀ THANH TOÁN', paths: ['validity', 'transactions'] },
-  { title: 'QUẢN TRỊ HỆ THỐNG', paths: ['users', 'languages', 'settings'] },
+  { title: 'TỔNG QUAN', paths: ['dashboard'] },
+  { title: 'DUYỆT NỘI DUNG', paths: ['review'] },
+  { title: 'NỘI DUNG THAM QUAN', paths: ['pois', 'tours', 'map', 'narrations', 'translations', 'media', 'audio', 'qr'] },
+  { title: 'TÀI KHOẢN VÀ NGÔN NGỮ', paths: ['users', 'languages'] },
 ];
-const restricted = ['users', 'vendors', 'validity', 'transactions', 'settings', 'languages', 'automation'];
+const restricted = ['users', 'languages'];
 function AdminLayout() {
   const { session, logout } = useSession();
   if (!session) return <Navigate to="/login" replace/>;
@@ -48,8 +45,8 @@ export function App() { const { session } = useSession(); return <Routes>
 <Route path="/vendor" element={<VendorLayout/>}><Route index element={<Navigate to="dashboard" replace/>}/><Route path="dashboard" element={<VendorDashboard/>}/><Route path="pois" element={<VendorPoiList/>}/><Route path="pois/new" element={<VendorPoiEditor/>}/><Route path="pois/:id/edit" element={<VendorPoiEditor/>}/><Route path="pois/:id" element={<VendorPoiDetail/>}/><Route path="submissions" element={<VendorSubmissions/>}/><Route path="statistics" element={<VendorStatistics/>}/></Route>
 <Route path="/admin" element={<AdminLayout/>}>
 <Route index element={<Navigate to="dashboard" replace/>}/>
-<Route path="dashboard" element={<Dashboard/>}/><Route path="analytics" element={<Dashboard analytics/>}/>
+<Route path="dashboard" element={<Dashboard/>}/><Route path="analytics" element={<Navigate to="/admin/dashboard" replace/>}/>
 <Route path="pois" element={<ResourcePage key="pois" resource="pois"/>}/><Route path="tours" element={<ResourcePage key="tours" resource="tours"/>}/><Route path="tours/:id" element={<TourEditor/>}/>
 <Route path="review" element={<ReviewPage/>}/><Route path="narrations" element={<ContentPage key="narrations" mode="narrations"/>}/><Route path="translations" element={<ContentPage key="translations" mode="translations"/>}/><Route path="media" element={<ContentPage key="media" mode="media"/>}/><Route path="audio" element={<ContentPage key="audio" mode="audio"/>}/>
-<Route path="qr" element={<ResourcePage key="qr" resource="qr"/>}/><Route element={<AdminOnly/>}><Route path="users" element={<ResourcePage key="users" resource="users"/>}/><Route path="vendors" element={<OperationsPage key="vendors" mode="vendors"/>}/><Route path="validity" element={<OperationsPage key="validity" mode="validity"/>}/><Route path="transactions" element={<OperationsPage key="transactions" mode="transactions"/>}/><Route path="settings" element={<SystemPage/>}/><Route path="languages" element={<ResourcePage key="languages" resource="languages"/>}/><Route path="automation" element={<AutomationPage/>}/></Route><Route path="map" element={<AdminMap/>}/>
+<Route path="qr" element={<ResourcePage key="qr" resource="qr"/>}/><Route element={<AdminOnly/>}><Route path="users" element={<ResourcePage key="users" resource="users"/>}/><Route path="languages" element={<ResourcePage key="languages" resource="languages"/>}/></Route><Route path="map" element={<AdminMap/>}/>
 </Route><Route path="*" element={<div className="state"><h1>Không tìm thấy trang</h1><p>Web dành riêng cho quản trị. Khách tham quan sử dụng ứng dụng Mobile.</p><Link to="/admin">Về quản trị</Link></div>}/></Routes>; }

@@ -148,7 +148,7 @@ export function VendorSubmissions() {
                       />
                     </td>
                     <td>
-                      <button onClick={() => setSelected(Number(row.Id))}>Xem nội dung</button>
+                      <button onClick={() => { setActionError(''); setSelected(Number(row.Id)) }}>Xem nội dung</button>
                       {row.Status === 'Rejected' ? (
                         <button
                           disabled={busyId === Number(row.Id)}
@@ -186,7 +186,7 @@ export function VendorSubmissions() {
           </div>
         ) : null}
       </section>
-      {selected && <VendorSubmissionDetail key={selected} id={selected} token={token} onClose={() => setSelected(undefined)}/>}
+      {selected && <VendorSubmissionDetail key={selected} id={selected} token={token} busy={busyId === selected} actionError={actionError} onClose={() => setSelected(undefined)} onResubmit={() => { const row = data.data?.items.find(item => Number(item.Id) === selected); if (row) void resubmit(row); }}/>}
     </>
   );
 }

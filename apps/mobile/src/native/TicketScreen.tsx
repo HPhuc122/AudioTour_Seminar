@@ -1,16 +1,9 @@
-import { useEffect, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { useTranslator } from "./i18n"
 
 export function TicketScreen({ remainingSeconds, onScan, onExplore }: { remainingSeconds: number | null; onScan: () => void; onExplore: () => void }) {
   const t = useTranslator()
-  const [remaining, setRemaining] = useState(remainingSeconds)
-  useEffect(() => setRemaining(remainingSeconds), [remainingSeconds])
-  useEffect(() => {
-    if (remaining === null || remaining <= 0) return
-    const timer = setInterval(() => setRemaining(value => value === null ? null : Math.max(0, value - 1)), 1000)
-    return () => clearInterval(timer)
-  }, [remaining === null || remaining <= 0])
+  const remaining = remainingSeconds
   const valid = remaining !== null && remaining > 0
   const time = valid ? [Math.floor(remaining / 3600), Math.floor((remaining % 3600) / 60), remaining % 60].map(value => String(value).padStart(2, "0")).join(":") : null
   return <View style={styles.screen}>

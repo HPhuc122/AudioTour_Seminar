@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react"
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { PublicPoiSummary, PublicTourSummary } from "./api"
 import { useTranslator } from "./i18n"
@@ -18,30 +17,25 @@ type Props = {
   onTours: () => void
   onPoi: (id: number) => void
   onTour: (id: number) => void
+  onRefresh?: () => void
 }
 
 function TicketStatus({ seconds }: { seconds: number | null }) {
   const t = useTranslator()
-  const [remaining, setRemaining] = useState(seconds)
-  useEffect(() => setRemaining(seconds), [seconds])
-  useEffect(() => {
-    if (remaining === null || remaining <= 0) return
-    const timer = setInterval(() => setRemaining(value => value === null ? null : Math.max(0, value - 1)), 1000)
-    return () => clearInterval(timer)
-  }, [remaining === null || remaining <= 0])
+  const remaining = seconds
   if (remaining === null || remaining <= 0) return null
   const time = [Math.floor(remaining / 3600), Math.floor((remaining % 3600) / 60), remaining % 60]
     .map(value => String(value).padStart(2, "0")).join(":")
   return <View style={styles.ticket}><Text style={styles.ticketText}>{t("Vé audio còn hiệu lực")} · {time}</Text></View>
 }
 
-export function HomeScreen({ languageCode, languageLabel, loading, pois, tours, remainingSeconds, onLanguage, onScan, onPois, onTours, onPoi, onTour }: Props) {
+export function HomeScreen({ languageCode, languageLabel, loading, pois, tours, remainingSeconds, onLanguage, onScan, onPois, onTours, onPoi, onTour, onRefresh }: Props) {
   const t = useTranslator()
-  return <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+  return <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={onRefresh ? <RefreshControl refreshing={loading} onRefresh={onRefresh}/> : undefined}>
     <View style={styles.header}>
       <View style={styles.greeting}>
         <Text style={styles.eyebrow}>{t("Xin chào")}</Text>
-        <Text accessibilityRole="header" style={styles.title}>{t("Khám phá Vĩnh Hy")}</Text>
+        <Text accessibilityRole="header" style={styles.title}>{t("Khám phá ẩm thực")}</Text>
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel={t("Ngôn ngữ: {0}", languageLabel)} onPress={onLanguage} style={styles.language}>
         <Text style={styles.languageText}>{languageCode?.split("-")[0].toUpperCase() || "VI"}</Text><Text style={styles.languageArrow}>⌄</Text>
@@ -63,7 +57,7 @@ export function HomeScreen({ languageCode, languageLabel, loading, pois, tours, 
     {loading && !pois.length ? <ActivityIndicator color="#058578" style={styles.loading} /> : pois.length ? (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.poiRow}>
         {pois.slice(0, 6).map(poi => <Pressable key={poi.id} accessibilityRole="button" onPress={() => onPoi(poi.id)} style={styles.poiCard}>
-          <View style={styles.poiCover}><PoiImage id={poi.thumbnailImageId} label={poi.name} /></View>
+          <View style={styles.poiCover}><PoiImage id={poi.thumbnailImageId} version={poi.thumbnailImageVersion} label={poi.name} /></View>
           <View style={styles.poiInfo}><Text numberOfLines={1} style={styles.poiCategory}>{(poi.category || t("Địa điểm")).toUpperCase()}</Text><Text numberOfLines={1} style={styles.poiName}>{poi.name}</Text><Text numberOfLines={1} style={styles.poiCaption}>{poi.shortDescription || poi.code}</Text></View>
         </Pressable>)}
       </ScrollView>

@@ -17,8 +17,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { RelatedContent } from './VendorRelatedContent';
-import { AudioUploadDialog } from '../../components/AudioUploadDialog';
-import { AutomationStatus } from '../../components/AutomationStatus';
+import { NarrationAudioStatus } from '../../components/NarrationAudioStatus';
 
 import { ReviewStatus } from '../../components/ReviewStatus';
 import { PageTitle, State } from '../../components/States';
@@ -320,7 +319,7 @@ export function VendorPoiEditor() {
               <h2>Thông tin cơ bản</h2>
               <p>Mô tả rõ ràng giúp khách tham quan nhận biết địa điểm.</p>
               <div className="vendor-form-grid">
-                {formFields.slice(0, 5).map((field) => (
+                {formFields.filter(field => !field.number).map((field) => (
                   <label
                     className={field.wide ? 'vendor-field-wide' : ''}
                     key={field.key}
@@ -337,7 +336,7 @@ export function VendorPoiEditor() {
                     ) : (
                       <input
                         defaultValue={String(poi.data?.[field.key] ?? '')}
-                        maxLength={field.key === 'Code' ? 100 : undefined}
+                        maxLength={field.key === 'Code' ? 50 : field.key === 'Name' ? 200 : field.key === 'Address' ? 500 : field.key === 'Category' ? 100 : field.key === 'ShortDescription' ? 500 : undefined}
                         name={field.key}
                         required={field.required}
                         type="text"
@@ -354,8 +353,9 @@ export function VendorPoiEditor() {
                 Tọa độ và bán kính được dùng để xác định vùng nhận diện POI
                 trong ứng dụng tham quan.
               </p>
+              <p id="vendor-coordinate-help" className="vendor-hint">Vĩ độ từ −90 đến 90; kinh độ từ −180 đến 180. Nhập tọa độ đúng của sạp lấy từ bản đồ, dùng dấu chấm cho số thập phân (ví dụ định dạng: 10.76 và 106.70).</p>
               <div className="vendor-form-grid">
-                {formFields.slice(5).map((field) => (
+                {formFields.filter(field => field.number).map((field) => (
                   <label key={field.key}>
                     {field.label}
                     {field.required ? ' *' : ''}
@@ -389,6 +389,8 @@ export function VendorPoiEditor() {
                               : 0
                       }
                       name={field.key}
+                      aria-describedby={field.key === 'Latitude' || field.key === 'Longitude' ? 'vendor-coordinate-help' : undefined}
+                      placeholder={field.key === 'Latitude' ? 'Ví dụ: 10.76' : field.key === 'Longitude' ? 'Ví dụ: 106.70' : undefined}
                       required={field.required}
                       step={field.key === 'Priority' || field.key.endsWith('Seconds') ? 1 : 'any'}
                       type="number"
@@ -430,7 +432,6 @@ export function VendorPoiDetail() {
   const tab: PoiTab = ['overview', 'images', 'narrations', 'audio', 'translations', 'qr', 'history'].includes(requestedTab) ? requestedTab as PoiTab : 'overview';
   const [uploading, setUploading] = useState(false);
   const [contentVersion, setContentVersion] = useState(0);
-  const [audioDialog, setAudioDialog] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const poi = useResource(
@@ -573,17 +574,16 @@ export function VendorPoiDetail() {
             />
           )}
           {tab === 'narrations' && (
-            <><AutomationStatus poiId={Number(id)}/><RelatedContent
-              empty="Chưa có nội dung thuyết minh."
+            <><NarrationAudioStatus token={token} poiId={Number(id)}/><RelatedContent
+              empty="Chưa có nội dung thuyết minh. Nhập văn bản để gửi Admin duyệt và tạo giọng nói."
               poiId={Number(id)}
               resource="narrations"
               token={token}
             /></>
           )}
           {tab === 'audio' && (
-            <><p className="notice">Nhập nội dung tại tab Thuyết minh để gửi duyệt. Âm thanh và bản dịch được xử lý từ văn bản đã duyệt khi dịch vụ tự động được cấu hình.</p><RelatedContent
+            <><p className="notice">Âm thanh được tạo từ văn bản thuyết minh sau khi Admin duyệt. Muốn thay đổi lời đọc, hãy sửa văn bản và gửi duyệt.</p><Link className="button primary" to={`/vendor/pois/${id}?tab=narrations`}>Nhập văn bản thuyết minh</Link><NarrationAudioStatus token={token} poiId={Number(id)}/><RelatedContent
               key={`audio-${contentVersion}`}
-              action={<button onClick={() => setAudioDialog(true)}>Thêm file âm thanh</button>}
               empty="Chưa có file âm thanh."
               poiId={Number(id)}
               resource="audio"
@@ -604,7 +604,6 @@ export function VendorPoiDetail() {
           {tab === 'history' && (
             <SubmissionHistory poiId={Number(id)} token={token} />
           )}
-          {audioDialog && <AudioUploadDialog token={token} initialPoi={Number(id)} lockPoi onClose={() => setAudioDialog(false)} onSaved={async () => { setContentVersion(value => value + 1); setMessage('File tải lên được gửi duyệt thủ công, độc lập với audio tự sinh.'); }}/>}
 
 
         </>

@@ -18,6 +18,7 @@ class SqlServerSettings:
     user: str = os.getenv("SQLSERVER_USER", "sa")
     password: str = os.getenv("SQLSERVER_PASSWORD", "")
     use_windows_auth: bool = os.getenv("SQLSERVER_USE_WINDOWS_AUTH", "false").lower() in {"1", "true", "yes"}
+    odbc_server: str = os.getenv("SQLSERVER_ODBC_SERVER", "")
     odbc_driver: str = os.getenv("SQLSERVER_ODBC_DRIVER", "")
     encrypt: bool = os.getenv("SQLSERVER_ENCRYPT", "true").lower() in {"1", "true", "yes"}
     trust_server_certificate: bool = os.getenv("SQLSERVER_TRUST_SERVER_CERTIFICATE", "true").lower() in {"1", "true", "yes"}

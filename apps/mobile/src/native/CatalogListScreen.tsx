@@ -25,6 +25,8 @@ type Props = {
   loadingMorePois: boolean
   morePoisError: string | null
   onLoadMorePois: () => void
+  onRefresh?: () => void
+  refreshRevision?: number
 }
 
 export function CatalogListScreen({
@@ -40,6 +42,8 @@ export function CatalogListScreen({
   loadingMorePois,
   morePoisError,
   onLoadMorePois,
+  onRefresh,
+  refreshRevision = 0,
 }: Props) {
   const t = useTranslator()
 
@@ -51,7 +55,7 @@ export function CatalogListScreen({
     error?: string
   } | null>(null)
   const term = query.trim()
-  const searchKey = JSON.stringify([kind, languageCode, term, retry])
+  const searchKey = JSON.stringify([kind, languageCode, term, retry, refreshRevision])
   const searching = Boolean(term) && result?.key !== searchKey
   const searchError = term && result?.key === searchKey ? result.error : undefined
   const entries = term ? (result?.key === searchKey ? result.entries : []) : (kind === "poi" ? pois : tours)
@@ -111,6 +115,8 @@ export function CatalogListScreen({
         <ActivityIndicator color="#15803D" style={styles.loading} />
       ) : (
         <FlatList
+          refreshing={isLoading || searching}
+          onRefresh={onRefresh ? () => { setRetry(value => value + 1); onRefresh() } : undefined}
           data={entries}
           keyExtractor={(entry) => `${kind}:${entry.id}`}
           keyboardShouldPersistTaps="handled"
@@ -127,6 +133,7 @@ export function CatalogListScreen({
                   <View style={styles.thumbnail}>
                     <PoiImage
                       id={(entry as PublicPoiSummary).thumbnailImageId}
+                      version={(entry as PublicPoiSummary).thumbnailImageVersion}
                       label={entry.name}
                     />
                   </View>

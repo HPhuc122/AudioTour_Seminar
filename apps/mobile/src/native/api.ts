@@ -64,6 +64,7 @@ export type ApiQrTarget = {
 
 export type PublicPoiSummary = {
   thumbnailImageId?: number | null
+  thumbnailImageVersion?: number
   id: number
   code: string
   name: string
@@ -72,6 +73,8 @@ export type PublicPoiSummary = {
   latitude?: number
   longitude?: number
   radiusMeters?: number
+  cooldownSeconds?: number
+  minDwellSeconds?: number
   category?: string
 }
 
@@ -118,6 +121,7 @@ export type PublicTargetDetail = {
     id: number
 
     audioTrackId: number
+    version?: number
 
     languageCode: string
 
@@ -134,6 +138,7 @@ export type PublicTargetDetail = {
 
   images?: Array<{
     id: number
+    version?: number
 
     imageCategory?: string
   }>
@@ -210,8 +215,8 @@ export const audioTourApi = {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ points: points.map(({ latitude, longitude }) => ({ latitude, longitude })), mode }),
   }),
   getTourRoute: (id: number, mode: TravelMode) => requestRoute(`/api/v1/public/routes/tours/${id}?mode=${mode}`),
-  getImageUrl: (id: number) =>
-    `${getBaseUrl()}/api/v1/public/media/images/${id}`,
+  getImageUrl: (id: number, version?: number) =>
+    `${getBaseUrl()}/api/v1/public/media/images/${id}${version === undefined ? '' : `?v=${version}`}`,
   startTargetAccess: (targetType: "poi" | "tour", targetId: number) =>
     request<GuestAccessResult>("/api/v1/public/access/start-target", {
       method: "POST",
@@ -269,7 +274,7 @@ export const audioTourApi = {
     id: number,
     languageCode: string,
     accessToken: string,
-    triggerType: "qr" | "manual" = "qr",
+    triggerType: "qr" | "gps" | "manual" = "qr",
   ) =>
     request<PublicTargetDetail>(
       `/api/v1/public/audio-tour/pois/${id}?languageCode=${encodeURIComponent(languageCode)}&triggerType=${triggerType}`,
@@ -280,12 +285,13 @@ export const audioTourApi = {
     audioTrackId: number,
     accessToken: string,
     title: string,
+    version?: number,
   ) => ({
     headers: { "X-Guest-Access-Token": accessToken },
 
     name: title,
 
-    uri: `${getBaseUrl()}/api/v1/public/audio/${audioTrackId}`,
+    uri: `${getBaseUrl()}/api/v1/public/audio/${audioTrackId}${version === undefined ? '' : `?v=${version}`}`,
   }),
   recordPlay: (audioTrackId: number, languageCode: string, triggerType: "qr" | "gps" | "manual", durationPlayedSeconds: number, accessToken: string) =>
     request<{ recorded: boolean }>(

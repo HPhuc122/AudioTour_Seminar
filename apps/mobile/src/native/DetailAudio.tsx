@@ -5,11 +5,14 @@ import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio"
 import Slider from "@react-native-community/slider"
 import { ApiError, audioTourApi, type AccessPackage, type PublicTargetDetail } from "./api"
 import { loadPaidAccessSession, savePaidAccessSession } from "./paidAccessStore"
+import { ListeningClock, PlaybackReporter, retryFailedPlayReports, hasFailedPlayReports, subscribeFailedPlayReports } from "./listening"
+import { deadlineFromRemaining, parseApiUtc } from "./accessTime"
 
 type Track = NonNullable<PublicTargetDetail["audioTracks"]>[number]
 type Session = {
   accessToken: string
   tracks: Track[]
+  deadline: number
 }
 const time = (seconds: number) =>
   `${Math.floor(Math.max(0, seconds) / 60)}:${String(Math.floor(Math.max(0, seconds)) % 60).padStart(2, "0")}`
@@ -20,17 +23,19 @@ function Player({
   languageCode,
   triggerType,
   onRetry,
+  onLogError,
 }: {
   token: string
   track: Track
   languageCode: string
   triggerType: "qr" | "gps" | "manual"
   onRetry: () => void
+  onLogError: () => void
 }) {
   const t = useTranslator()
 
   const player = useAudioPlayer(
-    audioTourApi.getAudioSource(track.audioTrackId, token, track.title),
+    audioTourApi.getAudioSource(track.audioTrackId, token, track.title, track.version),
     { updateInterval: 250 },
   )
   const status = useAudioPlayerStatus(player)
@@ -40,9 +45,16 @@ function Player({
   const [seeking, setSeeking] = useState(false)
   const [preview, setPreview] = useState<number | null>(null)
   const [controlError, setControlError] = useState<string | null>(null)
-  const listenedMs = useRef(0)
-  const lastTickMs = useRef<number | null>(null)
-  const wasPlaying = useRef(false)
+  const clock = useRef(new ListeningClock())
+  const reporter = useRef<PlaybackReporter | null>(null)
+  if (!reporter.current) reporter.current = new PlaybackReporter(clock.current, seconds =>
+    audioTourApi.recordPlay(track.audioTrackId, languageCode, triggerType, seconds, token))
+  const currentSample = useRef(() => {})
+  currentSample.current = () => clock.current.sample({ position: status.currentTime, playing: status.playing,
+    loaded: status.isLoaded && !status.error, buffering: status.isBuffering, seeking: seekingRef.current, active: AppState.currentState === "active" }, Date.now())
+  const logFailure = useRef(onLogError)
+  logFailure.current = onLogError
+  const flush = () => { void reporter.current!.flush().catch(() => logFailure.current()) }
   const duration = Math.max(0, status.duration || track.durationSeconds || 0)
   const position = Math.min(duration, Math.max(0, preview ?? status.currentTime))
   const finished = status.didJustFinish || (duration > 0 && status.currentTime >= duration)
@@ -51,19 +63,14 @@ function Player({
     mounted.current = true
     return () => {
       mounted.current = false
-      if (wasPlaying.current && lastTickMs.current !== null && AppState.currentState === "active")
-        listenedMs.current += Math.min(1000, Math.max(0, Date.now() - lastTickMs.current))
-      const listenedSeconds = Math.floor(listenedMs.current / 1000)
-      if (listenedSeconds > 0)
-        void audioTourApi.recordPlay(track.audioTrackId, languageCode, triggerType, listenedSeconds, token).catch(() => {})
+      currentSample.current()
+      flush()
     }
   }, [])
   useEffect(() => {
-    const now = Date.now()
-    if (wasPlaying.current && lastTickMs.current !== null)
-      listenedMs.current += Math.min(2000, Math.max(0, now - lastTickMs.current))
-    lastTickMs.current = now
-    wasPlaying.current = status.playing && status.isLoaded && !status.isBuffering && !status.error && !seekingRef.current && AppState.currentState === "active"
+    currentSample.current()
+    // Pause/resume remains one listening attempt; send at end, error or unmount.
+    if (status.didJustFinish || status.error) flush()
   }, [status.currentTime, status.playing, status.isLoaded, status.isBuffering, status.error])
   useEffect(() => {
     if (status.isLoaded && !status.error && !started.current && AppState.currentState === "active") {
@@ -74,6 +81,7 @@ function Player({
   async function seek(value: number) {
     if (disabled || seekingRef.current || duration <= 0) return
     seekingRef.current = true
+    currentSample.current()
     setSeeking(true)
     setControlError(null)
     try {
@@ -168,12 +176,15 @@ export function DetailAudio({
   const [locked, setLocked] = useState(requiresPayment)
   const [accessPackage, setAccessPackage] = useState<AccessPackage | null>(null)
   const [hasActivePackage, setHasActivePackage] = useState(false)
+  const [packageDeadline, setPackageDeadline] = useState<number | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState(false)
   const startRequest = useRef(0)
   const busy = useRef(false)
   const buying = useRef(false)
   const mounted = useRef(true)
   const autoRequested = useRef(false)
+  const [logError, setLogError] = useState(hasFailedPlayReports)
+  useEffect(() => subscribeFailedPlayReports(setLogError), [])
   const publicTracks =
     kind === "poi"
       ? detail.audioTracks
@@ -190,13 +201,16 @@ export function DetailAudio({
         )
         if (current) {
           setAccessPackage(globalPackage ?? null)
-          setLocked(requiresPayment || Boolean(globalPackage))
+          // A global paid package must not make a free target appear locked.
+          // startTargetAccess/getAudio remain authoritative about this target's scope.
+          setLocked(requiresPayment)
         }
         const saved = await loadPaidAccessSession()
         if (saved) {
           const validation = await audioTourApi.validateGuestAccess(saved.accessToken)
           if (current && validation.isValid) {
             setHasActivePackage(true)
+            setPackageDeadline(deadlineFromRemaining(validation.remainingSeconds))
             setLocked(false)
           }
         }
@@ -207,6 +221,16 @@ export function DetailAudio({
     })()
     return () => { current = false }
   }, [requiresPayment, t])
+
+  useEffect(() => {
+    const deadlines = [session?.deadline, packageDeadline].filter((value): value is number => value !== undefined && value !== null)
+    if (!deadlines.length) return
+    const timer = setTimeout(() => {
+      if (session && session.deadline <= Date.now()) { setSession(null); setLocked(true); setError(t('Quyền nghe đã hết hạn. Vui lòng quét QR hoặc mua lại gói.')) }
+      if (packageDeadline !== null && packageDeadline <= Date.now()) { setHasActivePackage(false); setPackageDeadline(null) }
+    }, Math.max(0, Math.min(...deadlines) - Date.now()))
+    return () => clearTimeout(timer)
+  }, [session, packageDeadline, t])
 
   useEffect(() => {
     mounted.current = true
@@ -240,7 +264,7 @@ export function DetailAudio({
             detail.id,
             languageCode,
             token,
-            qrCode ? "qr" : "manual",
+            triggerType,
           )
         : audioTourApi.getAudioTour(detail.id, languageCode, token)
     try {
@@ -288,10 +312,13 @@ export function DetailAudio({
         )?.filter((track) => track.isAvailable) ?? []
       if (!tracks.length)
         throw new Error(t("Chưa có audio khả dụng cho ngôn ngữ này."))
+      const validation = await audioTourApi.validateGuestAccess(token)
+      if (!validation.isValid || validation.remainingSeconds <= 0)
+        throw new Error(t('Quyền nghe đã hết hạn. Vui lòng quét QR hoặc mua lại gói.'))
       if (isCurrent()) {
         setLocked(false)
         setTrackIndex(0)
-        setSession({ accessToken: token, tracks })
+        setSession({ accessToken: token, tracks, deadline: deadlineFromRemaining(validation.remainingSeconds) })
       }
     } catch (reason) {
       if (isCurrent())
@@ -321,6 +348,7 @@ export function DetailAudio({
       await savePaidAccessSession({ accessToken: payment.accessToken, expiresAt: payment.expiresAt })
       onPackagePurchased(payment.expiresAt)
       setHasActivePackage(true)
+      setPackageDeadline(parseApiUtc(payment.expiresAt))
       setLocked(false)
       setPurchaseNotice(
         hasTracks
@@ -371,6 +399,7 @@ export function DetailAudio({
                 track={session.tracks[trackIndex]}
                 languageCode={languageCode}
                 triggerType={triggerType}
+                onLogError={() => { if (mounted.current) setLogError(true) }}
                 onRetry={() => void start()}
               />
               {kind === "tour" && (
@@ -433,6 +462,10 @@ export function DetailAudio({
       {hasActivePackage && <Text style={styles.text}>{t("Gói truy cập toàn bộ POI đang hoạt động.")}</Text>}
       {purchaseNotice && <Text style={styles.text}>{purchaseNotice}</Text>}
       {purchaseLoading && <ActivityIndicator color="#15803D" />}
+      {logError && <View>
+        <Text accessibilityRole="alert" style={styles.error}>{t("Chưa gửi được nhật ký nghe.")}</Text>
+        <Button title={t("Gửi lại nhật ký nghe")} onPress={() => { void retryFailedPlayReports().then(() => setLogError(false)).catch(() => setLogError(true)) }} />
+      </View>}
       {error && <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>}
     </View>
   )

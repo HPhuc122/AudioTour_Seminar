@@ -4,6 +4,7 @@ import os
 
 import httpx
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 
 app = FastAPI(title="AudioTour Gateway")
 
@@ -26,9 +27,15 @@ async def proxy(path: str, request: Request) -> Response:
     if request.url.query:
         url = f"{url}?{request.url.query}"
     headers = {key: value for key, value in request.headers.items() if key.lower() != "host"}
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        upstream = await client.request(request.method, url, content=await request.body(), headers=headers)
-    return Response(content=upstream.content, status_code=upstream.status_code, headers={key: value for key, value in upstream.headers.items() if key.lower() not in {"content-length", "transfer-encoding", "connection"}}, media_type=upstream.headers.get("content-type"))
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            upstream = await client.request(request.method, url, content=await request.body(), headers=headers)
+    except httpx.TimeoutException:
+        return JSONResponse(status_code=504, content={"success": False, "message": "Dịch vụ phản hồi quá lâu. Vui lòng thử lại."})
+    except httpx.RequestError:
+        return JSONResponse(status_code=502, content={"success": False, "message": "Không kết nối được dịch vụ. Vui lòng thử lại sau."})
+    # httpx decodes response content, so do not forward the old compression header.
+    return Response(content=upstream.content, status_code=upstream.status_code, headers={key: value for key, value in upstream.headers.items() if key.lower() not in {"content-length", "transfer-encoding", "connection", "content-encoding"}}, media_type=upstream.headers.get("content-type"))
 
 
 def _target_url(path: str) -> str:

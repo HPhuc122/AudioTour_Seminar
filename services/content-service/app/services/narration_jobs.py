@@ -162,7 +162,7 @@ class NarrationJobs:
             media = tx.save_media_file(Path(relative).name, Path(relative).name, mime, size, relative, job['ReviewerId'], job['PoiId'], None, 'Approved')
             tx.update_row('media', media['Id'], {'ReviewStatus': 'Approved', 'ReviewedByUserId': job['ReviewerId']})
             track = tx.create_row('audio', {'POIId': job['PoiId'], 'LanguageCode': job['LanguageCode'],
-                'Title': name, 'AudioType': 'prerecorded', 'FileUrl': relative, 'MimeType': mime,
+                'Title': name, 'AudioType': 'tts', 'TTSText': text, 'FileUrl': relative, 'MimeType': mime,
                 'FileSizeBytes': size, 'IsActive': True, 'ReviewStatus': 'Approved', 'AutomationJobId': job['Id']})
             if prior:
                 tx.update_row('audio', prior['AudioTrackId'], {'IsActive': False})

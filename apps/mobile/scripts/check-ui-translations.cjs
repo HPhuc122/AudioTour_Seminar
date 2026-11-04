@@ -49,7 +49,7 @@ const cases=[
  ['CatalogDetailScreen','CatalogDetailScreen',{kind:'tour',languageCode:'en',detail:{id:1,name:'Example',code:'T1',pois:[]},onScan:noop,onMap:noop,onBack:noop},['Back','View map','Itinerary','Estimated duration:','No audio is available']],
  ['QrScanner','QrScanner',{onClose:noop,onCodeScanned:noop},['Enter QR code','Allow camera access','Confirm code','Close']],
  ['PoiImages','PoiImages',{name:'Example',images:[]},['No image']],
- ['HomeScreen','HomeScreen',{languageCode:'en',languageLabel:'English',loading:false,pois:[],tours:[],remainingSeconds:null,onLanguage:noop,onScan:noop,onPois:noop,onTours:noop,onPoi:noop,onTour:noop},['Explore Vĩnh Hy','Featured places','Suggested tours']],
+ ['HomeScreen','HomeScreen',{languageCode:'en',languageLabel:'English',loading:false,pois:[],tours:[],remainingSeconds:null,onLanguage:noop,onScan:noop,onPois:noop,onTours:noop,onPoi:noop,onTour:noop},['Explore local food','Featured places','Suggested tours']],
  ['TicketScreen','TicketScreen',{remainingSeconds:null,onScan:noop,onExplore:noop},['Your audio pass','No active pass']],
  ['BottomNavigation','BottomNavigation',{active:'home',onSelect:noop,onScan:noop},['Home','Map','Tour','Pass','Search']],
 ];
@@ -62,7 +62,7 @@ const labels = {
  CatalogDetailScreen: ['Quay lại','Xem bản đồ','Hành trình','Thời lượng dự kiến:','Chưa có audio khả dụng cho ngôn ngữ này.'],
  QrScanner: ['Nhập mã QR','Cho phép dùng camera','Xác nhận mã','Đóng'],
  PoiImages: ['Chưa có ảnh'],
- HomeScreen: ['Khám phá Vĩnh Hy','Địa điểm nổi bật','Tour đề xuất'],
+ HomeScreen: ['Khám phá ẩm thực','Địa điểm nổi bật','Tour đề xuất'],
  TicketScreen: ['Vé audio của bạn','Chưa có vé đang hoạt động'],
  BottomNavigation: ['Trang chủ','Bản đồ','Tour','Vé','Tìm kiếm'],
 };

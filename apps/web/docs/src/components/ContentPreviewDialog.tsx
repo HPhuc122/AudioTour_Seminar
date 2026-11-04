@@ -1,26 +1,23 @@
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
 import { MediaPreview } from './MediaPreview';
 import { ReviewStatus } from './ReviewStatus';
+import { GoogleVoicePreview } from './GoogleVoicePreview';
 import type { Row } from '../types';
 
 export type ContentPreviewKind = 'narrations' | 'translations' | 'media' | 'audio' | 'audio-file';
 
-export function ContentPreviewDialog({ row, kind, token, canAutomate, onClose }: {
-  row: Row; kind: ContentPreviewKind; token: string; canAutomate: boolean; onClose: () => void;
+export function ContentPreviewDialog({ row, kind, token, onClose }: {
+  row: Row; kind: ContentPreviewKind; token: string; onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
     const element = dialog.current!;
     const trigger = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     element.showModal();
     return () => {
       element.close();
-      document.body.style.overflow = previousOverflow;
       if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus({ preventScroll: true });
     };
   }, []);
@@ -37,6 +34,7 @@ export function ContentPreviewDialog({ row, kind, token, canAutomate, onClose }:
     </div>
     <div className="content-preview-body">
       <ReviewStatus row={row}/>
+      {['narrations', 'translations'].includes(kind) && <GoogleVoicePreview token={token} key={`${kind}-${row.Id}`} language={String(row.LanguageCode || 'vi')} text={String(kind === 'narrations' ? row.TextContent || '' : kind === 'translations' ? row.Description || row.ShortDescription || '' : row.TTSText || '')}/>}
       {hasFile && <MediaPreview key={path} token={token} image={kind === 'media'} path={path}/>}
       {!isAudio && kind !== 'media' && <>
         {kind === 'translations' && row.ShortDescription && <p className="text-preview">{row.ShortDescription}</p>}
@@ -44,9 +42,8 @@ export function ContentPreviewDialog({ row, kind, token, canAutomate, onClose }:
       </>}
       {kind === 'audio' && <>
         {row.TTSText && <p className="text-preview">{row.TTSText}</p>}
-        {!hasFile && <p className="notice">Bản ghi chưa có file âm thanh. Cần tải file audio thật lên hoặc cấu hình nhà cung cấp TTS để tạo file.</p>}
+        {!hasFile && <p className="notice">Bản ghi chưa có file âm thanh. Hệ thống tạo giọng nói từ văn bản thuyết minh đã được Admin duyệt; kiểm tra trạng thái tạo giọng.</p>}
       </>}
-      {canAutomate && kind !== 'media' && kind !== 'audio-file' && <Link to="/admin/automation">Dịch / tạo audio từ văn bản đã duyệt</Link>}
     </div>
   </dialog>, document.body);
 }

@@ -18,21 +18,24 @@ export function PoiImage({
   id,
   label,
   contain = false,
+  version,
 }: {
   id?: number | null
   label: string
   contain?: boolean
+  version?: number
 }) {
   const t = useTranslator()
 
-  const [failedId, setFailedId] = useState<number | null>(null)
-  return id && failedId !== id ? (
+  const uri = id ? audioTourApi.getImageUrl(id, version) : null
+  const [failedUri, setFailedUri] = useState<string | null>(null)
+  return uri && failedUri !== uri ? (
     <Image
       accessibilityLabel={label}
-      source={{ uri: audioTourApi.getImageUrl(id) }}
+      source={{ uri }}
       resizeMode={contain ? "contain" : "cover"}
       style={styles.image}
-      onError={() => setFailedId(id)}
+      onError={() => setFailedUri(uri)}
     />
   ) : (
     <View style={styles.placeholder}>
@@ -74,7 +77,7 @@ export function PoiImages({
         onPress={() => open(0)}
         style={styles.hero}
       >
-        <PoiImage id={ordered[0]?.id} label={name} />
+        <PoiImage id={ordered[0]?.id} version={ordered[0]?.version} label={name} />
         {ordered.length > 0 && (
           <Text style={styles.count}>{ordered.length} {t(" ảnh")}</Text>
         )}
@@ -93,7 +96,7 @@ export function PoiImages({
               onPress={() => open(index + 1)}
               style={styles.tile}
             >
-              <PoiImage id={item.id} label={t("{0}, ảnh {1}", name, index + 2)} />
+              <PoiImage id={item.id} version={item.version} label={t("{0}, ảnh {1}", name, index + 2)} />
             </Pressable>
           ))}
         </ScrollView>
@@ -136,6 +139,7 @@ export function PoiImages({
                 <View style={{ width, height: Math.max(160, height - 160) }}>
                   <PoiImage
                     id={item.id}
+                    version={item.version}
                     label={t("{0}, ảnh {1}", name, index + 1)}
                     contain
                   />

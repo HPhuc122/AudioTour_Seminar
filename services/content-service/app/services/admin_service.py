@@ -155,10 +155,16 @@ class AdminService:
         target_dir = root / "uploads" / folder
         target_dir.mkdir(parents=True, exist_ok=True)
         target = target_dir / file_name
-        with target.open("wb") as output:
-            shutil.copyfileobj(file.file, output)
-        relative_path = f"uploads/{folder}/{file_name}"
-        return self._repository.save_media_file(file_name, file.filename or file_name, content_type, target.stat().st_size, relative_path, user_id, poi_id, image_category, "Approved" if approved else "Pending")
+        try:
+            with target.open("wb") as output:
+                shutil.copyfileobj(file.file, output)
+            if not target.stat().st_size:
+                raise HTTPException(422, "Uploaded file is empty")
+            relative_path = f"uploads/{folder}/{file_name}"
+            return self._repository.save_media_file(file_name, file.filename or file_name, content_type, target.stat().st_size, relative_path, user_id, poi_id, image_category, "Approved" if approved else "Pending")
+        except Exception:
+            target.unlink(missing_ok=True)
+            raise
 
     def approve_media(self, media_id: int, user_id: int | None) -> dict:
         return self.update_resource("media", media_id, {"ApprovalStatus": "Approved", "ReviewedByUserId": user_id, "ReviewedAt": None})

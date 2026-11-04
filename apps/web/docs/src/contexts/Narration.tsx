@@ -22,10 +22,12 @@ export function NarrationProvider({ children }: { children: ReactNode }) {
       const detail = await api.authorizedPoi(entry.id, entry.language, entry.token);
       if (run !== version.current) return;
       const tracks = (detail.audioTracks || []) as (NonNullable<PublicPoi['audioTracks']>[number] & { ttsText?: string })[];
-      const track = tracks.find(t => t.isAvailable) || tracks.find(t => t.ttsText);
+      const description = detail.description?.trim() || detail.shortDescription?.trim();
+      const track = tracks.find(t => t.ttsText?.trim()) || tracks.find(t => t.isAvailable) || (description ? { id: 0, audioTrackId: 0, isAvailable: false, durationSeconds: 0, ttsText: `${detail.name}. ${description}` } : undefined);
       if (!track) throw new Error('Chưa có audio hoặc TTS cho ngôn ngữ này.');
-      setCurrent({ name: detail.name, mode: track.isAvailable ? 'File audio' : 'TTS', elapsed: 0, duration: track.durationSeconds || 0 });
-      if (track.isAvailable) {
+      const playFile = track.isAvailable && !track.ttsText?.trim();
+      setCurrent({ name: detail.name, mode: playFile ? 'File audio' : 'Giọng Google', elapsed: 0, duration: track.durationSeconds || 0 });
+      if (playFile) {
         const blob = await api.audioBlob(track.audioTrackId || track.id, entry.token); if (run !== version.current) return;
         objectUrl = URL.createObjectURL(blob); const element = new Audio(objectUrl); audio.current = element;
         await new Promise<void>((resolve, reject) => {
@@ -39,18 +41,29 @@ export function NarrationProvider({ children }: { children: ReactNode }) {
         });
       } else {
         if (!('speechSynthesis' in window)) throw new Error('Trình duyệt chưa hỗ trợ TTS.');
-        const voices = speechSynthesis.getVoices(); const voice = voices.find(v => v.lang.toLowerCase().startsWith(entry.language.toLowerCase()));
-        if (voices.length && !voice) throw new Error('Thiết bị chưa có giọng TTS cho ngôn ngữ này. Hãy chọn file audio hoặc cài giọng phù hợp.');
+        const voices = await new Promise<SpeechSynthesisVoice[]>(resolve => {
+          const available = speechSynthesis.getVoices();
+          const hasGoogle = (items: SpeechSynthesisVoice[]) => items.some(v => /google/i.test(v.name) && v.lang.toLowerCase().split(/[-_]/)[0] === entry.language.toLowerCase().split(/[-_]/)[0]);
+          if (hasGoogle(available)) { resolve(available); return; }
+          const done = () => { clearTimeout(timeout); speechSynthesis.removeEventListener('voiceschanged', changed); resolve(speechSynthesis.getVoices()); };
+          const changed = () => { if (hasGoogle(speechSynthesis.getVoices())) done(); };
+          const timeout = setTimeout(done, 2000);
+          speechSynthesis.addEventListener('voiceschanged', changed);
+        });
+        if (run !== version.current) return;
+        const requestedLanguage = entry.language.toLowerCase().split(/[-_]/)[0];
+        const voice = voices.find(v => /google/i.test(v.name) && v.lang.toLowerCase().split(/[-_]/)[0] === requestedLanguage);
+        if (!voice) throw new Error('Không tìm thấy giọng Google cho ngôn ngữ này. Hãy mở bằng Chrome có hỗ trợ giọng Google hoặc chọn file audio.');
         await new Promise<void>((resolve, reject) => {
-          const utterance = new SpeechSynthesisUtterance(track.ttsText!); utterance.lang = entry.language; if (voice) utterance.voice = voice; speaking.current = utterance; finish.current = resolve;
+          const utterance = new SpeechSynthesisUtterance(track.ttsText!); utterance.lang = voice.lang; utterance.voice = voice; utterance.volume = 1; speaking.current = utterance; finish.current = resolve;
           let started = 0; let timer: ReturnType<typeof setInterval> | undefined;
           utterance.onstart = () => { played = true; started = performance.now(); setPlaying(true); setBusy(false); timer = setInterval(() => { if (!speechSynthesis.paused) seconds += 0.5; setCurrent(c => c && ({ ...c, elapsed: seconds })); }, 500); };
           const done = () => { if (timer) clearInterval(timer); if (started && seconds === 0) seconds = (performance.now() - started) / 1000; resolve(); };
           finish.current = done; utterance.onend = done; utterance.onerror = e => { if (timer) clearInterval(timer); if (e.error === 'canceled' || e.error === 'interrupted') resolve(); else reject(new Error(`TTS thất bại: ${e.error}`)); };
-          speechSynthesis.speak(utterance);
+          speechSynthesis.resume(); speechSynthesis.speak(utterance);
         });
       }
-      if (played && seconds >= 1) { try { if (track.isAvailable) await api.playLog(track.audioTrackId || track.id, entry.language, entry.trigger, seconds, entry.token); else await api.ttsLog(entry.id, entry.language, entry.trigger, seconds, entry.token); } catch { if (run === version.current) setError('Đã phát, nhưng chưa gửi được nhật ký lượt nghe.'); } }
+      if (played && seconds >= 1) { try { if (playFile) await api.playLog(track.audioTrackId || track.id, entry.language, entry.trigger, seconds, entry.token); else await api.ttsLog(entry.id, entry.language, entry.trigger, seconds, entry.token); } catch { if (run === version.current) setError('Đã phát, nhưng chưa gửi được nhật ký lượt nghe.'); } }
     } catch (e) { if (run === version.current) setError(e instanceof Error ? e.message : 'Không phát được thuyết minh.'); }
     finally { if (objectUrl) URL.revokeObjectURL(objectUrl); if (run === version.current) { audio.current = null; speaking.current = null; running.current = false; activeId.current = undefined; setPlaying(false); setBusy(false); setCurrent(null); void pump.current(); } }
   };

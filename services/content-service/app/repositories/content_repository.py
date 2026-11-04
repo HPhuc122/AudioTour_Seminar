@@ -174,12 +174,12 @@ class ContentRepository:
         query = f"""
         SELECT a.Id AS id, a.Id AS audioTrackId, a.POIId AS poiId, a.LanguageCode AS languageCode,
                a.LanguageCode AS language, COALESCE(a.Title, CONCAT('POI ', a.POIId, ' - ', a.LanguageCode)) AS title,
-               a.AudioType AS audioType, a.TTSText AS ttsText, a.FileUrl AS fileUrl, a.DurationSeconds AS durationSeconds,
+               a.AudioType AS audioType, a.Version AS version, a.TTSText AS ttsText, a.FileUrl AS fileUrl, a.DurationSeconds AS durationSeconds,
                a.DurationSeconds AS duration, a.FileSizeBytes AS fileSizeBytes, a.MimeType AS mimeType,
                CASE WHEN a.FileUrl IS NULL THEN CAST(0 AS bit) ELSE CAST(1 AS bit) END AS isAvailable
         FROM AudioTracks a
         INNER JOIN POIs p ON p.Id=a.POIId
-        WHERE {self.PUBLIC_POI_WHERE} AND a.POIId = %s AND a.IsActive = 1 AND a.DeletedAt IS NULL AND a.ReviewStatus = 'Approved' AND (a.AudioType = 'tts' OR EXISTS (SELECT 1 FROM MediaFiles am WHERE am.RelativePath=a.FileUrl AND am.PoiId=a.POIId AND am.FileType='audio' AND am.ReviewStatus='Approved' AND am.ApprovalStatus='Approved' AND am.IsDeleted=0)) {language_filter}
+        WHERE {self.PUBLIC_POI_WHERE} AND a.POIId = %s AND a.IsActive = 1 AND a.DeletedAt IS NULL AND a.ReviewStatus = 'Approved' AND ((a.AudioType = 'tts' AND a.FileUrl IS NULL) OR EXISTS (SELECT 1 FROM MediaFiles am WHERE am.RelativePath=a.FileUrl AND am.PoiId=a.POIId AND am.FileType='audio' AND am.ReviewStatus='Approved' AND am.ApprovalStatus='Approved' AND am.IsDeleted=0)) {language_filter}
         ORDER BY a.LanguageCode, a.Id
         """
         return self._fetchall(query, tuple(params))
@@ -190,7 +190,7 @@ class ContentRepository:
                a.MimeType AS mimeType, a.IsActive AS isActive
         FROM AudioTracks a
         INNER JOIN POIs p ON p.Id = a.POIId
-        WHERE a.Id = %s AND a.IsActive = 1 AND a.DeletedAt IS NULL AND a.ReviewStatus = 'Approved' AND (a.AudioType = 'tts' OR EXISTS (SELECT 1 FROM MediaFiles am WHERE am.RelativePath=a.FileUrl AND am.PoiId=a.POIId AND am.FileType='audio' AND am.ReviewStatus='Approved' AND am.ApprovalStatus='Approved' AND am.IsDeleted=0)) AND {self.PUBLIC_POI_WHERE}
+        WHERE a.Id = %s AND a.IsActive = 1 AND a.DeletedAt IS NULL AND a.ReviewStatus = 'Approved' AND ((a.AudioType = 'tts' AND a.FileUrl IS NULL) OR EXISTS (SELECT 1 FROM MediaFiles am WHERE am.RelativePath=a.FileUrl AND am.PoiId=a.POIId AND am.FileType='audio' AND am.ReviewStatus='Approved' AND am.ApprovalStatus='Approved' AND am.IsDeleted=0)) AND {self.PUBLIC_POI_WHERE}
         """
         return self._fetchone(query, (audio_track_id,))
 
@@ -204,7 +204,7 @@ class ContentRepository:
         published = self._fetchone("""SELECT j.Id AS jobId,j.NarrationId AS narrationId,
             j.SourceVersion AS sourceVersion,j.ResultText AS description,j.ResultName AS name,
             a.Id AS id,a.POIId AS poiId,a.LanguageCode AS languageCode,a.LanguageCode AS language,
-            a.Title AS title,a.AudioType AS audioType,a.FileUrl AS fileUrl,a.MimeType AS mimeType,
+            a.Title AS title,a.AudioType AS audioType,a.Version AS version,a.FileUrl AS fileUrl,a.MimeType AS mimeType,
             a.DurationSeconds AS durationSeconds,a.FileSizeBytes AS fileSizeBytes
             FROM NarrationPublications n JOIN NarrationJobs j ON j.Id=n.JobId
             JOIN AudioTracks a ON a.Id=n.AudioTrackId
@@ -217,7 +217,7 @@ class ContentRepository:
     def list_public_images_for_poi(self, poi_id: int) -> list[dict]:
         query = """
         SELECT Id AS id, FileName AS fileName, OriginalFileName AS originalFileName,
-               ContentType AS contentType, FileSize AS fileSize, ImageCategory AS imageCategory, RelativePath AS relativePath
+               ContentType AS contentType, FileSize AS fileSize, Version AS version, ImageCategory AS imageCategory, RelativePath AS relativePath
         FROM MediaFiles
         WHERE PoiId = %s AND FileType = 'image' AND ApprovalStatus = 'Approved' AND ReviewStatus = 'Approved' AND IsDeleted = 0
         ORDER BY CASE WHEN ImageCategory = 'Highlight' THEN 0 ELSE 1 END, UploadedAt DESC, Id DESC
@@ -226,7 +226,7 @@ class ContentRepository:
 
     def get_public_media_file(self, media_file_id: int) -> dict | None:
         query = f"""
-        SELECT m.Id AS id, m.RelativePath AS relativePath, m.ContentType AS contentType
+        SELECT m.Id AS id, m.Version AS version, m.RelativePath AS relativePath, m.ContentType AS contentType
         FROM MediaFiles m
         INNER JOIN POIs p ON p.Id = m.PoiId
         WHERE m.Id = %s AND m.FileType = 'image' AND m.ApprovalStatus = 'Approved'

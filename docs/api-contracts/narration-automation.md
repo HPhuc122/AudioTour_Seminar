@@ -18,7 +18,7 @@ Worker quét lease hết hạn khi service khởi động và trong mỗi vòng 
 
 Unique `(NarrationId, SourceVersion, LanguageCode)` và `AudioTracks.AutomationJobId` chống kết quả trùng trong DB. Adapter nhận `Idempotency-Key: narration-{id}-v{version}-{language}` và **cần tôn trọng key này** để tránh tính phí lại nếu request ngoài đã thành công nhưng worker chưa nhận được response. Không thể cam kết exactly-once billing với dịch vụ ngoài không hỗ trợ idempotency.
 
-Upload thủ công vẫn có trên Admin/Vendor và dùng quy trình duyệt cũ. Index tiếp tục giới hạn một audio thủ công đang active cho POI/ngôn ngữ, tách riêng audio tự sinh bằng AutomationJobId. Khi có bản tự sinh hoàn chỉnh, API ưu tiên cặp text/audio này; file upload thủ công không bị tự duyệt, xóa hay sửa. Xóa thuyết minh qua duyệt là xóa mềm, giữ lịch sử; chỉ gỡ publication do chính thuyết minh đó tạo.
+Giao diện Admin/Vendor chỉ dùng văn bản → duyệt → TTS, không còn upload audio thủ công. Audio tự sinh lưu AudioType=tts, TTSText và AutomationJobId, cùng file thật để Mobile stream. API upload cũ được giữ tương thích, không xóa dữ liệu cũ. Khi có bản tự sinh hoàn chỉnh, API ưu tiên cặp text/audio này. Xóa thuyết minh qua duyệt là xóa mềm, giữ lịch sử; chỉ gỡ publication do chính thuyết minh đó tạo.
 
 ## Migration và cấu hình
 

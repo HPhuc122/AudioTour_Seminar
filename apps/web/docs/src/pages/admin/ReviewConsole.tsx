@@ -5,9 +5,10 @@ import { api, json } from '../../services/api';
 import { useResource } from '../../hooks/useResource';
 import { PageTitle, State } from '../../components/States';
 import { MediaPreview } from '../../components/MediaPreview';
+import { DetailDialog } from '../../components/DetailDialog';
 import { ReviewStatus } from '../../components/ReviewStatus';
 import { Filters, Pagination, ConfirmDialog } from '../../components/AdminTable';
-import { dateLabel } from './OperationsPage';
+import { dateLabel } from '../../lib/dateTime';
 import type { Page, Row } from '../../types';
 const names: Record<string, string> = { pois: 'Đăng ký / thay đổi POI', tours: 'Tour', media: 'Ảnh / file audio', audio: 'Audio', narrations: 'Văn bản giới thiệu', 'poi-translations': 'Bản dịch POI', 'tour-translations': 'Bản dịch tour' };
 const fields: Record<string, string> = { Name: 'Tên', Title: 'Tiêu đề', Code: 'Mã', LanguageCode: 'Ngôn ngữ', Description: 'Nội dung', ShortDescription: 'Mô tả ngắn', TextContent: 'Thuyết minh', TTSText: 'Văn bản đọc', Latitude: 'Vĩ độ', Longitude: 'Kinh độ', RadiusMeters: 'Bán kính (m)', FileUrl: 'File audio', OriginalFileName: 'Tên file', EstimatedMinutes: 'Thời lượng (phút)', ValidFrom: 'Bắt đầu', ValidUntil: 'Kết thúc', _pois: 'Thứ tự POI' };
@@ -46,7 +47,7 @@ export function ReviewPage() {
       {!data.loading && !data.error && !!data.data?.items.length && <div className="table-scroll"><table><thead><tr><th>Hồ sơ</th><th>Người gửi</th><th>Ngày gửi</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{data.data.items.map(row => <tr key={String(row.Id)}><td>{names[String(row.Resource)]} #{row.EntityId}<small className="block">Đề xuất #{row.Id} · Phiên bản nền {row.BaseVersion}</small></td><td>{row.SubmittedBy || `Tài khoản #${row.SubmittedByUserId}`}</td><td>{dateLabel(row.SubmittedAt)}</td><td><ReviewStatus row={{ SubmissionStatus: row.Status, RejectionReason: row.RejectionReason }}/></td><td><button disabled={busy} onClick={() => { setSelected(row); setError(''); setRejecting(false); }}>Xem nội dung</button></td></tr>)}</tbody></table></div>}
       <Pagination page={page} total={data.data?.total} busy={data.loading || busy} onPage={setPage}/>
     </section>
-    {selected && <section className="panel dossier"><h2>Hồ sơ {names[String(selected.Resource)]} #{selected.EntityId}</h2>
+    {selected && <DetailDialog title={`Hồ sơ ${names[String(selected.Resource)]} #${selected.EntityId}`} busy={busy || confirming} onClose={() => { setSelected(undefined); setRejecting(false); setConfirming(false); }}><section className="dossier">
       {submission?.Operation === 'delete' && <p className="error">Đề xuất xóa nội dung. Chỉ xóa khỏi bản công khai sau khi duyệt.</p>}
       <State loading={detail.loading} error={detail.error} retry={() => void detail.reload()}/>
       {item && detail.data && <>
@@ -61,6 +62,6 @@ export function ReviewPage() {
         <button disabled={busy} onClick={() => setSelected(undefined)}>Đóng</button>
       </div>
       {rejecting && <form className="reject-form" onSubmit={e => { e.preventDefault(); void action('reject', String(new FormData(e.currentTarget).get('reason'))); }}><label>Lý do từ chối<textarea name="reason" required minLength={1} maxLength={1000}/></label><p>Thao tác sẽ lưu lý do và giữ nguyên nội dung đã công khai trước đó.</p><button disabled={busy} className="primary">Xác nhận từ chối</button><button type="button" disabled={busy} onClick={() => setRejecting(false)}>Hủy</button></form>}
-    </section>}
+    </section></DetailDialog>}
     {confirming && <ConfirmDialog title="Xác nhận duyệt hồ sơ" description={selected?.Operation === 'delete' ? 'Nội dung sẽ bị gỡ khỏi bản công khai. Bạn đã kiểm tra hồ sơ này?' : 'Nội dung đề xuất sẽ trở thành phiên bản đã duyệt. Bạn đã kiểm tra văn bản và các file đính kèm?'} busy={busy} error={error} onClose={() => setConfirming(false)} onConfirm={() => void action('approve')}/>}</>;
 }

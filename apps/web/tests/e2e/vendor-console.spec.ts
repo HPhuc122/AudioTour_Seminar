@@ -36,18 +36,41 @@ test('Vendor creates a POI without granting publication or ownership fields', as
   const writes = await setup(page); await page.goto('/vendor/pois/new');
   await page.getByLabel('Mã địa điểm').fill('SAP-2');
   await page.getByLabel('Tên địa điểm').fill('Sạp mới');
+  await expect(page.getByLabel('Giới thiệu', { exact: true })).toHaveJSProperty('tagName', 'TEXTAREA');
+  await page.getByLabel('Giới thiệu', { exact: true }).fill('Giới thiệu sạp bằng văn bản tiếng Việt.');
   await page.getByLabel('Vĩ độ').fill('11.7'); await page.getByLabel('Kinh độ').fill('109.1');
   await page.getByRole('button', { name: 'Lưu và gửi duyệt' }).click();
   await expect(page).toHaveURL(/\/vendor\/pois$/);
   expect(writes).toHaveLength(1);
-  expect(writes[0]).toMatchObject({ path: '/api/v1/pois', method: 'POST', body: { Code: 'SAP-2', Name: 'Sạp mới', Latitude: 11.7, Longitude: 109.1, RadiusMeters: 50 } });
+  expect(writes[0]).toMatchObject({ path: '/api/v1/pois', method: 'POST', body: { Code: 'SAP-2', Name: 'Sạp mới', Description: 'Giới thiệu sạp bằng văn bản tiếng Việt.', Latitude: 11.7, Longitude: 109.1, RadiusMeters: 50 } });
   for (const field of ['UserId', 'ReviewStatus', 'ApprovalStatus', 'LifecycleStatus']) expect(writes[0].body).not.toHaveProperty(field);
+});
+
+test('Vendor can scroll a short-screen content form and submit text', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 420 });
+  const writes = await setup(page);
+  await page.goto('/vendor/pois/1?tab=narrations');
+  await page.getByRole('button', { name: 'Thêm thuyết minh', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflowY)).toBe('hidden');
+  await dialog.getByLabel('Tiêu đề', { exact: false }).fill('Giới thiệu sạp');
+  await dialog.getByLabel('Nội dung thuyết minh', { exact: false }).fill('Nội dung tiếng Việt có thể nhập và gửi duyệt.');
+  await dialog.evaluate(element => { element.scrollTop = 0; });
+  const box = await dialog.boundingBox();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.wheel(0, 800);
+  await expect.poll(() => dialog.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflowY)).not.toBe('hidden');
+  expect(writes[0]).toMatchObject({ path: '/api/v1/narrations', method: 'POST', body: { PoiId: 1, TextContent: 'Nội dung tiếng Việt có thể nhập và gửi duyệt.' } });
 });
 
 test('Vendor updates a POI through its own detail and editor', async ({ page }) => {
   const writes = await setup(page); await page.goto('/vendor/pois/1');
   await page.getByRole('link', { name: 'Chỉnh sửa thông tin' }).click();
   await expect(page.getByLabel('Tên địa điểm')).toHaveValue('Sạp hải sản');
+  await expect(page.getByLabel('Giới thiệu')).toHaveValue('Giới thiệu sạp');
   await page.getByLabel('Tên địa điểm').fill('Sạp đã sửa');
   await page.getByRole('button', { name: 'Lưu và gửi duyệt' }).click();
   await expect(page).toHaveURL(/\/vendor\/pois$/);
@@ -91,9 +114,23 @@ test('Vendor reviews rejection details, opens the correct editor and resubmits',
   await expect(dossier.getByText('Cần bổ sung nội dung', { exact: false })).toBeVisible();
   await expect(dossier.getByRole('link', { name: 'Mở nội dung để chỉnh sửa' })).toHaveAttribute('href', '/vendor/pois/1?tab=translations');
   await expect(page.getByRole('button', { name: 'Duyệt nội dung', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Gửi lại', exact: true }).click();
+  await dossier.getByRole('button', { name: 'Gửi lại', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Đã gửi nội dung lại');
   expect(writes[0]).toMatchObject({ path: '/api/v1/cms/poi-translations/3/resubmit', method: 'POST' });
+});
+
+test('Vendor resubmit errors remain visible inside the dossier dialog', async ({ page }) => {
+  await setup(page);
+  await page.route('**/api/v1/cms/poi-translations/3/resubmit', route => route.fulfill({ status: 409, json: { detail: 'Nội dung đã thay đổi. Hãy kiểm tra lại.' } }));
+  await page.goto('/vendor/submissions');
+  await page.getByLabel('Trạng thái', { exact: true }).selectOption('Rejected');
+  await page.getByRole('button', { name: 'Xem nội dung' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Chi tiết hồ sơ #7' });
+  await dialog.getByRole('button', { name: 'Gửi lại', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Nội dung đã thay đổi');
+  await expect(dialog.getByRole('button', { name: 'Gửi lại', exact: true })).toBeEnabled();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
 });
 
 test('Vendor statistics validates the range and keeps filters scoped', async ({ page }) => {

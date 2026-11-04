@@ -38,7 +38,7 @@ def connect(database: str, autocommit: bool):
         import pyodbc
 
         driver = settings.odbc_driver or "ODBC Driver 18 for SQL Server"
-        server = f"tcp:{settings.host},{settings.port}"
+        server = settings.odbc_server or f"tcp:{settings.host},{settings.port}"
         auth = (
             "Trusted_Connection=yes;"
             if settings.use_windows_auth

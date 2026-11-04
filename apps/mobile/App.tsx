@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar"
 import { useEffect, useRef, useState } from "react"
 import {
   ActivityIndicator,
+  AppState,
   Button,
   Modal,
   Pressable,
@@ -23,7 +24,7 @@ import { BottomNavigation, type Tab } from "./src/native/BottomNavigation"
 import { TicketScreen } from "./src/native/TicketScreen"
 import { MapPanel, type MapTarget } from "./src/native/MapPanel"
 import { QrScanner } from "./src/native/QrScanner"
-import { audioTourApi } from "./src/native/api"
+import { ApiError, audioTourApi } from "./src/native/api"
 import type {
   ApiLanguage,
   ApiQrTarget,
@@ -34,6 +35,7 @@ import type {
 } from "./src/native/api"
 import { resolveDeviceLanguage } from "./src/native/languageResolution"
 import { canTriggerNearby } from "./src/native/proximity"
+import { deadlineFromRemaining, parseApiUtc, remainingAccessSeconds } from "./src/native/accessTime"
 import {
   clearPaidAccessSession,
   loadPaidAccessSession,
@@ -80,8 +82,31 @@ export default function App() {
   const [morePoisError, setMorePoisError] = useState<string | null>(null)
   const morePoisBusy = useRef(false)
   const [tours, setTours] = useState<PublicTourSummary[]>([])
+  const [catalogRevision, setCatalogRevision] = useState(0)
   const [paidAccessRemainingSeconds, setPaidAccessRemainingSeconds] =
     useState<number | null>(null)
+  const accessDeadline = useRef<number | null>(null)
+  const setAccessRemaining = (seconds: number | null) => {
+    accessDeadline.current = seconds === null ? null : deadlineFromRemaining(seconds)
+    setPaidAccessRemainingSeconds(remainingAccessSeconds(accessDeadline.current))
+  }
+  const onPackagePurchased = (expiresAt: string) => {
+    accessDeadline.current = parseApiUtc(expiresAt)
+    setPaidAccessRemainingSeconds(remainingAccessSeconds(accessDeadline.current))
+  }
+  const [detailRevision, setDetailRevision] = useState(0)
+  const [allowAutoStart, setAllowAutoStart] = useState(true)
+  const resume = useRef(() => {})
+  useEffect(() => {
+    const tick = () => setPaidAccessRemainingSeconds(remainingAccessSeconds(accessDeadline.current))
+    const timer = setInterval(tick, 1000)
+    const listener = AppState.addEventListener('change', state => {
+      tick()
+      if (state === 'active') resume.current()
+      else setAllowAutoStart(false)
+    })
+    return () => { clearInterval(timer); listener.remove() }
+  }, [])
   const [destination, setDestination] =
     useState<PublicDetailDestination | null>(null)
   const [detail, setDetail] = useState<PublicTargetDetail | null>(null)
@@ -150,19 +175,20 @@ export default function App() {
       setPoiPage(poiPage)
       setPoiTotal(poiPage.total)
       setTours(tourItems)
+      setCatalogRevision(value => value + 1)
       if (paidSession) {
         const validation = await audioTourApi.validateGuestAccess(
           paidSession.accessToken,
         )
         if (request !== catalogRequest.current) return
         if (validation.isValid)
-          setPaidAccessRemainingSeconds(validation.remainingSeconds)
+          setAccessRemaining(validation.remainingSeconds)
         else {
           await clearPaidAccessSession()
           if (request !== catalogRequest.current) return
-          setPaidAccessRemainingSeconds(null)
+          setAccessRemaining(null)
         }
-      } else setPaidAccessRemainingSeconds(null)
+      } else setAccessRemaining(null)
     } catch (reason) {
       if (request !== catalogRequest.current) return
       errorSource.current = "catalog"
@@ -240,6 +266,7 @@ export default function App() {
           : await audioTourApi.getTour(id, languageCode)
       if (request !== detailRequest.current) return
       setDetail(target)
+      setAllowAutoStart(true)
       setDetailFromMap(fromMap)
       setDetailFromNearby(fromNearby)
       setCatalogDetailKind(kind)
@@ -259,7 +286,8 @@ export default function App() {
   const openNearbyPoi = (id: number) => {
     if (!nearbyEnabled || isQrScannerOpen || pendingQrVisit || detail || loadingDetail || activeTab !== "map") return
     const now = Date.now()
-    if (!canTriggerNearby(nearbyLastTriggered.current.get(id), now)) return
+    const poi = pois.find(item => item.id === id)
+    if (!poi || !canTriggerNearby(nearbyLastTriggered.current.get(id), now, poi.cooldownSeconds)) return
     nearbyLastTriggered.current.set(id, now)
     detailOrigin.current = "map"
     void openCatalogDetail("poi", id, true, true)
@@ -271,6 +299,7 @@ export default function App() {
     scannedQrCode: string,
   ) => {
     const request = ++detailRequest.current
+    setAllowAutoStart(true)
     setLoadingDetail(true)
 
     setError(null)
@@ -373,18 +402,42 @@ export default function App() {
 
   const detailKind =
     catalogDetailKind ?? (destination?.screen === "poi-detail" ? "poi" : "tour")
+  const refreshCatalog = () => languageCode ? loadCatalog(languageCode) : loadLanguages()
+  const refreshDetail = async () => {
+    if (!detail || loadingDetail || !languageCode) return
+    const request = ++detailRequest.current
+    setLoadingDetail(true)
+    setAllowAutoStart(false)
+    setError(null)
+    try {
+      const selectedLanguage = destination?.languageCode ?? languageCode
+      const updated = detailKind === 'poi' ? await audioTourApi.getPoi(detail.id, selectedLanguage) : await audioTourApi.getTour(detail.id, selectedLanguage)
+      if (request !== detailRequest.current) return
+      setDetail(updated)
+      setDetailRevision(value => value + 1)
+    } catch (reason) {
+      if (request === detailRequest.current) {
+        if (reason instanceof ApiError && [403, 404].includes(reason.status)) { clearDetail(); setMapTarget(null) }
+        setError(reason instanceof Error ? reason.message : t('Không thể mở chi tiết.'))
+      }
+    } finally { if (request === detailRequest.current) setLoadingDetail(false) }
+  }
+  resume.current = () => { void refreshCatalog(); void refreshDetail() }
   const content =
     detail && (catalogDetailKind || destination) ? (
       <CatalogDetailScreen
-        key={`${detailKind}:${detail.id}:${destination?.languageCode ?? languageCode}:${qrCode ?? "catalog"}`}
+        key={`${detailKind}:${detail.id}:${destination?.languageCode ?? languageCode}:${qrCode ?? "catalog"}:${detailRevision}`}
         detail={detail}
         kind={detailKind}
         languageCode={destination?.languageCode ?? languageCode ?? ""}
         qrCode={qrCode ?? undefined}
-        autoStart={detailFromNearby || Boolean(destination)}
+        autoStart={allowAutoStart && (detailFromNearby || Boolean(destination))}
+        refreshing={loadingDetail}
+        onRefresh={() => void refreshDetail()}
+        refreshError={error}
         triggerType={destination ? "qr" : detailFromNearby ? "gps" : "manual"}
         requiresPayment={audioEntryAction === "show-payment"}
-        onPackagePurchased={(expiresAt) => setPaidAccessRemainingSeconds(Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)))}
+        onPackagePurchased={onPackagePurchased}
         onScan={openQr}
         onMap={() => {
           setMapTarget({ kind: detailKind, detail })
@@ -408,13 +461,14 @@ export default function App() {
     ) : activeTab === "map" ? (
       <View style={styles.mapScreen}>
         <View style={styles.mapHeader}><Text style={styles.mapTitle}>{t("Bản đồ khám phá")}</Text></View>
-        {languageCode ? <MapPanel key={languageCode} pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onPackagePurchased={(expiresAt) => setPaidAccessRemainingSeconds(Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)))} onDetail={(id) => { detailOrigin.current = "map"; void openCatalogDetail("poi", id, true) }} nearbyEnabled={nearbyEnabled} onNearbyToggle={setNearbyEnabled} onNearbyPoi={openNearbyPoi} /> : <ActivityIndicator color="#058578" />}
+        {languageCode ? <MapPanel key={languageCode} pois={pois} languageCode={languageCode} target={mapTarget} onScan={openQr} onPackagePurchased={onPackagePurchased} onDetail={(id) => { detailOrigin.current = "map"; void openCatalogDetail("poi", id, true) }} nearbyEnabled={nearbyEnabled} onNearbyToggle={setNearbyEnabled} onNearbyPoi={openNearbyPoi} /> : <ActivityIndicator color="#058578" />}
       </View>
     ) : activeSection === "dashboard" ? (
       <HomeScreen
         languageCode={languageCode}
         languageLabel={currentLanguage?.nativeName || currentLanguage?.name || languageCode || t("Chưa chọn")}
         loading={isLoading}
+        onRefresh={() => void refreshCatalog()}
         pois={pois}
         tours={tours}
         remainingSeconds={paidAccessRemainingSeconds}
@@ -428,6 +482,7 @@ export default function App() {
     ) : (
       <CatalogListScreen
         key={`${activeSection}:${languageCode}`}
+        refreshRevision={catalogRevision}
         languageCode={languageCode ?? ""}
         isLoading={isLoading}
         kind={activeSection === "pois" ? "poi" : "tour"}
@@ -440,6 +495,7 @@ export default function App() {
         loadingMorePois={loadingMorePois}
         morePoisError={morePoisError}
         onLoadMorePois={() => void loadMorePois()}
+        onRefresh={() => void refreshCatalog()}
       />
     )
 

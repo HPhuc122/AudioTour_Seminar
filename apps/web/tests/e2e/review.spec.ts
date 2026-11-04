@@ -36,6 +36,36 @@ test('approval requires a concrete confirmation', async ({ page }) => {
   expect((await request).method()).toBe('POST');
   await expect(page.getByRole('status').filter({ hasText: 'Đã duyệt hồ sơ' })).toContainText('Đã duyệt hồ sơ');
 });
+
+test('review details open in a modal and Escape restores the selected row', async ({ page }) => {
+  await setup(page, 'Admin');
+  await page.goto('/admin/review');
+  const trigger = page.getByRole('button', { name: 'Xem nội dung', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Hồ sơ Bản dịch POI #1', exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toBeInViewport();
+  await expect(dialog.getByText('Nội dung đề xuất mới', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test('closing nested approval dialogs restores page scrolling', async ({ page }) => {
+  await setup(page, 'Admin'); await page.goto('/admin/review');
+  await page.getByRole('button', { name: 'Xem nội dung' }).click();
+  await page.getByRole('button', { name: 'Duyệt nội dung', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflowY)).toBe('hidden');
+  await page.getByRole('dialog', { name: 'Xác nhận duyệt hồ sơ' }).getByRole('button', { name: 'Hủy', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflowY)).toBe('hidden');
+  await page.getByRole('button', { name: 'Duyệt nội dung', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận duyệt', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflowY)).not.toBe('hidden');
+});
 test('Admin must supply a reason when rejecting a pending proposal', async ({ page }) => {
   await setup(page, 'Admin'); await page.goto('/admin/review'); await page.getByRole('button', { name: 'Xem nội dung' }).click();
   await expect(page.getByRole('button', { name: 'Duyệt nội dung', exact: true })).toBeVisible();

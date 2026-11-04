@@ -7,7 +7,7 @@ import * as Location from "expo-location";
 import { audioTourApi, type MapPoint, type MapRoute, type PublicPoiSummary, type PublicTargetDetail, type TravelMode } from "./api";
 import { DetailAudio } from "./DetailAudio";
 import { MAP_HTML } from "./mapHtml";
-import { nearestPoiWithinRadius } from "./proximity";
+import { ProximityMonitor } from "./proximity";
 export type MapTarget = {
     kind: "poi" | "tour";
     detail: PublicTargetDetail;
@@ -71,9 +71,10 @@ export function MapPanel({ pois, languageCode, target, onScan, onPackagePurchase
     nearbyEnabledRef.current = nearbyEnabled;
     const onNearbyPoiRef = useRef(onNearbyPoi);
     onNearbyPoiRef.current = onNearbyPoi;
-    function notifyNearby(point: MapPoint & { accuracy: number }, monitor: boolean) {
-        if (!monitor || !nearbyEnabledRef.current || selectedRef.current || AppState.currentState !== "active") return;
-        const nearest = nearestPoiWithinRadius(mapPoisRef.current, point);
+    const proximity = useRef(new ProximityMonitor());
+    function notifyNearby(point: MapPoint & { accuracy: number }, monitor: boolean, timestamp: number) {
+        if (!monitor || !nearbyEnabledRef.current || selectedRef.current || AppState.currentState !== "active") { proximity.current.reset(); return; }
+        const nearest = proximity.current.update(mapPoisRef.current, point, Date.now(), timestamp);
         if (nearest) onNearbyPoiRef.current(nearest.id);
     }
     function clearRoute() { routeRequest.current++; setRoute(null); setRouting(false); setError(null); }
@@ -118,9 +119,9 @@ export function MapPanel({ pois, languageCode, target, onScan, onPackagePurchase
                 clearTimeout(timeout); });
             if (!mounted.current || request !== locationRequest.current || AppState.currentState !== "active")
                 return;
-            const point = { latitude: result.coords.latitude, longitude: result.coords.longitude, accuracy: result.coords.accuracy ?? 0 };
+            const point = { latitude: result.coords.latitude, longitude: result.coords.longitude, accuracy: result.coords.accuracy ?? Infinity };
             setLocation(point);
-            notifyNearby(point, monitor);
+            notifyNearby(point, monitor, result.timestamp);
             if (endpoint)
                 choose(endpoint, { ...point, label: t("Vị trí hiện tại") });
             else {
@@ -128,11 +129,12 @@ export function MapPanel({ pois, languageCode, target, onScan, onPackagePurchase
                 setFitKey((v) => v + 1);
             }
             subscription.current?.remove();
-            const watcher = await Location.watchPositionAsync({ accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 10000 }, (next) => {
+            // Dwell must keep receiving fixes while the visitor stands still.
+            const watcher = await Location.watchPositionAsync({ accuracy: Location.Accuracy.Balanced, distanceInterval: monitor ? 0 : 10, timeInterval: monitor ? 1000 : 10000 }, (next) => {
                 if (mounted.current && AppState.currentState === "active") {
-                    const point = { latitude: next.coords.latitude, longitude: next.coords.longitude, accuracy: next.coords.accuracy ?? 0 };
+                    const point = { latitude: next.coords.latitude, longitude: next.coords.longitude, accuracy: next.coords.accuracy ?? Infinity };
                     setLocation(point);
-                    notifyNearby(point, monitor);
+                    notifyNearby(point, monitor, next.timestamp);
                 }
             });
             if (!mounted.current || request !== locationRequest.current || AppState.currentState !== "active")
@@ -153,7 +155,8 @@ export function MapPanel({ pois, languageCode, target, onScan, onPackagePurchase
     useEffect(() => {
         mounted.current = true;
         const listener = AppState.addEventListener("change", (state) => {
-            if (state === "background") {
+            if (state !== "active") {
+                proximity.current.reset();
                 locationRequest.current++;
                 subscription.current?.remove();
                 subscription.current = null;
@@ -164,7 +167,11 @@ export function MapPanel({ pois, languageCode, target, onScan, onPackagePurchase
         });
         return () => { mounted.current = false; routeRequest.current++; detailRequest.current++; locationRequest.current++; subscription.current?.remove(); listener.remove(); };
     }, []);
-    useEffect(() => { if (nearbyEnabled) void locate(undefined, true); }, [nearbyEnabled]);
+    useEffect(() => {
+        proximity.current.reset();
+        if (nearbyEnabled) void locate(undefined, true);
+        else { locationRequest.current++; subscription.current?.remove(); subscription.current = null; setLocating(false); }
+    }, [nearbyEnabled]);
     async function calculate(tourDetail = tour, travelMode = mode) {
         const request = ++routeRequest.current;
         setRoute(null);

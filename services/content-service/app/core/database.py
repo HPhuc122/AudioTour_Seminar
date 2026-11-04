@@ -63,7 +63,7 @@ def get_connection() -> Iterator[pymssql.Connection | OdbcConnection]:
     if settings.use_windows_auth or settings.odbc_driver:
         encrypt = "yes" if settings.encrypt else "no"
         trust_certificate = "yes" if settings.trust_server_certificate else "no"
-        server = f"tcp:{settings.host},{settings.port}"
+        server = settings.odbc_server or f"tcp:{settings.host},{settings.port}"
         driver = settings.odbc_driver or "ODBC Driver 17 for SQL Server"
         authentication = (
             "Trusted_Connection=yes;"

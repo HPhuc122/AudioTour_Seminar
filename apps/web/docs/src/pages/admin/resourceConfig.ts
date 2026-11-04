@@ -7,6 +7,8 @@ export const poiFields: Field[] = [
   { key: 'Priority', label: 'Mức ưu tiên', type: 'number', default: 1, min: 0, step: '1' },
   { key: 'CooldownSeconds', label: 'Khoảng nghỉ giữa các lần phát (giây)', type: 'number', default: 120, min: 0, step: '1' }, { key: 'MinDwellSeconds', label: 'Thời gian trong vùng (giây)', type: 'number', default: 3, min: 0, step: '1' },
   { key: 'ImageUrl', label: 'URL ảnh (https)' }, { key: 'IsActive', label: 'Hoạt động', type: 'checkbox' },
+  { key: 'ValidFrom', label: 'Bắt đầu (giờ địa phương)', type: 'datetime-local' },
+  { key: 'ValidUntil', label: 'Kết thúc (giờ địa phương)', type: 'datetime-local' },
   { key: 'LifecycleStatus', label: 'Trạng thái xuất bản', type: 'select', default: 0, options: [{ value: '0', label: 'Nháp (0)' }, { value: '1', label: 'Chờ duyệt (1)' }, { value: '2', label: 'Chờ thanh toán (2)' }, { value: '3', label: 'Đã xuất bản (3)' }, { value: '5', label: 'Từ chối (5)' }] },
 ];
 export const configs: Record<string, { title: string; fields: Field[]; columns: [string, string][] }> = {

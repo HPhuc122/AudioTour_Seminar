@@ -7,9 +7,18 @@ from pydantic import ValidationError
 
 from app.api.public import TargetAccessRequest
 from app.services.content_service import ContentService
+from fastapi.encoders import jsonable_encoder
 
 
 class TargetAccessTests(unittest.TestCase):
+    def test_guest_expiry_responses_include_explicit_utc(self):
+        expires = datetime.utcnow() + timedelta(minutes=60)
+        valid = ContentService._validate_response({'expiresAt': expires, 'status': 'Active'}, True)
+        payment = ContentService._payment_response({'passStatus': 'Active'}, 'guest', expires)
+        self.assertTrue(jsonable_encoder(valid)['expiresAt'].endswith('+00:00'))
+        self.assertTrue(jsonable_encoder(payment)['expiresAt'].endswith('+00:00'))
+        self.assertGreater(valid['remainingSeconds'], 3590)
+
     def setUp(self):
         self.repo = Mock()
         self.service = ContentService(self.repo)

@@ -30,7 +30,8 @@ class WebService:
     def tts_play_log(self, payload, token):
         self.content._require_access_for_poi(token, payload.poiId)
         detail = self.content.get_poi(payload.poiId, payload.languageCode)
-        if not any(row.get("ttsText") for row in self.repository.web_tts_tracks(detail["id"], payload.languageCode)):
+        has_description = bool((detail.get("description") or detail.get("shortDescription") or "").strip())
+        if not has_description and not any(row.get("ttsText") for row in self.repository.web_tts_tracks(detail["id"], payload.languageCode)):
             raise HTTPException(404, "TTS content not found")
         self.content._repository.record_play_log(payload.poiId, self.content._lang(payload.languageCode), self.content._trigger(payload.triggerType), None, payload.durationPlayedSeconds)
         return {"recorded": True}

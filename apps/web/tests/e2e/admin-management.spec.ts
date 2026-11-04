@@ -74,16 +74,14 @@ test('Admin submits tour POI order and a tour translation for review', async ({ 
   expect(writes[1]).toMatchObject({ method: 'POST', path: '/api/v1/tours/1/translations', body: { LanguageCode: 'vi', Name: 'Tour biển' } });
 });
 
-test('Admin edits audio metadata without rewriting its uploaded file', async ({ page }) => {
+test('Admin changes generated audio through narration text', async ({ page }) => {
   const writes = await setup(page); await page.goto('/admin/audio');
-  await page.getByRole('button', { name: 'Sửa', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Thông tin audio' });
-  await dialog.getByLabel('Tên audio').fill('Thuyết minh đã sửa');
-  await dialog.getByLabel('Ngôn ngữ').selectOption('en');
-  await dialog.getByRole('button', { name: 'Lưu thay đổi' }).click();
-  await expect(dialog).toHaveCount(0);
-  expect(writes[0]).toMatchObject({ method: 'PUT', path: '/api/v1/audio/5', body: { Title: 'Thuyết minh đã sửa', LanguageCode: 'en', POIId: 1 } });
-  expect(writes[0].body).not.toHaveProperty('FileUrl');
+  await expect(page.getByRole('cell', { name: /Thuyết minh cũ/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sửa', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Xóa', exact: true })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Nhập văn bản thuyết minh' }).click();
+  await expect(page).toHaveURL(/\/admin\/narrations/);
+  expect(writes).toHaveLength(0);
 });
 
 test('switching Admin resources resets the previous search and page', async ({ page }) => {

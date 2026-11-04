@@ -139,6 +139,9 @@ class ReviewService(AdminService):
                     )
                 if media.get("PoiId") != merged.get("POIId"):
                     raise HTTPException(422, "Audio media must belong to the same POI")
+                # File metadata comes from the uploaded bytes, not an editable form.
+                data["MimeType"] = media["ContentType"]
+                data["FileSizeBytes"] = media["FileSize"]
         if resource == "media":
             if "RelativePath" in data:
                 self._path(data["RelativePath"])

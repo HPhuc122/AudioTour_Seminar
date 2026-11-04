@@ -3,15 +3,15 @@
 Web React dành cho chủ sạp và quản trị viên; khách tham quan dùng Mobile React Native. Web gọi Gateway FastAPI, không kết nối SQL Server trực tiếp.
 
 - Admin và Chủ sạp đăng nhập bằng tài khoản hệ thống. Mọi dữ liệu quản lý được lấy qua Gateway; lỗi kết nối được thông báo để người dùng thử lại.
-- Sidebar chia nhóm tổng quan, hồ sơ/duyệt, nội dung, dịch vụ/thanh toán, quản trị hệ thống.
-- Dashboard có tổng POI/tour/audio/media, hàng đợi duyệt, cảnh báo file thiếu và thời hạn. Thống kê lọc ngày UTC, dùng tên POI thật; nhật ký kích hoạt không được coi là lượt nghe hoàn tất.
+- Sidebar chỉ giữ tổng quan, duyệt nội dung, nội dung tham quan, tài khoản và ngôn ngữ. Đã gỡ các trang Giao dịch, Hồ sơ chủ sạp riêng, Thời hạn riêng, Cấu hình hệ thống và Dịch/TTS tự động.
+- Dashboard có tổng POI/tour/audio/media, hàng đợi duyệt và cảnh báo file thiếu. Thống kê lọc ngày UTC, dùng tên POI thật; nhật ký kích hoạt không được coi là lượt nghe hoàn tất.
 - POI, Tour, người dùng, nội dung, ảnh/audio và ngôn ngữ có tìm kiếm/lọc/phân trang qua SQL. POI đã xóa mềm không xuất hiện trong danh sách mặc định.
 - Hồ sơ duyệt so sánh canonical và đề xuất; xem trước ảnh/audio/text, xác nhận duyệt, bắt buộc lý do từ chối. Bản chỉnh sửa Pending không thay bản public. Thứ tự POI trong tour cũng qua quy trình duyệt.
-- Hồ sơ chủ sạp hiện tra cứu tài khoản, POI sở hữu và quyền được cấp. Chưa có quy trình duyệt hồ sơ trong schema cũ.
-- Thời hạn POI dùng ValidFrom/ValidUntil; thay đổi gửi duyệt. Danh mục gói dịch vụ/mua gói/gia hạn thanh toán chưa triển khai vì cần xác nhận nghiệp vụ và migration.
-- Giao dịch tra cứu PoiPaymentSessions/AccessPaymentSessions. Paid trong DB không chứng minh đã đối soát; SimulatedMoMo được ghi rõ là mô phỏng. Không có nút xác nhận thanh toán giả; Backend chặn mark-paid và payload sửa PaymentStatus.
-- Thư viện Âm thanh có nút Thêm file âm thanh: chọn MP3/WAV/OGG/M4A/AAC/FLAC, POI, tên và ngôn ngữ rồi lưu. Backend lưu file thật và bản ghi AudioTracks vào Pending. Không cần nhập đường dẫn file; khi tạo bản ghi lỗi, thử lại dùng file đã tải lên để tránh tải trùng.
-- Ngôn ngữ có API cấu hình thật. Duyệt thuyết minh tạo tác vụ DB theo từng ngôn ngữ; dịch và TTS tự sinh kế thừa lần duyệt nguồn, công khai cùng nhau khi hoàn tất, giữ cặp cũ trong lúc chờ. Upload thủ công vẫn Pending và cần duyệt riêng. Provider thật chưa cấu hình, chưa bật tự động. Xem [contract và cách chạy](../../docs/api-contracts/narration-automation.md).
+- Tài khoản Chủ sạp quản lý tại Người dùng; cấp quyền trực tiếp trên POI/Tour. Không có trang hồ sơ xét duyệt Chủ sạp riêng.
+- Thời hạn POI dùng các cột thật ValidFrom/ValidUntil ngay trong form sửa POI của Admin; thay đổi vẫn gửi duyệt. Không có màn hình gói dịch vụ/gia hạn riêng.
+- Không hiển thị giao dịch hay thanh toán mô phỏng trên Web. Bảng/API quyền nghe của khách được giữ để Mobile tiếp tục hoạt động.
+- Âm thanh được tạo từ văn bản thuyết minh đã được Admin duyệt. Thư viện audio chỉ xem/nghe kết quả; muốn sửa lời đọc phải sửa văn bản và gửi duyệt. Không tải file thu âm thủ công.
+- Trạng thái tạo giọng nằm ngay trong trang thuyết minh/audio của Admin và Chủ sạp. Khi chưa cấu hình dịch vụ TTS hoặc chưa bật worker, giao diện báo chưa sẵn sàng; nghe thử trên Web không phải file đã xuất bản cho Mobile.
 - Admin/SuperAdmin duyệt và quản lý hệ thống. Vendor/ContentAdmin/TourOperator sửa nội dung sở hữu hoặc được cấp quyền; AnalyticsViewer chỉ đọc. Backend kiểm tra role/scope độc lập với Web.
 - Khu vực Chủ sạp dùng route `/vendor`: tổng quan trong scope, danh sách/tạo/sửa POI, ảnh, audio, trạng thái gửi duyệt, QR chỉ xem/tải theo POI và thống kê. Hồ sơ sạp, gói dịch vụ/gia hạn chưa có API đầy đủ nên không hiển thị như chức năng hoàn chỉnh.
 - Chưa có tài khoản Vendor thì mở `/register` để tạo tài khoản qua `POST /api/v1/auth/register`; Backend hiện kích hoạt tài khoản ngay và chưa có quy trình xét duyệt hồ sơ Chủ sạp.
@@ -24,7 +24,7 @@ Web React dành cho chủ sạp và quản trị viên; khách tham quan dùng M
 - Hồ sơ gửi duyệt của Chủ sạp có so sánh bản hiện tại/đề xuất, lý do từ chối, xem file đề xuất, liên kết đúng tab chỉnh sửa và gửi lại. Thanh đầu trang có đăng xuất ở cả màn hình nhỏ.
 - Kiểm tra chỉ đọc API CMS với DB thật: `.tooling/python/python.exe scripts/check_web_console.py` từ root (cần quyền Windows truy cập SQL Server). Lệnh không khởi động worker, không ghi/duyệt dữ liệu và không in token.
 - Giữ API Mobile và không sửa apps/mobile. Web không có GPS/geofencing/scan QR của khách.
-- 46 file media gốc vẫn thiếu trên máy; upload hoặc khôi phục file thật trước khi demo đầy đủ.
+- DB hiện tại AudioTourVinhKhanh có 12 POI, 3 tour và 24 ảnh; file audio/bản dịch ngoại ngữ cần được bổ sung qua quy trình nội dung.
 
 ## Chạy cục bộ
 

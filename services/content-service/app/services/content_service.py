@@ -1,7 +1,7 @@
 import hashlib
 import math
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import HTTPException, status
@@ -49,9 +49,11 @@ class ContentService:
         if published:
             poi['description'], poi['name'] = published['description'], published['name']
             # Prefer the atomic generated text/audio pair over an older read.
-            poi['audioTracks'] = [{k: v for k, v in published.items() if k not in {'description', 'name', 'jobId', 'sourceVersion', 'narrationId'}}]
+            generated = {k: v for k, v in published.items() if k not in {'description', 'name', 'jobId', 'sourceVersion', 'narrationId'}}
+            poi['audioTracks'] = [generated] + [track for track in poi.get('audioTracks', []) if track['id'] != generated['id']]
         available_audio = []
         for track in poi.get('audioTracks', []):
+            track['audioTrackId'] = track.get('audioTrackId') or track['id']
             relative = track.pop('fileUrl', None)
             track['isAvailable'] = False
             if relative:
@@ -74,7 +76,8 @@ class ContentService:
             media = self._repository.get_public_media_file(poi['thumbnailImageId'])
             try:
                 self._resolve_media_path(media.get('relativePath') if media else None, 'uploads/images')
-                poi['thumbnailUrl'] = f"{base}/api/v1/public/media/images/{poi['thumbnailImageId']}"
+                poi['thumbnailImageVersion'] = media.get('version', 1)
+                poi['thumbnailUrl'] = f"{base}/api/v1/public/media/images/{poi['thumbnailImageId']}?v={poi['thumbnailImageVersion']}"
             except HTTPException:
                 poi['thumbnailImageId'] = None
                 poi.pop('thumbnailUrl', None)
@@ -85,12 +88,12 @@ class ContentService:
                 self._resolve_media_path(relative, 'uploads/images')
             except HTTPException:
                 continue
-            image['url'] = f"{base}/api/v1/public/media/images/{image['id']}"
+            image['url'] = f"{base}/api/v1/public/media/images/{image['id']}?v={image.get('version', 1)}"
             images.append(image)
         poi['images'] = images
         for audio in poi.get('audioTracks', []):
             if audio['isAvailable']:
-                audio['streamUrl'] = f"{base}/api/v1/public/audio/{audio['id']}"
+                audio['streamUrl'] = f"{base}/api/v1/public/audio/{audio['id']}?v={audio.get('version', 1)}"
         return poi
 
     def get_audio_tour(self, tour_id: int, language: str, token: str | None) -> dict:
@@ -100,7 +103,8 @@ class ContentService:
     def get_audio_poi(self, poi_id: int, language: str, trigger_type: str, token: str | None, device_id: str | None) -> dict:
         self._require_access_for_poi(token, poi_id)
         poi = self.get_poi(poi_id, language)
-        self._repository.record_play_log(poi_id, self._lang(language), self._trigger(trigger_type), device_id)
+        # Loading protected metadata is not evidence that audio was played.
+        self._trigger(trigger_type)
         return poi
 
     def start_target_access(self, target_type: str, target_id: int, device_id: str | None = None) -> dict:
@@ -144,8 +148,6 @@ class ContentService:
         payment_session_id = None
         if requires_payment:
             payment_session_id = self._repository.create_payment_session(pass_id, amount, "VND", now + timedelta(minutes=15))
-        elif qr.get("poiId"):
-            self._repository.record_play_log(qr["poiId"], "vi", trigger_type, device_id)
         return {
             "qr": qr,
             "requiresPayment": requires_payment,
@@ -155,7 +157,7 @@ class ContentService:
             "paymentSessionId": payment_session_id,
             "status": "PendingPayment" if requires_payment else "Active",
             "accessToken": token,
-            "expiresAt": now + timedelta(minutes=duration) if token else None,
+            "expiresAt": self._utc(now + timedelta(minutes=duration)) if token else None,
         }
 
     def simulate_payment(self, payment_session_id: int, success: bool = True) -> dict:
@@ -179,8 +181,6 @@ class ContentService:
         self._repository.mark_payment_session(payment_session_id, session["passId"], "Paid", "Active", self._hash_token(token), expires_at)
         session["passStatus"] = "Active"
         session["expiresAt"] = expires_at
-        if session.get("poiId"):
-            self._repository.record_play_log(session["poiId"], "vi", "qr", None)
         return self._payment_response(session, token, expires_at)
 
     def validate_access(self, token: str | None) -> dict:
@@ -207,6 +207,8 @@ class ContentService:
         if track is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio track not found")
         self._require_access_for_poi(token, track["poiId"])
+        if self._lang(language) != track.get("languageCode", self._lang(language)):
+            raise HTTPException(422, "Log language must match the audio track")
         self._repository.record_play_log(track["poiId"], self._lang(language), self._trigger(trigger_type), device_id, duration)
         return {"recorded": True}
 
@@ -332,13 +334,19 @@ class ContentService:
         return value if value in {"gps", "qr", "manual"} else "manual"
 
     @staticmethod
+    def _utc(value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+    @staticmethod
     def _validate_response(access_pass: dict, valid: bool) -> dict:
         seconds = max(0, int((access_pass["expiresAt"] - datetime.utcnow()).total_seconds())) if valid else 0
-        return {"isValid": valid, "status": access_pass["status"], "expiresAt": access_pass.get("expiresAt") if valid else None, "remainingSeconds": seconds, "qrLocationId": access_pass.get("qrLocationId"), "poiId": access_pass.get("poiId"), "tourId": access_pass.get("tourId")}
+        return {"isValid": valid, "status": access_pass["status"], "expiresAt": ContentService._utc(access_pass.get("expiresAt")) if valid else None, "remainingSeconds": seconds, "qrLocationId": access_pass.get("qrLocationId"), "poiId": access_pass.get("poiId"), "tourId": access_pass.get("tourId")}
 
     @staticmethod
     def _payment_response(session: dict, token: str | None, expires_at: datetime | None = None) -> dict:
-        return {"status": session.get("passStatus"), "accessToken": token, "expiresAt": expires_at, "qrLocationId": session.get("qrLocationId"), "poiId": session.get("poiId"), "tourId": session.get("tourId")}
+        return {"status": session.get("passStatus"), "accessToken": token, "expiresAt": ContentService._utc(expires_at), "qrLocationId": session.get("qrLocationId"), "poiId": session.get("poiId"), "tourId": session.get("tourId")}
 
     @staticmethod
     def _distance(a: dict, b: dict) -> float:

@@ -13,6 +13,10 @@ Monorepo for the AudioTour platform.
 
 ## Quick start
 
+For the existing `AudioTourVinhKhanh` database, start the services without resetting or reseeding it. See [running Web and Mobile together](docs/guides/run-web-mobile-together.md) for Windows startup commands, ports, the Admin/Vendor workflow and Android checks.
+
+The following setup steps are for a **new machine without the database**:
+
 1. Install SQL Server Developer or Express locally and enable SQL Authentication on port `1433`.
 2. Copy `.env.example` to `.env`; set the local SQL Server login/password.
 3. Install backend dependencies and create the fresh local database/seed:
@@ -23,7 +27,7 @@ Monorepo for the AudioTour platform.
    python scripts/initialize_local_database.py
    ```
 
-   The local demo seed creates `local-admin` plus 12 Vendor accounts (one per POI), 3 Tours, 12 unique dish illustrations, and one simulated all-POI access package (100,000 VND for 60 minutes). All local demo accounts use password `123456`; keep it only in the local test database. Non-Vietnamese translations and audio are left empty. To recreate only the new demo DB, run `python scripts/initialize_local_database.py --reset`.
+   The local demo seed creates 12 POIs, `local-admin` plus 12 Vendor accounts (one per POI), 3 Tours, 24 photos, and one simulated all-POI access package (100,000 VND for 60 minutes). All local demo accounts use password `123456`; keep it only in the local test database. Non-Vietnamese translations and audio are left empty. Database reset is a separate destructive operation described in the database guide.
 
 4. Start the backend and web services:
 

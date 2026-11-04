@@ -12,6 +12,16 @@ function client(fetchImpl){
 }
 const response=(body,status=200)=>({ok:status>=200&&status<300,status,json:async()=>body});
 (async()=>{
+ let gpsUrl;
+ const gps=client(async(url,init)=>{gpsUrl=url;assert.equal(init.headers['X-Guest-Access-Token'],'guest');return response({success:true,data:{id:1}})});
+ await gps.audioTourApi.getAudioPoi(1,'vi','guest','gps');
+ assert.ok(gpsUrl.includes('triggerType=gps'));
+ const source=gps.audioTourApi.getAudioSource(7,'guest','Recording');
+ assert.ok(source.uri.endsWith('/api/v1/public/audio/7'));assert.equal(source.headers['X-Guest-Access-Token'],'guest');
+ assert.ok(gps.audioTourApi.getImageUrl(21,4).endsWith('/media/images/21?v=4'));
+ assert.notEqual(gps.audioTourApi.getImageUrl(21,3),gps.audioTourApi.getImageUrl(21,4),'Approved replacement bypasses old image cache');
+ const updated=gps.audioTourApi.getAudioSource(7,'guest','Recording',4);
+ assert.ok(updated.uri.endsWith('/audio/7?v=4'));assert.equal(updated.headers['X-Guest-Access-Token'],'guest');
  let c=client(async()=>response({success:true,data:[{code:'vi'}]}));
  assert.deepEqual(await c.audioTourApi.getLanguages(),[{code:'vi'}]);assert.equal(c.pending.size,0);
  c=client(async()=>{throw new TypeError('Network request failed')});

@@ -63,13 +63,13 @@ export function RelatedContent({ action, empty, poiId, resource, token }: {
       <div className="vendor-content-main"><strong>{row.Title || row.Name || row.OriginalFileName || `#${row.Id}`}</strong><small>{row.LanguageCode || row.ContentType}</small><p className="vendor-content-preview">{row.TextContent || row.Description || row.ShortDescription}</p><ReviewStatus row={row}/></div>
       <div className="row-actions">
         <button onClick={() => setPreview(row)}>Xem trước</button>
-        {resource !== 'media' && <button disabled={busy || languages.loading || !!languages.error} onClick={() => setEditing(row)}>Chỉnh sửa và gửi duyệt</button>}
+        {resource !== 'media' && resource !== 'audio' && <button disabled={busy || languages.loading || !!languages.error} onClick={() => setEditing(row)}>Chỉnh sửa và gửi duyệt</button>}
         {resource === 'media' && <label className="upload replace-image">Thay ảnh<input aria-label={`Thay ảnh ${row.OriginalFileName || row.Id}`} type="file" accept="image/*" disabled={busy} onChange={e => { const file = e.target.files?.[0]; if (file) void replaceImage(row, file); e.target.value = ''; }}/></label>}
-        <button disabled={busy} onClick={() => void remove(row)}>Yêu cầu xóa</button>
+        {resource !== 'audio' && <button disabled={busy} onClick={() => void remove(row)}>Yêu cầu xóa</button>}
       </div>
     </article>)}
     <Pagination page={page} total={data.data?.total} size={20} busy={busy || data.loading} onPage={setPage}/>
-    {preview && <ContentPreviewDialog row={preview} kind={kind} token={token} canAutomate={false} onClose={() => setPreview(undefined)}/>}
+    {preview && <ContentPreviewDialog row={preview} kind={kind} token={token} onClose={() => setPreview(undefined)}/>}
     {editing !== undefined && <Editor title={`${editing ? 'Sửa' : 'Thêm'} ${titles[resource].toLowerCase()} và gửi duyệt`} fields={fields} initial={editing || undefined} onClose={() => setEditing(undefined)} onSave={async values => {
       const path = editing && resource === 'narrations' ? `narrations/${editing.Id}/content` : `${resource}${editing ? '/' + editing.Id : ''}`;
       await api.admin(path, token, json(editing ? 'PUT' : 'POST', { ...values, ...(resource === 'narrations' ? { PoiId: poiId } : { POIId: poiId }) }));

@@ -548,3 +548,10 @@
 .admin-top .session-actions{display:flex;align-items:center;gap:12px}
 @media(max-width:1100px){.charts-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:760px){.page-title,.section-title,.vendor-section-heading{flex-wrap:wrap}.admin-top{height:auto;min-height:52px;gap:12px;padding-top:10px;padding-bottom:10px}.sidebar .sidebar-bottom{display:none}.admin-top .session-actions button{padding:6px 10px}.stats-grid,.vendor-stat-grid{min-width:0}}
+
+.detail-dialog{width:1000px;margin:auto;padding:24px}.detail-dialog .dossier{margin-top:0}.detail-dialog .modal-title{position:sticky;top:0;background:white;padding-bottom:16px}.detail-dialog .comparison th,.detail-dialog .comparison td{white-space:pre-wrap;overflow-wrap:anywhere}.detail-dialog .row-actions{flex-wrap:wrap}
+
+/* The open dialogs control the lock, so closing nested dialogs cannot leave a stale inline lock. */
+body:has(dialog[open],.modal-backdrop){overflow:hidden}
+.modal{overscroll-behavior:contain}
+.vendor-form .form-actions{position:sticky;bottom:0;z-index:2;background:white;padding:16px 0;box-shadow:0 -8px 18px #ffffffed}

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nghe thử giọng Google — địa điểm</title>
+<style>body{font:17px system-ui;max-width:780px;margin:40px auto;padding:0 20px;background:#f5f8fa;color:#182c3b}article{background:white;padding:20px;margin:16px 0;border-radius:12px}button,select{font:inherit;padding:10px;margin:6px 8px 6px 0}#status{white-space:pre-wrap}h1{font-size:26px}</style>
+<h1>Nghe thử giọng Google</h1>
+<p>Đọc phần mô tả công khai của địa điểm từ database. Đây là bản nghe thử, không phải bản thuyết minh đã duyệt.</p>
+<label>Giọng Google <select id="voices" aria-label="Giọng Google"></select></label>
+<button id="stop">Dừng đọc</button>
+<p id="voice-status" role="status"></p>
+<p id="status" role="status">Đang tải…</p>
+<main id="places"></main>
+<script type="module">
+const status = document.querySelector('#status');
+const select = document.querySelector('#voices');
+const supported = 'speechSynthesis' in window;
+let voices = [];
+let utterance;
+function loadVoices() {
+  const previous = select.value;
+  voices = speechSynthesis.getVoices().filter(v => /google/i.test(v.name) && /^vi(?:-|_|$)/i.test(v.lang));
+  select.replaceChildren(...voices.map(v => new Option(`${v.name} (${v.lang})`, v.voiceURI)));
+  if (voices.some(v => v.voiceURI === previous)) select.value = previous;
+  if (!voices.length) select.add(new Option('Chưa tìm thấy giọng Google tiếng Việt', ''));
+  document.querySelector('#voice-status').textContent = voices.length
+    ? `Sẵn sàng: ${voices.length} giọng Google tiếng Việt.`
+    : 'Trình duyệt hiện chưa cung cấp giọng Google tiếng Việt nên chưa thể phát. Hãy mở liên kết này bằng Google Chrome và chờ danh sách giọng tải xong. Không cần API key cho giọng có sẵn trong Chrome.';
+}
+if (supported) { loadVoices(); speechSynthesis.addEventListener('voiceschanged', loadVoices); }
+else document.querySelector('#voice-status').textContent = 'Trình duyệt này không hỗ trợ đọc văn bản.';
+document.querySelector('#stop').onclick = () => { if (supported) speechSynthesis.cancel(); status.textContent = 'Đã dừng.'; };
+window.addEventListener('pagehide', () => { if (supported) speechSynthesis.cancel(); });
+try {
+  const response = await fetch('/api/v1/public/pois?lang=vi&pageSize=100');
+  const body = await response.json();
+  if (!response.ok || !body.success) throw new Error('Không tải được địa điểm từ API.');
+  for (const poi of body.data.items) {
+    const article = document.createElement('article');
+    const heading = document.createElement('h2'); heading.textContent = poi.name;
+    const text = poi.description || poi.shortDescription || '';
+    const paragraph = document.createElement('p'); paragraph.textContent = text || 'Chưa có mô tả.';
+    const button = document.createElement('button'); button.textContent = '▶ Nghe giọng Google'; button.disabled = !text;
+    button.onclick = () => {
+      if (!supported) { status.textContent = 'Trình duyệt không hỗ trợ đọc văn bản.'; return; }
+      const voice = voices.find(v => v.voiceURI === select.value);
+      if (!voice) { status.textContent = 'Chưa có giọng Google tiếng Việt trong trình duyệt này. Hãy thử mở trang bằng Google Chrome.'; return; }
+      speechSynthesis.cancel();
+      speechSynthesis.resume();
+      utterance = new SpeechSynthesisUtterance(`${poi.name}. ${text}`);
+      utterance.voice = voice; utterance.lang = voice.lang;
+      utterance.volume = 1;
+      status.textContent = `Đang yêu cầu đọc: ${poi.name}…`;
+      const attempt = utterance;
+      const timeout = setTimeout(() => {
+        if (utterance === attempt) status.textContent = 'Giọng Google không bắt đầu phát sau 8 giây. Kiểm tra kết nối mạng, quyền âm thanh của trang và âm lượng thiết bị, rồi bấm Nghe lại.';
+      }, 8000);
+      utterance.onstart = () => { clearTimeout(timeout); status.textContent = `Đang đọc: ${poi.name} — ${voice.name}`; };
+      utterance.onend = () => { clearTimeout(timeout); if (utterance === attempt) status.textContent = `Đã đọc xong: ${poi.name}`; };
+      utterance.onerror = e => { clearTimeout(timeout); if (utterance === attempt && !['canceled','interrupted'].includes(e.error)) status.textContent = `Không đọc được: ${e.error}`; };
+      speechSynthesis.speak(utterance);
+    };
+    article.append(heading, paragraph, button); document.querySelector('#places').append(article);
+  }
+  status.textContent = `Đã tải ${body.data.items.length} địa điểm từ API. Chọn địa điểm để nghe thử.`;
+} catch (e) { status.textContent = e.message; }
+</script>
+</html>

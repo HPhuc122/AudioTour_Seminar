@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { parseApiUtc } from './accessTime';
 
 const PAID_ACCESS_KEY = "audiotour.paid-access";
 
@@ -12,9 +13,11 @@ export async function loadPaidAccessSession(): Promise<PaidAccessSession | null>
   if (!value) return null;
   try {
     const session = JSON.parse(value) as Partial<PaidAccessSession>;
-    return session.accessToken && session.expiresAt
-      ? { accessToken: session.accessToken, expiresAt: session.expiresAt }
-      : null;
+    if (typeof session.accessToken !== 'string' || !session.accessToken.trim() || typeof session.expiresAt !== 'string' || !Number.isFinite(parseApiUtc(session.expiresAt))) {
+      await SecureStore.deleteItemAsync(PAID_ACCESS_KEY);
+      return null;
+    }
+    return { accessToken: session.accessToken, expiresAt: new Date(parseApiUtc(session.expiresAt)).toISOString() };
   } catch {
     await SecureStore.deleteItemAsync(PAID_ACCESS_KEY);
     return null;

@@ -6,10 +6,12 @@ Dữ liệu và media nằm trên từng máy, không đồng bộ tự động.
 
 ## Yêu cầu
 
-- SQL Server Developer hoặc Express đang chạy và cho phép kết nối TCP.
+- SQL Server Developer hoặc Express đang chạy, dùng TCP hoặc kết nối local Windows theo cấu hình bên dưới.
 - Python backend dependencies được cài trong môi trường dự án.
 - Cấu hình `.env` ở root repo với `SQLSERVER_HOST`, `SQLSERVER_PORT`, `SQLSERVER_DATABASE=AudioTourVinhKhanh`, `SQLSERVER_USE_WINDOWS_AUTH` và `SQLSERVER_ODBC_DRIVER` (hoặc SQL login/password).
 - `MEDIA_ROOT=./services/content-service` để media được chép vào đúng backend đang phục vụ ảnh.
+
+Nếu SQL Server trên Windows chỉ dùng kết nối local, đặt `SQLSERVER_USE_WINDOWS_AUTH=true`, `SQLSERVER_ODBC_DRIVER=ODBC Driver 17 for SQL Server`, `SQLSERVER_ODBC_SERVER=localhost` và `SQLSERVER_ENCRYPT=false` trong `.env` local. Để trống `SQLSERVER_ODBC_SERVER` để dùng TCP theo host/port. Auth, Content và script khởi tạo cùng đọc tùy chọn này.
 
 ## Tạo mới database
 
