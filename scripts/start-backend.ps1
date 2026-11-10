@@ -2,6 +2,9 @@ param([switch]$Restart)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $pythonPath = Join-Path $projectRoot '.tooling\python\python.exe'
+if (-not (Test-Path -LiteralPath $pythonPath)) {
+    $pythonPath = Join-Path $projectRoot 'services\narration-service\.venv\Scripts\python.exe'
+}
 $servePath = Join-Path $PSScriptRoot 'serve.py'
 $logDirectory = Join-Path $projectRoot '.runtime'
 if (-not (Test-Path -LiteralPath $pythonPath)) {
@@ -18,6 +21,7 @@ function Test-ServiceHealth([int]$servicePort) {
 
 foreach ($service in @(
     @{ Name = 'auth'; Port = 8001 },
+    @{ Name = 'narration'; Port = 8003 },
     @{ Name = 'content'; Port = 8002 },
     @{ Name = 'gateway'; Port = 8000 }
 )) {

@@ -88,7 +88,7 @@ class NarrationProvider:
         except httpx.HTTPStatusError as exc:
             code = exc.response.status_code
             adapter_code = exc.response.headers.get('X-Adapter-Error-Code')
-            safe_codes = {'AdapterConfiguration', 'AdapterAuthentication', 'AzureAuthentication', 'AzureRateLimited', 'AzureUnavailable', 'AzureConnectionFailed', 'ProviderResultUnknown', 'IdempotencyConflict', 'RequestInProgress', 'AzureRequestRejected', 'InvalidAzureResponse', 'IdempotencyStorageUnavailable'}
+            safe_codes = {'AdapterConfiguration', 'AdapterAuthentication', 'AzureAuthentication', 'AzureRateLimited', 'AzureUnavailable', 'AzureConnectionFailed', 'ProviderResultUnknown', 'IdempotencyConflict', 'RequestInProgress', 'AzureRequestRejected', 'InvalidAzureResponse', 'IdempotencyStorageUnavailable', 'DemoTimeout', 'DemoUnavailable', 'DemoDependencies', 'DemoRateLimited', 'DemoQuotaExceeded', 'DemoNoAudio', 'InvalidDemoResponse', 'UnsupportedVoice'}
             failure_code = adapter_code if adapter_code in safe_codes else 'ProviderHTTPError'
             retryable = (code == 429 or code >= 500) and exc.response.headers.get('X-Adapter-Retryable') != 'false'
             raise ProviderFailure(failure_code, f'Adapter returned HTTP {code} ({failure_code}); check adapter configuration/status', retryable, retry_after_seconds(exc.response.headers.get('Retry-After'))) from None

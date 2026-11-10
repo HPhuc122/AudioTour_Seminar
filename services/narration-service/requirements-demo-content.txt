@@ -1,0 +1,4 @@
+-r requirements.txt
+mutagen==1.48.1
+gTTS==2.5.4
+pyodbc>=5.0.0

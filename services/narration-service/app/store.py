@@ -21,6 +21,22 @@ class Store:
                 state TEXT NOT NULL, owner TEXT, lease_until REAL, retry_at REAL NOT NULL DEFAULT 0,
                 status INTEGER, mime TEXT, body BLOB, error_code TEXT, message TEXT,
                 updated_at REAL NOT NULL, PRIMARY KEY(operation,key))''')
+            db.execute('''CREATE TABLE IF NOT EXISTS provider_cooldowns (
+                scope TEXT PRIMARY KEY, until REAL NOT NULL, code TEXT NOT NULL,
+                message TEXT NOT NULL)''')
+
+    def check_cooldown(self, scope):
+        with self.connection() as db:
+            row = db.execute('SELECT * FROM provider_cooldowns WHERE scope=?', (scope,)).fetchone()
+        if row and row['until'] > time.time():
+            raise AdapterError(429, row['code'], row['message'], True, max(1, math.ceil(row['until'] - time.time())))
+
+    def cooldown(self, scope, error):
+        until = time.time() + (error.retry_after or 60)
+        with self.connection() as db:
+            db.execute('''INSERT INTO provider_cooldowns(scope,until,code,message) VALUES (?,?,?,?)
+                ON CONFLICT(scope) DO UPDATE SET until=MAX(until,excluded.until),
+                code=excluded.code,message=excluded.message''', (scope, until, error.code, error.message))
 
     @contextmanager
     def connection(self):

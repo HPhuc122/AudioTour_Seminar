@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.azure import Azure
+from app.demo import Demo
 from app.config import Settings
 from app.errors import AdapterError
 from app.store import Store
@@ -51,7 +52,7 @@ def create_app(settings=None, client=None, store=None):
     owned_client = client is None
     client = client or httpx.Client(timeout=httpx.Timeout(60, connect=10), follow_redirects=False)
     store = store or Store(settings.cache_path)
-    azure = Azure(settings, client)
+    provider = Demo(settings) if settings.provider == 'demo' else Azure(settings, client)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -90,14 +91,21 @@ def create_app(settings=None, client=None, store=None):
         if cached:
             body, mime = cached
             return Response(content=body, media_type=mime, headers={'X-Idempotent-Replay': 'true'})
+        scope = f'demo:{settings.demo_translator}:translate' if settings.provider == 'demo' and operation == 'translate' else None
+        upstream_started = False
         try:
             missing = settings.missing(operation)
             if missing:
                 raise AdapterError(503, 'AdapterConfiguration', 'Missing: ' + ', '.join(missing))
-            body, mime = azure.translate(payload) if operation == 'translate' else azure.tts(payload)
+            if scope:
+                store.check_cooldown(scope)
+            upstream_started = True
+            body, mime = provider.translate(payload) if operation == 'translate' else provider.tts(payload)
             store.complete(operation, key, owner, body, mime)
         except AdapterError as error:
             try:
+                if scope and upstream_started and error.status == 429:
+                    store.cooldown(scope, error)
                 store.fail(operation, key, owner, error)
             except Exception:
                 raise AdapterError(409, 'ProviderResultUnknown', 'Failed to persist request state; reconcile before retry', uncertain=True) from None
@@ -114,7 +122,10 @@ def create_app(settings=None, client=None, store=None):
 
     @app.get('/health')
     async def health():
-        return {'status': 'ok', 'azureEnabled': settings.enabled}
+        return {'status': 'ok', 'provider': settings.provider,
+                'demoTranslator': settings.demo_translator if settings.provider == 'demo' else None,
+                'azureEnabled': settings.provider == 'azure' and settings.enabled,
+                'demoEnabled': settings.provider == 'demo' and settings.demo_enabled}
 
     @app.post('/translate', dependencies=[Depends(authorize)])
     def translate(payload: TranslationRequest, idempotency_key: str | None = Header(None)):

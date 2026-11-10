@@ -33,21 +33,31 @@ class Settings:
     speech_format: str = 'audio-24khz-48kbitrate-mono-mp3'
     voices: dict = field(default_factory=lambda: {code: value[2] for code, value in LANGUAGES.items()})
     cache_path: Path = field(default_factory=lambda: Path(__file__).resolve().parents[1] / 'data/adapter.sqlite3')
+    provider: str = 'azure'
+    demo_enabled: bool = False
+    demo_translator: str = 'mymemory'
 
     @classmethod
     def from_env(cls):
+        provider = os.getenv('NARRATION_PROVIDER', 'azure').strip().lower()
+        if provider not in {'azure', 'demo'}:
+            raise RuntimeError('NARRATION_PROVIDER must be azure or demo')
+        demo_translator = os.getenv('DEMO_TRANSLATOR', 'mymemory').strip().lower()
+        if demo_translator not in {'mymemory', 'google'}:
+            raise RuntimeError('DEMO_TRANSLATOR must be mymemory or google')
         voices = {code: value[2] for code, value in LANGUAGES.items()}
-        raw = os.getenv('AZURE_SPEECH_VOICES_JSON', '')
+        voice_variable = 'DEMO_TTS_VOICES_JSON' if provider == 'demo' else 'AZURE_SPEECH_VOICES_JSON'
+        raw = os.getenv(voice_variable, '')
         try:
             overrides = json.loads(raw) if raw else {}
             if not isinstance(overrides, dict) or set(overrides) - set(LANGUAGES):
                 raise ValueError
             voices.update(overrides)
         except (ValueError, TypeError):
-            raise RuntimeError('AZURE_SPEECH_VOICES_JSON must be a JSON object keyed by supported language codes') from None
+            raise RuntimeError(voice_variable + ' must be a JSON object keyed by supported language codes') from None
         for code, voice in voices.items():
             if not isinstance(voice, str) or not re.fullmatch(r'[A-Za-z0-9:._-]{1,200}', voice) or not voice.startswith(LANGUAGES[code][1] + '-'):
-                raise RuntimeError('AZURE_SPEECH_VOICES_JSON contains a voice incompatible with its locale')
+                raise RuntimeError(voice_variable + ' contains a voice incompatible with its locale')
         values = dict(
             enabled=os.getenv('NARRATION_AZURE_ENABLED', 'false').lower() == 'true',
             adapter_token=os.getenv('NARRATION_ADAPTER_TOKEN', ''),
@@ -59,6 +69,9 @@ class Settings:
             speech_endpoint=os.getenv('AZURE_SPEECH_ENDPOINT', ''),
             speech_format=os.getenv('AZURE_SPEECH_OUTPUT_FORMAT', cls.speech_format),
             voices=voices,
+            provider=provider,
+            demo_enabled=os.getenv('NARRATION_DEMO_ENABLED', 'false').lower() == 'true',
+            demo_translator=demo_translator,
         )
         if os.getenv('NARRATION_ADAPTER_CACHE_PATH'):
             values['cache_path'] = Path(os.environ['NARRATION_ADAPTER_CACHE_PATH'])
@@ -70,6 +83,8 @@ class Settings:
         return result
 
     def missing(self, operation):
+        if self.provider == 'demo':
+            return [] if self.demo_enabled else ['NARRATION_DEMO_ENABLED=true']
         missing = []
         if not self.enabled:
             missing.append('NARRATION_AZURE_ENABLED=true')
