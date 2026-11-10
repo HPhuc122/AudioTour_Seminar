@@ -52,6 +52,7 @@ class ContentService:
             poi['audioTracks'] = [{k: v for k, v in published.items() if k not in {'description', 'name', 'jobId', 'sourceVersion', 'narrationId'}}]
         available_audio = []
         for track in poi.get('audioTracks', []):
+            track['audioTrackId'] = track['id']
             relative = track.pop('fileUrl', None)
             track['isAvailable'] = False
             if relative:

@@ -206,6 +206,11 @@ async function requestRoute(path: string, init?: RequestInit): Promise<MapRoute>
 }
 
 export const audioTourApi = {
+  registerDevice: (deviceId: string, platform: string, osVersion: string) =>
+    request<unknown>("/api/v1/auth/register-device", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, platform, osVersion }),
+    }),
   getDirections: (points: MapPoint[], mode: TravelMode) => requestRoute("/api/v1/public/routes/directions", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ points: points.map(({ latitude, longitude }) => ({ latitude, longitude })), mode }),
   }),

@@ -67,7 +67,7 @@ async function startMetro(ip) {
     if (!result.ok) throw new Error(`HTTP ${result.status}`);
     console.log("API health: OK (from this computer).");
   } catch {
-    console.warn("API is not reachable yet. Start Content API on 0.0.0.0:8002 to load content.");
+    console.warn("API is not reachable yet. Run scripts/start-backend.ps1 to start Content API on 0.0.0.0:8002.");
   }
   child = spawn(process.execPath, [cli, "start", "--lan", "--port", "8081", "--clear", ...expoArgs.filter((arg) => arg !== "--clear")], {
     cwd: root,

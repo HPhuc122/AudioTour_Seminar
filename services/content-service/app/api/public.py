@@ -5,6 +5,7 @@ from typing import Literal
 
 from app.services.content_service import ContentService
 from app.services.routing_service import RoutingService
+from app.services.device_registration import register_device as forward_device_registration
 
 router = APIRouter(tags=["public"])
 service = ContentService()
@@ -12,6 +13,20 @@ service = ContentService()
 
 def ok(data=None, message: str = "Success"):
     return {"success": True, "message": message, "data": data}
+
+
+class DeviceRegistrationRequest(BaseModel):
+    device_id: str = Field(min_length=1, alias="deviceId")
+    platform: str
+    app_version: str | None = Field(default=None, alias="appVersion")
+    os_version: str | None = Field(default=None, alias="osVersion")
+    push_token: str | None = Field(default=None, alias="pushToken")
+
+
+@router.post("/api/v1/auth/register-device")
+async def register_device(request: DeviceRegistrationRequest):
+    await forward_device_registration(request.model_dump(by_alias=True, exclude_none=True))
+    return ok(message="Device registered")
 
 
 @router.get("/api/v1/public/tours")

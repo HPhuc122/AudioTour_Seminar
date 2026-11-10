@@ -1,6 +1,7 @@
 import { appendPois, hasMorePois } from "./src/native/poiPagination"
 import { UiLanguageContext, createTranslator } from "./src/native/i18n"
 import { StatusBar } from "expo-status-bar"
+import { useDevicePresence } from "./src/native/useDevicePresence"
 
 import { useEffect, useRef, useState } from "react"
 import {
@@ -56,6 +57,7 @@ type PendingQrVisit = {
 type CatalogDetailKind = "poi" | "tour"
 
 export default function App() {
+  useDevicePresence()
   const [activeSection, setActiveSection] = useState<"dashboard" | "pois" | "tours">("dashboard")
   const [activeTab, setActiveTab] = useState<Tab>("home")
   const detailOrigin = useRef<"home" | "map" | "list">("list")

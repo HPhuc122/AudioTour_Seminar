@@ -19,6 +19,7 @@ services:
       SQLSERVER_HOST: host.docker.internal
       SQLSERVER_USE_WINDOWS_AUTH: "false"
       MEDIA_ROOT: /app
+      AUTH_SERVICE_URL: http://auth-service:8000
       ADMIN_TRANSLATION_URL: http://narration-service:8000/translate
       ADMIN_TTS_URL: http://narration-service:8000/tts
     volumes:
