@@ -1,4 +1,4 @@
-param([switch]$Restart)
+param([switch]$Restart, [switch]$NoReload)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $pythonPath = Join-Path $projectRoot '.tooling\python\python.exe'
@@ -33,7 +33,8 @@ foreach ($service in @(
             $_.CommandLine.Contains($servePath) -and $_.CommandLine -match $servicePattern
         }
         foreach ($ownedProcess in $ownedProcesses) {
-            Stop-Process -Id $ownedProcess.ProcessId -ErrorAction Stop
+            # Include the reload worker, which owns the listening socket.
+            & taskkill.exe /PID $ownedProcess.ProcessId /T /F | Out-Null
             Wait-Process -Id $ownedProcess.ProcessId -Timeout 10 -ErrorAction SilentlyContinue
         }
     }
@@ -41,7 +42,9 @@ foreach ($service in @(
         Write-Output "$($service.Name): already available on $($service.Port)"
         continue
     }
-    $process = Start-Process -FilePath $pythonPath -ArgumentList @("`"$servePath`"", $service.Name) -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $logDirectory "$($service.Name).stdout.log") -RedirectStandardError (Join-Path $logDirectory "$($service.Name).stderr.log")
+    $serviceArguments = @("`"$servePath`"", $service.Name)
+    if (-not $NoReload) { $serviceArguments += '--reload' }
+    $process = Start-Process -FilePath $pythonPath -ArgumentList $serviceArguments -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $logDirectory "$($service.Name).stdout.log") -RedirectStandardError (Join-Path $logDirectory "$($service.Name).stderr.log")
     $ready = $false
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
         if ($process.HasExited) { break }
@@ -52,3 +55,4 @@ foreach ($service in @(
     Write-Output "$($service.Name): ready on $($service.Port), PID $($process.Id)"
 }
 Write-Output 'Backend is ready. Web: http://localhost:5173'
+if (-not $NoReload) { Write-Output 'Python auto-reload is enabled for newly started services. Use -Restart to replace already running services.' }

@@ -35,6 +35,15 @@ Monorepo for the AudioTour platform.
 
 See [the local database guide](docs/guides/local-database-bootstrap.md) for Windows Authentication, reset scope, and media behavior.
 
+## Local Python auto-reload
+
+`powershell -ExecutionPolicy Bypass -File scripts/start-backend.ps1` starts new
+local backend services with Python auto-reload. Each service watches its own
+application directory. To enable it for services already running, run the script
+once with `-Restart`. Use `-Restart -NoReload` to run without auto-reload.
+Changes to `.env` still require a restart. For a single service, use
+`python scripts/serve.py content --reload` (or `auth`, `narration`, `gateway`).
+
 ## Git
 
 ```bash
