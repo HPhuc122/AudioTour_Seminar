@@ -43,6 +43,10 @@ application directory. To enable it for services already running, run the script
 once with `-Restart`. Use `-Restart -NoReload` to run without auto-reload.
 Changes to `.env` still require a restart. For a single service, use
 `python scripts/serve.py content --reload` (or `auth`, `narration`, `gateway`).
+On Windows, local reload terminates and replaces the app worker directly because
+hidden background processes cannot reliably receive console Ctrl+C events.
+Requests in progress may be interrupted; retry after startup. Other platforms
+allow up to three seconds for active requests to finish during reload.
 
 ## Git
 

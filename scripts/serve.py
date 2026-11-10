@@ -7,6 +7,36 @@ from pathlib import Path
 from dotenv import load_dotenv
 import uvicorn
 
+
+def run_windows_reload(config):
+    """Hidden Windows services cannot reliably receive Uvicorn's Ctrl+C event."""
+    from uvicorn.supervisors import ChangeReload
+    from uvicorn._subprocess import get_subprocess
+
+    class WindowsReload(ChangeReload):
+        def stop_worker(self):
+            if self.process.is_alive():
+                self.process.terminate()
+            self.process.join(timeout=5)
+            if self.process.is_alive():
+                self.process.kill()
+                self.process.join(timeout=5)
+
+        def restart(self):
+            self.stop_worker()
+            self.process = get_subprocess(config=self.config, target=self.target, sockets=self.sockets)
+            self.process.start()
+
+        def shutdown(self):
+            self.should_exit.set()
+            self.stop_worker()
+            for sock in self.sockets:
+                sock.close()
+
+    server = uvicorn.Server(config)
+    sock = config.bind_socket()
+    WindowsReload(config, target=server.run, sockets=[sock]).run()
+
 def main():
     root = Path(__file__).resolve().parents[1]
     load_dotenv(root / ".env")
@@ -23,8 +53,15 @@ def main():
     }[args.service]
     sys.path.insert(0, str(root / directory))
     watch_directory = root / directory / "app" if args.service != "gateway" else root / directory
-    uvicorn.run(module, host=args.host, port=port, reload=args.reload,
-                reload_dirs=[str(watch_directory)] if args.reload else None)
+    config = uvicorn.Config(module, host=args.host, port=port, reload=args.reload,
+                            reload_dirs=[str(watch_directory)] if args.reload else None,
+                            timeout_graceful_shutdown=3 if args.reload else None)
+    if args.reload and sys.platform == "win32":
+        run_windows_reload(config)
+    else:
+        uvicorn.run(module, host=args.host, port=port, reload=args.reload,
+                    reload_dirs=[str(watch_directory)] if args.reload else None,
+                    timeout_graceful_shutdown=3 if args.reload else None)
 
 
 # Windows reload workers import this module using multiprocessing.
