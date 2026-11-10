@@ -178,9 +178,9 @@ def device_activity(
     visible = "(d.UserId IS NULL OR u.IsActive=1)"
     source = " FROM Devices d LEFT JOIN Users u ON u.Id=d.UserId LEFT JOIN Roles r ON r.Id=u.RoleId"
     summary = repo.fetchone(
-        "SELECT COUNT(*) AS totalDevices,"
-        f"COALESCE(SUM(CASE WHEN {recent} THEN 1 ELSE 0 END),0) AS activeDevices,"
-        f"COUNT(DISTINCT CASE WHEN {recent} THEN d.UserId END) AS activeUsers"
+        "SELECT COALESCE(SUM(CASE WHEN d.Platform IN ('android','ios') THEN 1 ELSE 0 END),0) AS totalDevices,"
+        f"COALESCE(SUM(CASE WHEN d.Platform IN ('android','ios') AND {recent} THEN 1 ELSE 0 END),0) AS activeDevices,"
+        f"COUNT(DISTINCT CASE WHEN d.Platform='web' AND {recent} THEN d.UserId END) AS activeUsers"
         + source + " WHERE " + visible
     )
     where, values = [visible], []
@@ -194,7 +194,7 @@ def device_activity(
     rows = repo.fetchall(
         "SELECT d.Id,d.DeviceId,d.UserId,u.Username,r.Name AS Role,d.Platform,"
         "d.AppVersion,d.OsVersion,d.RegisteredAt,d.LastSeenAt,"
-        "(SELECT COUNT(*) FROM Devices other WHERE other.UserId=d.UserId AND "
+        "(SELECT COUNT(*) FROM Devices other WHERE other.Platform='web' AND other.UserId=d.UserId AND "
         + recent.replace('d.', 'other.') + ") AS ActiveDevicesForUser,"
         +
         f"CAST(CASE WHEN {recent} THEN 1 ELSE 0 END AS bit) AS IsActive"

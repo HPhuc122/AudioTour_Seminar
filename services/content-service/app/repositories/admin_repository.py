@@ -152,7 +152,7 @@ class AdminRepository:
             "activePois": self.scalar("SELECT COUNT(1) AS total FROM POIs WHERE DeletedAt IS NULL AND IsActive = 1") or 0,
             "tours": self.scalar("SELECT COUNT(1) AS total FROM Tours WHERE DeletedAt IS NULL") or 0,
             "plays": self.scalar("SELECT COUNT(1) AS total FROM NarrationLogs") or 0,
-            "devices": self.scalar("SELECT COUNT(1) AS total FROM Devices") or 0,
+            "devices": self.scalar("SELECT COUNT(1) AS total FROM Devices WHERE Platform IN ('android','ios')") or 0,
         }
 
     def tour_translations(self, tour_id: int) -> list[dict]:

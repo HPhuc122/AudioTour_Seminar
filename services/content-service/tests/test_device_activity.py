@@ -1,4 +1,5 @@
 import unittest
+import os
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
@@ -7,6 +8,7 @@ from jose import jwt
 from app.main import app
 from app.api import admin, admin_console
 from app.core.config import settings
+from app.core.database import get_connection
 
 
 class DeviceActivityTests(unittest.TestCase):
@@ -54,3 +56,31 @@ class DeviceActivityTests(unittest.TestCase):
     def test_invalid_pagination_is_rejected(self):
         for params in [{'page': 0}, {'pageSize': 101}, {'search': 'x' * 201}]:
             self.assertEqual(self.client.get('/api/v1/cms/device-activity', params=params, headers=self.headers('Admin')).status_code, 422)
+
+    @unittest.skipUnless(os.getenv('AUDIOTOUR_SQL_TESTS') == '1', 'Opt-in SQL Server integration')
+    def test_mobile_devices_and_distinct_web_accounts_are_counted_separately(self):
+        response = self.client.get('/api/v1/cms/device-activity', headers=self.headers('Admin'))
+        self.assertEqual(response.status_code, 200)
+        query = self.console._repository.fetchone.call_args.args[0]
+        # Run the production aggregate against connection-local temporary fixtures.
+        # No rows in the application's tables are changed.
+        query = query.replace('FROM Devices d', 'FROM #PresenceDevices d')
+        query = query.replace('JOIN Users u', 'JOIN #PresenceUsers u')
+        query = query.replace('JOIN Roles r', 'JOIN #PresenceRoles r')
+        with get_connection() as connection, connection.cursor() as cursor:
+            cursor.execute('CREATE TABLE #PresenceDevices (Platform varchar(20),UserId int NULL,LastSeenAt datetime2); CREATE TABLE #PresenceUsers (Id int,IsActive bit,RoleId int); CREATE TABLE #PresenceRoles (Id int,Name varchar(20));')
+            cursor.execute("INSERT INTO #PresenceRoles VALUES (1,'Admin'); INSERT INTO #PresenceUsers VALUES (1,1,1),(2,1,1),(3,0,1);")
+            cursor.execute("""INSERT INTO #PresenceDevices VALUES
+                ('android',NULL,SYSUTCDATETIME()),('ios',NULL,SYSUTCDATETIME()),
+                ('android',2,SYSUTCDATETIME()),
+                ('android',NULL,DATEADD(minute,-6,SYSUTCDATETIME())),
+                ('ios',NULL,DATEADD(minute,10,SYSUTCDATETIME())),
+                ('web',1,SYSUTCDATETIME()),('web',1,SYSUTCDATETIME()),
+                ('web',NULL,SYSUTCDATETIME()),
+                ('web',2,DATEADD(minute,-6,SYSUTCDATETIME())),
+                ('web',3,SYSUTCDATETIME()),('desktop',NULL,SYSUTCDATETIME())""")
+            actual = cursor.execute(query).fetchone()
+            self.assertEqual(actual, {'totalDevices': 5, 'activeDevices': 3, 'activeUsers': 1})
+            cursor.execute('DELETE FROM #PresenceDevices')
+            self.assertEqual(cursor.execute(query).fetchone(),
+                             {'totalDevices': 0, 'activeDevices': 0, 'activeUsers': 0})
