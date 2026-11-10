@@ -25,6 +25,8 @@ Monorepo for the AudioTour platform.
 
    The local demo seed creates `local-admin` plus 12 Vendor accounts (one per POI), 3 Tours, 12 unique dish illustrations, and one simulated all-POI access package (100,000 VND for 60 minutes). All local demo accounts use password `123456`; keep it only in the local test database. Non-Vietnamese translations and audio are left empty. To recreate only the new demo DB, run `python scripts/initialize_local_database.py --reset`.
 
+   Prepared translations and 72 existing MP3 files are available in [the prepared demo package](data/prepared-demo-2026-11-10/README.md). Import the package once after creating the base seed; teammates do not need to regenerate translation or audio.
+
 4. Start the backend and web services:
 
    ```powershell

@@ -1,0 +1,567 @@
+{
+  "database": "AudioTourVinhKhanh",
+  "translationOrigin": "prepared-demo",
+  "audioProvider": [
+    "edge-tts",
+    "gTTS"
+  ],
+  "pois": [
+    {
+      "id": 1,
+      "code": "VK-ALO-333",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Dim Tu Tac – 55 Đông Du",
+          "text": "Dim Tu Tac tại 55 Đông Du là nhà hàng Quảng Đông ở trung tâm thành phố. Ảnh menu minh họa món vịt quay được chụp tại hệ thống Dim Tu Tac.",
+          "shortDescription": "Nhà hàng Quảng Đông với dim sum và vịt quay."
+        },
+        "en": {
+          "name": "Dim Tu Tac – 55 Đông Du",
+          "text": "Dim Tu Tac at 55 Đông Du is a Cantonese restaurant in the city centre. The menu illustration shows roast duck photographed at a Dim Tu Tac restaurant.",
+          "shortDescription": "Cantonese restaurant serving dim sum and roast duck."
+        },
+        "zh": {
+          "name": "Dim Tu Tac – 东游街55号",
+          "text": "位于东游街55号的Dim Tu Tac是市中心的一家粤菜餐厅。菜单配图中的烤鸭拍摄于Dim Tu Tac餐厅体系内。",
+          "shortDescription": "供应点心和烤鸭的粤菜餐厅。"
+        },
+        "ko": {
+          "name": "Dim Tu Tac – Đông Du 55번지",
+          "text": "Đông Du 55번지의 Dim Tu Tac은 도심에 있는 광둥 요리 전문점입니다. 메뉴 예시 사진의 오리구이는 Dim Tu Tac 매장에서 촬영되었습니다.",
+          "shortDescription": "딤섬과 오리구이를 선보이는 광둥 요리 전문점입니다."
+        },
+        "ja": {
+          "name": "Dim Tu Tac – Đông Du通り55番地",
+          "text": "Đông Du通り55番地にあるDim Tu Tacは、市中心部の広東料理店です。メニューの参考写真に写るローストダックは、Dim Tu Tacの店舗で撮影されました。",
+          "shortDescription": "点心とローストダックを提供する広東料理店です。"
+        },
+        "fr": {
+          "name": "Dim Tu Tac – 55 Đông Du",
+          "text": "Dim Tu Tac, au 55 Đông Du, est un restaurant cantonais du centre-ville. La photo illustrant le menu montre un canard rôti photographié dans un établissement Dim Tu Tac.",
+          "shortDescription": "Restaurant cantonais proposant des dim sum et du canard rôti."
+        }
+      }
+    },
+    {
+      "id": 2,
+      "code": "VK-OC-DAO-232-123",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Ốc La Cà – Đồng Đen",
+          "text": "Ốc La Cà ở Đồng Đen là điểm ăn ốc tại khu vực Tân Bình. Ảnh bìa và ảnh món đều được ghi nhận tại quán.",
+          "shortDescription": "Quán ốc và hải sản trên đường Đồng Đen."
+        },
+        "en": {
+          "name": "Ốc La Cà – Đồng Đen",
+          "text": "Ốc La Cà on Đồng Đen Street is a snail restaurant in Tân Bình. Both the cover photo and the food photos were taken at the restaurant.",
+          "shortDescription": "Snail and seafood restaurant on Đồng Đen Street."
+        },
+        "zh": {
+          "name": "Ốc La Cà – Đồng Đen街",
+          "text": "Đồng Đen街上的Ốc La Cà是新平区的一家螺类餐馆。封面照片和菜品照片均拍摄于该店。",
+          "shortDescription": "Đồng Đen街上的螺类及海鲜餐馆。"
+        },
+        "ko": {
+          "name": "Ốc La Cà – Đồng Đen",
+          "text": "Đồng Đen 거리의 Ốc La Cà는 Tân Bình 지역에 있는 식용 고둥 요리 전문점입니다. 표지 사진과 음식 사진은 모두 이 식당에서 촬영되었습니다.",
+          "shortDescription": "Đồng Đen 거리에 있는 고둥 요리와 해산물 전문점입니다."
+        },
+        "ja": {
+          "name": "Ốc La Cà – Đồng Đen通り",
+          "text": "Đồng Đen通りのỐc La Càは、タンビン地区にある貝料理店です。表紙写真と料理写真はいずれもこの店で撮影されました。",
+          "shortDescription": "Đồng Đen通りにある貝料理と海鮮の店です。"
+        },
+        "fr": {
+          "name": "Ốc La Cà – Đồng Đen",
+          "text": "Ốc La Cà, dans la rue Đồng Đen, est un restaurant de coquillages du quartier de Tân Bình. La photo de couverture et les photos des plats ont toutes été prises sur place.",
+          "shortDescription": "Restaurant de coquillages et de fruits de mer dans la rue Đồng Đen."
+        }
+      }
+    },
+    {
+      "id": 3,
+      "code": "VK-BUN-CA-DI-TU-75",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Ốc Hai Lùn – Lê Đại Hành",
+          "text": "Ốc Hai Lùn trên đường Lê Đại Hành phục vụ các món ốc và hải sản. Bộ ảnh tư liệu được chụp tại quán; địa chỉ số nhà cần xác nhận lại.",
+          "shortDescription": "Quán ốc lâu năm trên đường Lê Đại Hành."
+        },
+        "en": {
+          "name": "Ốc Hai Lùn – Lê Đại Hành",
+          "text": "Ốc Hai Lùn on Lê Đại Hành Street serves snails and seafood. The reference photos were taken at the restaurant; the street number still needs to be confirmed.",
+          "shortDescription": "Long-established snail restaurant on Lê Đại Hành Street."
+        },
+        "zh": {
+          "name": "Ốc Hai Lùn – Lê Đại Hành街",
+          "text": "Lê Đại Hành街上的Ốc Hai Lùn供应螺类和海鲜。资料照片拍摄于该店，但具体门牌号仍需核实。",
+          "shortDescription": "Lê Đại Hành街上的老牌螺类餐馆。"
+        },
+        "ko": {
+          "name": "Ốc Hai Lùn – Lê Đại Hành",
+          "text": "Lê Đại Hành 거리의 Ốc Hai Lùn은 고둥 요리와 해산물을 제공합니다. 자료 사진은 이 식당에서 촬영되었으며, 정확한 번지는 추가 확인이 필요합니다.",
+          "shortDescription": "Lê Đại Hành 거리에 있는 오래된 고둥 요리 전문점입니다."
+        },
+        "ja": {
+          "name": "Ốc Hai Lùn – Lê Đại Hành通り",
+          "text": "Lê Đại Hành通りのỐc Hai Lùnでは、貝料理や海鮮を提供しています。資料写真は店内で撮影されたものですが、正確な番地は確認が必要です。",
+          "shortDescription": "Lê Đại Hành通りにある老舗の貝料理店です。"
+        },
+        "fr": {
+          "name": "Ốc Hai Lùn – Lê Đại Hành",
+          "text": "Ốc Hai Lùn, dans la rue Lê Đại Hành, propose des coquillages et des fruits de mer. Les photos de référence ont été prises sur place ; le numéro exact de l'adresse reste à confirmer.",
+          "shortDescription": "Restaurant de coquillages de longue date dans la rue Lê Đại Hành."
+        }
+      }
+    },
+    {
+      "id": 4,
+      "code": "VK-BUN-THIT-NUONG-CO-NGA-14",
+      "sourceVersion": 3,
+      "translations": {
+        "vi": {
+          "name": "Hum Lounge · 34 Võ Văn Tần",
+          "text": "Hum Lounge là nhà hàng thực vật tại 34 Võ Văn Tần. Ảnh món ăn kèm là ảnh ẩm thực chay tại Thành phố Hồ Chí Minh, dùng minh họa và không xác nhận là món trong thực đơn Hum.",
+          "shortDescription": "Nhà hàng thực vật trong không gian kiến trúc xanh."
+        },
+        "en": {
+          "name": "Hum Lounge · 34 Võ Văn Tần",
+          "text": "Hum Lounge is a plant-based restaurant at 34 Võ Văn Tần. The accompanying food photo illustrates vegetarian cuisine in Ho Chi Minh City and is not confirmed to show an item on Hum's menu.",
+          "shortDescription": "Plant-based restaurant in a green architectural setting."
+        },
+        "zh": {
+          "name": "Hum Lounge · Võ Văn Tần街34号",
+          "text": "Hum Lounge是位于Võ Văn Tần街34号的植物性饮食餐厅。配图为胡志明市素食料理的示意照片，不能确认照片中的菜品属于Hum的菜单。",
+          "shortDescription": "坐落于绿色建筑空间中的植物性饮食餐厅。"
+        },
+        "ko": {
+          "name": "Hum Lounge · Võ Văn Tần 34번지",
+          "text": "Hum Lounge는 Võ Văn Tần 34번지에 있는 식물성 요리 레스토랑입니다. 첨부된 음식 사진은 호찌민시의 채식 요리를 보여 주는 참고 이미지이며, Hum의 실제 메뉴인지는 확인되지 않았습니다.",
+          "shortDescription": "녹색 건축 공간에서 식물성 요리를 즐길 수 있는 레스토랑입니다."
+        },
+        "ja": {
+          "name": "Hum Lounge · Võ Văn Tần通り34番地",
+          "text": "Hum LoungeはVõ Văn Tần通り34番地にある植物性料理のレストランです。添付の料理写真はホーチミン市のベジタリアン料理の参考画像で、Humの実際のメニューかどうかは確認されていません。",
+          "shortDescription": "緑を取り入れた建築空間で植物性料理を提供するレストランです。"
+        },
+        "fr": {
+          "name": "Hum Lounge · 34 Võ Văn Tần",
+          "text": "Hum Lounge est un restaurant de cuisine végétale au 34 Võ Văn Tần. La photo jointe illustre la cuisine végétarienne à Hô Chi Minh-Ville ; il n'est pas confirmé que le plat figure au menu de Hum.",
+          "shortDescription": "Restaurant de cuisine végétale dans un cadre architectural verdoyant."
+        }
+      }
+    },
+    {
+      "id": 5,
+      "code": "VK-OC-VU-37",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Cơm Tấm Cali – Hoàng Diệu",
+          "text": "Ảnh bìa ghi lại không gian Cơm Tấm Cali tại Quận 4; ảnh menu là món bún thịt nướng chụp tại chi nhánh Hoàng Diệu.",
+          "shortDescription": "Cơm tấm và món ăn Việt tại chi nhánh Quận 4."
+        },
+        "en": {
+          "name": "Cơm Tấm Cali – Hoàng Diệu",
+          "text": "The cover photo shows the interior of Cơm Tấm Cali in District 4. The menu photo shows grilled pork rice noodles photographed at the Hoàng Diệu branch.",
+          "shortDescription": "Broken rice and Vietnamese dishes at the District 4 branch."
+        },
+        "zh": {
+          "name": "Cơm Tấm Cali – Hoàng Diệu街",
+          "text": "封面照片展示了第四郡Cơm Tấm Cali的店内环境。菜单照片中的烤肉米粉拍摄于Hoàng Diệu分店。",
+          "shortDescription": "第四郡分店供应越式碎米饭及越南菜。"
+        },
+        "ko": {
+          "name": "Cơm Tấm Cali – Hoàng Diệu",
+          "text": "표지 사진은 4군에 있는 Cơm Tấm Cali의 실내를 보여 줍니다. 메뉴 사진의 돼지고기 숯불구이 쌀국수는 Hoàng Diệu 지점에서 촬영되었습니다.",
+          "shortDescription": "4군 지점에서 껌땀과 베트남 요리를 제공합니다."
+        },
+        "ja": {
+          "name": "Cơm Tấm Cali – Hoàng Diệu通り",
+          "text": "表紙写真は4区にあるCơm Tấm Caliの店内を写したものです。メニュー写真の焼き豚肉入り米麺は、Hoàng Diệu支店で撮影されました。",
+          "shortDescription": "4区の店舗でコムタムやベトナム料理を提供しています。"
+        },
+        "fr": {
+          "name": "Cơm Tấm Cali – Hoàng Diệu",
+          "text": "La photo de couverture montre l'intérieur de Cơm Tấm Cali dans le 4e arrondissement. La photo du menu présente des vermicelles de riz au porc grillé, photographiés à la succursale Hoàng Diệu.",
+          "shortDescription": "Riz brisé et plats vietnamiens à la succursale du 4e arrondissement."
+        }
+      }
+    },
+    {
+      "id": 6,
+      "code": "VK-LANG-531",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Quán bánh xèo Đinh Công Tráng",
+          "text": "Ảnh bìa được chụp tại một nhà hàng bánh xèo trên đường Đinh Công Tráng. Ảnh menu là ảnh minh họa món bánh xèo, chưa xác nhận là món của đúng quán trong ảnh bìa.",
+          "shortDescription": "Quán bánh xèo trên đường Đinh Công Tráng."
+        },
+        "en": {
+          "name": "Bánh xèo restaurant on Đinh Công Tráng Street",
+          "text": "The cover photo was taken at a bánh xèo restaurant on Đinh Công Tráng Street. The menu photo is an illustration of bánh xèo and is not confirmed to show a dish from the restaurant in the cover photo.",
+          "shortDescription": "Bánh xèo restaurant on Đinh Công Tráng Street."
+        },
+        "zh": {
+          "name": "Đinh Công Tráng街越式煎饼店",
+          "text": "封面照片拍摄于Đinh Công Tráng街的一家越式煎饼店。菜单照片为越式煎饼示意图，尚不能确认该菜品来自封面中的同一家店。",
+          "shortDescription": "Đinh Công Tráng街上的越式煎饼店。"
+        },
+        "ko": {
+          "name": "Đinh Công Tráng 거리의 반쎄오 식당",
+          "text": "표지 사진은 Đinh Công Tráng 거리에 있는 반쎄오 식당에서 촬영되었습니다. 메뉴 사진은 반쎄오 참고 이미지이며, 표지에 나온 식당의 음식인지는 확인되지 않았습니다.",
+          "shortDescription": "Đinh Công Tráng 거리에 있는 반쎄오 식당입니다."
+        },
+        "ja": {
+          "name": "Đinh Công Tráng通りのバインセオ店",
+          "text": "表紙写真はĐinh Công Tráng通りのバインセオ店で撮影されました。メニュー写真はバインセオの参考画像で、表紙に写る店の料理かどうかは確認されていません。",
+          "shortDescription": "Đinh Công Tráng通りにあるバインセオ店です。"
+        },
+        "fr": {
+          "name": "Restaurant de bánh xèo, rue Đinh Công Tráng",
+          "text": "La photo de couverture a été prise dans un restaurant de bánh xèo de la rue Đinh Công Tráng. La photo du menu est une illustration de bánh xèo ; il n'est pas confirmé qu'il s'agisse d'un plat du même restaurant.",
+          "shortDescription": "Restaurant de bánh xèo dans la rue Đinh Công Tráng."
+        }
+      }
+    },
+    {
+      "id": 7,
+      "code": "VK-OT-XIEM-568",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Bún Bò 1980 – Tân Phú",
+          "text": "Ảnh bìa ghi lại một quán bún bò 1980 tại Tân Phú. Ảnh menu là tô bún bò Huế chụp tại một quán ăn ở Thành phố Hồ Chí Minh.",
+          "shortDescription": "Quán bún bò Huế tại khu vực Tân Phú."
+        },
+        "en": {
+          "name": "Bún Bò 1980 – Tân Phú",
+          "text": "The cover photo shows a Bún Bò 1980 restaurant in Tân Phú. The menu photo shows a bowl of Huế-style beef noodle soup photographed at a restaurant in Ho Chi Minh City.",
+          "shortDescription": "Huế-style beef noodle soup restaurant in Tân Phú."
+        },
+        "zh": {
+          "name": "Bún Bò 1980 – 新富区",
+          "text": "封面照片展示了新富区的一家Bún Bò 1980餐馆。菜单照片中的顺化牛肉米粉拍摄于胡志明市的一家餐馆。",
+          "shortDescription": "新富区的顺化牛肉米粉店。"
+        },
+        "ko": {
+          "name": "Bún Bò 1980 – Tân Phú",
+          "text": "표지 사진은 Tân Phú에 있는 Bún Bò 1980 식당을 보여 줍니다. 메뉴 사진의 후에식 소고기 쌀국수는 호찌민시의 한 식당에서 촬영되었습니다.",
+          "shortDescription": "Tân Phú 지역에 있는 후에식 소고기 쌀국수 식당입니다."
+        },
+        "ja": {
+          "name": "Bún Bò 1980 – タンフー地区",
+          "text": "表紙写真はタンフー地区のBún Bò 1980の店舗を写したものです。メニュー写真のフエ風牛肉米麺は、ホーチミン市のある飲食店で撮影されました。",
+          "shortDescription": "タンフー地区にあるフエ風牛肉米麺の店です。"
+        },
+        "fr": {
+          "name": "Bún Bò 1980 – Tân Phú",
+          "text": "La photo de couverture montre un restaurant Bún Bò 1980 à Tân Phú. La photo du menu présente un bol de soupe de nouilles au bœuf de Huế, photographié dans un restaurant de Hô Chi Minh-Ville.",
+          "shortDescription": "Restaurant de soupe de nouilles au bœuf de Huế à Tân Phú."
+        }
+      }
+    },
+    {
+      "id": 8,
+      "code": "VK-A-FAT-668",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Chiang Rai – Nhà hàng Thái",
+          "text": "Ảnh bìa ghi lại nhà hàng Thái tại Tân Phú. Ảnh menu minh họa món lẩu phù hợp với nhóm món nóng của nhà hàng.",
+          "shortDescription": "Nhà hàng Thái tại khu vực Tân Phú."
+        },
+        "en": {
+          "name": "Chiang Rai – Thai restaurant",
+          "text": "The cover photo shows a Thai restaurant in Tân Phú. The menu photo illustrates a hotpot, corresponding to the restaurant's hot-dish category.",
+          "shortDescription": "Thai restaurant in Tân Phú."
+        },
+        "zh": {
+          "name": "Chiang Rai – 泰式餐厅",
+          "text": "封面照片展示了新富区的一家泰式餐厅。菜单配图为火锅示意图，与餐厅的热菜类别相符。",
+          "shortDescription": "新富区的泰式餐厅。"
+        },
+        "ko": {
+          "name": "Chiang Rai – 태국 요리 레스토랑",
+          "text": "표지 사진은 Tân Phú에 있는 태국 요리 레스토랑을 보여 줍니다. 메뉴 사진은 이 식당의 따뜻한 요리 종류에 어울리는 전골 참고 이미지입니다.",
+          "shortDescription": "Tân Phú 지역에 있는 태국 요리 레스토랑입니다."
+        },
+        "ja": {
+          "name": "Chiang Rai – タイ料理店",
+          "text": "表紙写真はタンフー地区のタイ料理店を写したものです。メニュー写真は、店の温かい料理のカテゴリーに合う鍋料理の参考画像です。",
+          "shortDescription": "タンフー地区にあるタイ料理店です。"
+        },
+        "fr": {
+          "name": "Chiang Rai – Restaurant thaïlandais",
+          "text": "La photo de couverture montre un restaurant thaïlandais à Tân Phú. La photo du menu illustre une fondue correspondant à la catégorie des plats chauds du restaurant.",
+          "shortDescription": "Restaurant thaïlandais à Tân Phú."
+        }
+      }
+    },
+    {
+      "id": 9,
+      "code": "VK-SUON-MUOI-OT-712",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Anan Saigon",
+          "text": "Anan Saigon nằm tại 89 Tôn Thất Đạm. Ảnh món trong bộ demo là ảnh gà kho nước dừa tại một quán ăn ở Thành phố Hồ Chí Minh, không khẳng định đây là món hiện có của Anan.",
+          "shortDescription": "Nhà hàng Việt Nam trong khu chợ cũ Tôn Thất Đạm."
+        },
+        "en": {
+          "name": "Anan Saigon",
+          "text": "Anan Saigon is located at 89 Tôn Thất Đạm. The food photo in this demo shows chicken braised in coconut water at a restaurant in Ho Chi Minh City; it does not confirm that this dish is currently served at Anan.",
+          "shortDescription": "Vietnamese restaurant in the old Tôn Thất Đạm market area."
+        },
+        "zh": {
+          "name": "Anan Saigon",
+          "text": "Anan Saigon位于Tôn Thất Đạm街89号。演示中的菜品照片是在胡志明市一家餐馆拍摄的椰汁焖鸡，不能据此确认Anan目前供应这道菜。",
+          "shortDescription": "位于Tôn Thất Đạm老市场区域的越南餐厅。"
+        },
+        "ko": {
+          "name": "Anan Saigon",
+          "text": "Anan Saigon은 Tôn Thất Đạm 89번지에 있습니다. 데모의 음식 사진은 호찌민시의 한 식당에서 촬영한 코코넛워터 닭조림이며, Anan이 현재 이 요리를 제공한다는 뜻은 아닙니다.",
+          "shortDescription": "Tôn Thất Đạm의 오래된 시장 지역에 있는 베트남 요리 레스토랑입니다."
+        },
+        "ja": {
+          "name": "Anan Saigon",
+          "text": "Anan SaigonはTôn Thất Đạm通り89番地にあります。デモの料理写真はホーチミン市のある飲食店で撮影された鶏肉のココナッツウォーター煮で、Ananで現在提供されている料理とは断定できません。",
+          "shortDescription": "Tôn Thất Đạmの旧市場地区にあるベトナム料理店です。"
+        },
+        "fr": {
+          "name": "Anan Saigon",
+          "text": "Anan Saigon se trouve au 89 Tôn Thất Đạm. La photo du jeu de démonstration montre du poulet mijoté à l'eau de coco dans un restaurant de Hô Chi Minh-Ville ; elle ne confirme pas que ce plat est actuellement proposé chez Anan.",
+          "shortDescription": "Restaurant vietnamien dans le quartier de l'ancien marché Tôn Thất Đạm."
+        }
+      }
+    },
+    {
+      "id": 10,
+      "code": "VK-CHILLI-232-105",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Maison Marou – Quận 1",
+          "text": "Ảnh bìa là cửa hàng Maison Marou ở Quận 1. Ảnh menu là bánh sô-cô-la minh họa, không khẳng định là sản phẩm hiện có tại cửa hàng.",
+          "shortDescription": "Cửa hàng cà phê và sô-cô-la Marou tại Quận 1."
+        },
+        "en": {
+          "name": "Maison Marou – District 1",
+          "text": "The cover photo shows a Maison Marou shop in District 1. The menu photo illustrates a chocolate cake and does not confirm that the product is currently available at the shop.",
+          "shortDescription": "Marou coffee and chocolate shop in District 1."
+        },
+        "zh": {
+          "name": "Maison Marou – 第一郡",
+          "text": "封面照片展示了第一郡的Maison Marou门店。菜单照片为巧克力蛋糕示意图，不能据此确认该店目前销售这一产品。",
+          "shortDescription": "第一郡的Marou咖啡及巧克力店。"
+        },
+        "ko": {
+          "name": "Maison Marou – 1군",
+          "text": "표지 사진은 1군의 Maison Marou 매장을 보여 줍니다. 메뉴 사진은 초콜릿 케이크 참고 이미지이며, 현재 이 매장에서 판매하는 제품이라는 뜻은 아닙니다.",
+          "shortDescription": "1군에 있는 Marou 커피와 초콜릿 매장입니다."
+        },
+        "ja": {
+          "name": "Maison Marou – 1区",
+          "text": "表紙写真は1区のMaison Marouの店舗を写したものです。メニュー写真はチョコレートケーキの参考画像で、現在その店舗で販売されている商品とは断定できません。",
+          "shortDescription": "1区にあるMarouのコーヒーとチョコレートの店です。"
+        },
+        "fr": {
+          "name": "Maison Marou – 1er arrondissement",
+          "text": "La photo de couverture montre une boutique Maison Marou dans le 1er arrondissement. La photo du menu illustre un gâteau au chocolat, sans confirmer sa disponibilité actuelle dans la boutique.",
+          "shortDescription": "Boutique Marou de café et de chocolat dans le 1er arrondissement."
+        }
+      }
+    },
+    {
+      "id": 11,
+      "code": "VK-THAO-OC-383",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Café City Garden – Tân Bình",
+          "text": "Ảnh bìa và ảnh cà phê được chụp tại Café City Garden ở Tân Bình.",
+          "shortDescription": "Quán cà phê City Garden tại Tân Bình."
+        },
+        "en": {
+          "name": "Café City Garden – Tân Bình",
+          "text": "The cover photo and the coffee photo were taken at Café City Garden in Tân Bình.",
+          "shortDescription": "City Garden café in Tân Bình."
+        },
+        "zh": {
+          "name": "Café City Garden – 新平区",
+          "text": "封面照片和咖啡照片均拍摄于新平区的Café City Garden。",
+          "shortDescription": "新平区的City Garden咖啡馆。"
+        },
+        "ko": {
+          "name": "Café City Garden – Tân Bình",
+          "text": "표지 사진과 커피 사진은 Tân Bình에 있는 Café City Garden에서 촬영되었습니다.",
+          "shortDescription": "Tân Bình에 있는 City Garden 카페입니다."
+        },
+        "ja": {
+          "name": "Café City Garden – タンビン地区",
+          "text": "表紙写真とコーヒーの写真は、タンビン地区のCafé City Gardenで撮影されました。",
+          "shortDescription": "タンビン地区にあるCity Gardenカフェです。"
+        },
+        "fr": {
+          "name": "Café City Garden – Tân Bình",
+          "text": "La photo de couverture et la photo du café ont été prises au Café City Garden, à Tân Bình.",
+          "shortDescription": "Café City Garden à Tân Bình."
+        }
+      }
+    },
+    {
+      "id": 12,
+      "code": "VK-OC-OANH-534",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Café 30/4 – Nam Kỳ Khởi Nghĩa",
+          "text": "Ảnh bìa ghi lại Café 30/4 tại số 135 Nam Kỳ Khởi Nghĩa. Ảnh menu minh họa cà phê và bánh mì tại Sài Gòn.",
+          "shortDescription": "Quán cà phê trên đường Nam Kỳ Khởi Nghĩa."
+        },
+        "en": {
+          "name": "Café 30/4 – Nam Kỳ Khởi Nghĩa",
+          "text": "The cover photo shows Café 30/4 at 135 Nam Kỳ Khởi Nghĩa. The menu photo illustrates coffee and bánh mì in Saigon.",
+          "shortDescription": "Café on Nam Kỳ Khởi Nghĩa Street."
+        },
+        "zh": {
+          "name": "Café 30/4 – Nam Kỳ Khởi Nghĩa街",
+          "text": "封面照片展示了Nam Kỳ Khởi Nghĩa街135号的Café 30/4。菜单配图展示了西贡的咖啡和越式法棍三明治。",
+          "shortDescription": "Nam Kỳ Khởi Nghĩa街上的咖啡馆。"
+        },
+        "ko": {
+          "name": "Café 30/4 – Nam Kỳ Khởi Nghĩa",
+          "text": "표지 사진은 Nam Kỳ Khởi Nghĩa 135번지의 Café 30/4를 보여 줍니다. 메뉴 사진은 사이공의 커피와 반미를 소개하는 참고 이미지입니다.",
+          "shortDescription": "Nam Kỳ Khởi Nghĩa 거리에 있는 카페입니다."
+        },
+        "ja": {
+          "name": "Café 30/4 – Nam Kỳ Khởi Nghĩa通り",
+          "text": "表紙写真はNam Kỳ Khởi Nghĩa通り135番地のCafé 30/4を写したものです。メニュー写真はサイゴンのコーヒーとバインミーの参考画像です。",
+          "shortDescription": "Nam Kỳ Khởi Nghĩa通りにあるカフェです。"
+        },
+        "fr": {
+          "name": "Café 30/4 – Nam Kỳ Khởi Nghĩa",
+          "text": "La photo de couverture montre le Café 30/4 au 135 Nam Kỳ Khởi Nghĩa. La photo du menu illustre le café et le bánh mì à Saïgon.",
+          "shortDescription": "Café dans la rue Nam Kỳ Khởi Nghĩa."
+        }
+      }
+    }
+  ],
+  "tours": [
+    {
+      "id": 1,
+      "code": "VK-TOUR-QUANH-PHO",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Ẩm thực trung tâm Sài Gòn",
+          "text": "Các điểm ăn uống tại trung tâm, từ nhà hàng Quảng Đông đến món Việt và cà phê.",
+          "shortDescription": ""
+        },
+        "en": {
+          "name": "Food in central Saigon",
+          "text": "Food and drink stops in the city centre, from Cantonese restaurants to Vietnamese dishes and cafés.",
+          "shortDescription": null
+        },
+        "zh": {
+          "name": "西贡市中心美食之旅",
+          "text": "探访市中心的餐饮地点，体验粤菜、越南菜和咖啡馆。",
+          "shortDescription": null
+        },
+        "ko": {
+          "name": "사이공 도심 미식 여행",
+          "text": "광둥 요리점부터 베트남 음식과 카페까지, 도심의 다양한 식음료 장소를 둘러봅니다.",
+          "shortDescription": null
+        },
+        "ja": {
+          "name": "サイゴン中心部のグルメ巡り",
+          "text": "広東料理店からベトナム料理、カフェまで、市中心部の飲食スポットを巡ります。",
+          "shortDescription": null
+        },
+        "fr": {
+          "name": "Saveurs du centre de Saïgon",
+          "text": "Des étapes gourmandes dans le centre-ville, des restaurants cantonais aux plats vietnamiens et aux cafés.",
+          "shortDescription": null
+        }
+      }
+    },
+    {
+      "id": 2,
+      "code": "VK-TOUR-OC-HAI-SAN",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Ốc, hải sản và món chay",
+          "text": "Các quán ốc và hải sản kết hợp với trải nghiệm ẩm thực thực vật tại Hum Lounge.",
+          "shortDescription": ""
+        },
+        "en": {
+          "name": "Snails, seafood and vegetarian food",
+          "text": "Snail and seafood restaurants combined with a plant-based dining experience at Hum Lounge.",
+          "shortDescription": null
+        },
+        "zh": {
+          "name": "螺类、海鲜与素食之旅",
+          "text": "探访螺类及海鲜餐馆，并在Hum Lounge体验植物性料理。",
+          "shortDescription": null
+        },
+        "ko": {
+          "name": "고둥 요리, 해산물과 채식",
+          "text": "고둥 요리 및 해산물 식당과 Hum Lounge의 식물성 요리 체험을 함께 즐깁니다.",
+          "shortDescription": null
+        },
+        "ja": {
+          "name": "貝料理と海鮮、ベジタリアン料理",
+          "text": "貝料理や海鮮の店と、Hum Loungeでの植物性料理の体験を組み合わせたコースです。",
+          "shortDescription": null
+        },
+        "fr": {
+          "name": "Coquillages, fruits de mer et cuisine végétarienne",
+          "text": "Des restaurants de coquillages et de fruits de mer, associés à une expérience de cuisine végétale au Hum Lounge.",
+          "shortDescription": null
+        }
+      }
+    },
+    {
+      "id": 3,
+      "code": "VK-TOUR-LAU-NUONG",
+      "sourceVersion": 2,
+      "translations": {
+        "vi": {
+          "name": "Món Việt và món nóng",
+          "text": "Cơm tấm, bánh xèo, bún bò và lẩu Thái ở các khu vực trong thành phố.",
+          "shortDescription": ""
+        },
+        "en": {
+          "name": "Vietnamese dishes and hot meals",
+          "text": "Broken rice, bánh xèo, beef noodle soup and Thai hotpot in different parts of the city.",
+          "shortDescription": null
+        },
+        "zh": {
+          "name": "越南菜与热食之旅",
+          "text": "在市内不同区域品尝越式碎米饭、越式煎饼、牛肉米粉和泰式火锅。",
+          "shortDescription": null
+        },
+        "ko": {
+          "name": "베트남 요리와 따뜻한 음식",
+          "text": "도시의 여러 지역에서 껌땀, 반쎄오, 소고기 쌀국수와 태국식 전골을 즐깁니다.",
+          "shortDescription": null
+        },
+        "ja": {
+          "name": "ベトナム料理と温かい料理",
+          "text": "市内の各エリアで、コムタム、バインセオ、牛肉米麺、タイ風鍋料理を楽しむコースです。",
+          "shortDescription": null
+        },
+        "fr": {
+          "name": "Plats vietnamiens et spécialités chaudes",
+          "text": "Riz brisé, bánh xèo, soupe de nouilles au bœuf et fondue thaïlandaise dans différents quartiers de la ville.",
+          "shortDescription": null
+        }
+      }
+    }
+  ]
+}

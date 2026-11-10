@@ -1,0 +1,218 @@
+{
+  "pois": [
+    {
+      "Id": 1,
+      "Code": "VK-ALO-333",
+      "Name": "Dim Tu Tac – 55 Đông Du",
+      "Description": "Dim Tu Tac tại 55 Đông Du là nhà hàng Quảng Đông ở trung tâm thành phố. Ảnh menu minh họa món vịt quay được chụp tại hệ thống Dim Tu Tac.",
+      "ShortDescription": "Nhà hàng Quảng Đông với dim sum và vịt quay.",
+      "Version": 2,
+      "TranslationId": 1,
+      "TranslationVersion": 2,
+      "TranslationName": "Dim Tu Tac – 55 Đông Du",
+      "TranslationDescription": "Dim Tu Tac tại 55 Đông Du là nhà hàng Quảng Đông ở trung tâm thành phố. Ảnh menu minh họa món vịt quay được chụp tại hệ thống Dim Tu Tac.",
+      "TranslationShortDescription": "Nhà hàng Quảng Đông với dim sum và vịt quay."
+    },
+    {
+      "Id": 2,
+      "Code": "VK-OC-DAO-232-123",
+      "Name": "Ốc La Cà – Đồng Đen",
+      "Description": "Ốc La Cà ở Đồng Đen là điểm ăn ốc tại khu vực Tân Bình. Ảnh bìa và ảnh món đều được ghi nhận tại quán.",
+      "ShortDescription": "Quán ốc và hải sản trên đường Đồng Đen.",
+      "Version": 2,
+      "TranslationId": 2,
+      "TranslationVersion": 2,
+      "TranslationName": "Ốc La Cà – Đồng Đen",
+      "TranslationDescription": "Ốc La Cà ở Đồng Đen là điểm ăn ốc tại khu vực Tân Bình. Ảnh bìa và ảnh món đều được ghi nhận tại quán.",
+      "TranslationShortDescription": "Quán ốc và hải sản trên đường Đồng Đen."
+    },
+    {
+      "Id": 3,
+      "Code": "VK-BUN-CA-DI-TU-75",
+      "Name": "Ốc Hai Lùn – Lê Đại Hành",
+      "Description": "Ốc Hai Lùn trên đường Lê Đại Hành phục vụ các món ốc và hải sản. Bộ ảnh tư liệu được chụp tại quán; địa chỉ số nhà cần xác nhận lại.",
+      "ShortDescription": "Quán ốc lâu năm trên đường Lê Đại Hành.",
+      "Version": 2,
+      "TranslationId": 3,
+      "TranslationVersion": 2,
+      "TranslationName": "Ốc Hai Lùn – Lê Đại Hành",
+      "TranslationDescription": "Ốc Hai Lùn trên đường Lê Đại Hành phục vụ các món ốc và hải sản. Bộ ảnh tư liệu được chụp tại quán; địa chỉ số nhà cần xác nhận lại.",
+      "TranslationShortDescription": "Quán ốc lâu năm trên đường Lê Đại Hành."
+    },
+    {
+      "Id": 4,
+      "Code": "VK-BUN-THIT-NUONG-CO-NGA-14",
+      "Name": "Hum Lounge · 34 Võ Văn Tần",
+      "Description": "Hum Lounge là nhà hàng thực vật tại 34 Võ Văn Tần. Ảnh món ăn kèm là ảnh ẩm thực chay tại Thành phố Hồ Chí Minh, dùng minh họa và không xác nhận là món trong thực đơn Hum.",
+      "ShortDescription": "Nhà hàng thực vật trong không gian kiến trúc xanh.",
+      "Version": 3,
+      "TranslationId": 4,
+      "TranslationVersion": 3,
+      "TranslationName": "Hum Lounge · 34 Võ Văn Tần",
+      "TranslationDescription": "Hum Lounge là nhà hàng thực vật tại 34 Võ Văn Tần. Ảnh món ăn kèm là ảnh ẩm thực chay tại Thành phố Hồ Chí Minh, dùng minh họa và không xác nhận là món trong thực đơn Hum.",
+      "TranslationShortDescription": "Nhà hàng thực vật trong không gian kiến trúc xanh."
+    },
+    {
+      "Id": 5,
+      "Code": "VK-OC-VU-37",
+      "Name": "Cơm Tấm Cali – Hoàng Diệu",
+      "Description": "Ảnh bìa ghi lại không gian Cơm Tấm Cali tại Quận 4; ảnh menu là món bún thịt nướng chụp tại chi nhánh Hoàng Diệu.",
+      "ShortDescription": "Cơm tấm và món ăn Việt tại chi nhánh Quận 4.",
+      "Version": 2,
+      "TranslationId": 5,
+      "TranslationVersion": 2,
+      "TranslationName": "Cơm Tấm Cali – Hoàng Diệu",
+      "TranslationDescription": "Ảnh bìa ghi lại không gian Cơm Tấm Cali tại Quận 4; ảnh menu là món bún thịt nướng chụp tại chi nhánh Hoàng Diệu.",
+      "TranslationShortDescription": "Cơm tấm và món ăn Việt tại chi nhánh Quận 4."
+    },
+    {
+      "Id": 6,
+      "Code": "VK-LANG-531",
+      "Name": "Quán bánh xèo Đinh Công Tráng",
+      "Description": "Ảnh bìa được chụp tại một nhà hàng bánh xèo trên đường Đinh Công Tráng. Ảnh menu là ảnh minh họa món bánh xèo, chưa xác nhận là món của đúng quán trong ảnh bìa.",
+      "ShortDescription": "Quán bánh xèo trên đường Đinh Công Tráng.",
+      "Version": 2,
+      "TranslationId": 6,
+      "TranslationVersion": 2,
+      "TranslationName": "Quán bánh xèo Đinh Công Tráng",
+      "TranslationDescription": "Ảnh bìa được chụp tại một nhà hàng bánh xèo trên đường Đinh Công Tráng. Ảnh menu là ảnh minh họa món bánh xèo, chưa xác nhận là món của đúng quán trong ảnh bìa.",
+      "TranslationShortDescription": "Quán bánh xèo trên đường Đinh Công Tráng."
+    },
+    {
+      "Id": 7,
+      "Code": "VK-OT-XIEM-568",
+      "Name": "Bún Bò 1980 – Tân Phú",
+      "Description": "Ảnh bìa ghi lại một quán bún bò 1980 tại Tân Phú. Ảnh menu là tô bún bò Huế chụp tại một quán ăn ở Thành phố Hồ Chí Minh.",
+      "ShortDescription": "Quán bún bò Huế tại khu vực Tân Phú.",
+      "Version": 2,
+      "TranslationId": 7,
+      "TranslationVersion": 2,
+      "TranslationName": "Bún Bò 1980 – Tân Phú",
+      "TranslationDescription": "Ảnh bìa ghi lại một quán bún bò 1980 tại Tân Phú. Ảnh menu là tô bún bò Huế chụp tại một quán ăn ở Thành phố Hồ Chí Minh.",
+      "TranslationShortDescription": "Quán bún bò Huế tại khu vực Tân Phú."
+    },
+    {
+      "Id": 8,
+      "Code": "VK-A-FAT-668",
+      "Name": "Chiang Rai – Nhà hàng Thái",
+      "Description": "Ảnh bìa ghi lại nhà hàng Thái tại Tân Phú. Ảnh menu minh họa món lẩu phù hợp với nhóm món nóng của nhà hàng.",
+      "ShortDescription": "Nhà hàng Thái tại khu vực Tân Phú.",
+      "Version": 2,
+      "TranslationId": 8,
+      "TranslationVersion": 2,
+      "TranslationName": "Chiang Rai – Nhà hàng Thái",
+      "TranslationDescription": "Ảnh bìa ghi lại nhà hàng Thái tại Tân Phú. Ảnh menu minh họa món lẩu phù hợp với nhóm món nóng của nhà hàng.",
+      "TranslationShortDescription": "Nhà hàng Thái tại khu vực Tân Phú."
+    },
+    {
+      "Id": 9,
+      "Code": "VK-SUON-MUOI-OT-712",
+      "Name": "Anan Saigon",
+      "Description": "Anan Saigon nằm tại 89 Tôn Thất Đạm. Ảnh món trong bộ demo là ảnh gà kho nước dừa tại một quán ăn ở Thành phố Hồ Chí Minh, không khẳng định đây là món hiện có của Anan.",
+      "ShortDescription": "Nhà hàng Việt Nam trong khu chợ cũ Tôn Thất Đạm.",
+      "Version": 2,
+      "TranslationId": 9,
+      "TranslationVersion": 2,
+      "TranslationName": "Anan Saigon",
+      "TranslationDescription": "Anan Saigon nằm tại 89 Tôn Thất Đạm. Ảnh món trong bộ demo là ảnh gà kho nước dừa tại một quán ăn ở Thành phố Hồ Chí Minh, không khẳng định đây là món hiện có của Anan.",
+      "TranslationShortDescription": "Nhà hàng Việt Nam trong khu chợ cũ Tôn Thất Đạm."
+    },
+    {
+      "Id": 10,
+      "Code": "VK-CHILLI-232-105",
+      "Name": "Maison Marou – Quận 1",
+      "Description": "Ảnh bìa là cửa hàng Maison Marou ở Quận 1. Ảnh menu là bánh sô-cô-la minh họa, không khẳng định là sản phẩm hiện có tại cửa hàng.",
+      "ShortDescription": "Cửa hàng cà phê và sô-cô-la Marou tại Quận 1.",
+      "Version": 2,
+      "TranslationId": 10,
+      "TranslationVersion": 2,
+      "TranslationName": "Maison Marou – Quận 1",
+      "TranslationDescription": "Ảnh bìa là cửa hàng Maison Marou ở Quận 1. Ảnh menu là bánh sô-cô-la minh họa, không khẳng định là sản phẩm hiện có tại cửa hàng.",
+      "TranslationShortDescription": "Cửa hàng cà phê và sô-cô-la Marou tại Quận 1."
+    },
+    {
+      "Id": 11,
+      "Code": "VK-THAO-OC-383",
+      "Name": "Café City Garden – Tân Bình",
+      "Description": "Ảnh bìa và ảnh cà phê được chụp tại Café City Garden ở Tân Bình.",
+      "ShortDescription": "Quán cà phê City Garden tại Tân Bình.",
+      "Version": 2,
+      "TranslationId": 11,
+      "TranslationVersion": 2,
+      "TranslationName": "Café City Garden – Tân Bình",
+      "TranslationDescription": "Ảnh bìa và ảnh cà phê được chụp tại Café City Garden ở Tân Bình.",
+      "TranslationShortDescription": "Quán cà phê City Garden tại Tân Bình."
+    },
+    {
+      "Id": 12,
+      "Code": "VK-OC-OANH-534",
+      "Name": "Café 30/4 – Nam Kỳ Khởi Nghĩa",
+      "Description": "Ảnh bìa ghi lại Café 30/4 tại số 135 Nam Kỳ Khởi Nghĩa. Ảnh menu minh họa cà phê và bánh mì tại Sài Gòn.",
+      "ShortDescription": "Quán cà phê trên đường Nam Kỳ Khởi Nghĩa.",
+      "Version": 2,
+      "TranslationId": 12,
+      "TranslationVersion": 2,
+      "TranslationName": "Café 30/4 – Nam Kỳ Khởi Nghĩa",
+      "TranslationDescription": "Ảnh bìa ghi lại Café 30/4 tại số 135 Nam Kỳ Khởi Nghĩa. Ảnh menu minh họa cà phê và bánh mì tại Sài Gòn.",
+      "TranslationShortDescription": "Quán cà phê trên đường Nam Kỳ Khởi Nghĩa."
+    }
+  ],
+  "tours": [
+    {
+      "Id": 1,
+      "Code": "VK-TOUR-QUANH-PHO",
+      "DefaultLanguage": "vi",
+      "Version": 2,
+      "TranslationId": 1,
+      "TranslationVersion": 2,
+      "Name": "Ẩm thực trung tâm Sài Gòn",
+      "Description": "Các điểm ăn uống tại trung tâm, từ nhà hàng Quảng Đông đến món Việt và cà phê."
+    },
+    {
+      "Id": 2,
+      "Code": "VK-TOUR-OC-HAI-SAN",
+      "DefaultLanguage": "vi",
+      "Version": 2,
+      "TranslationId": 2,
+      "TranslationVersion": 3,
+      "Name": "Ốc, hải sản và món chay",
+      "Description": "Các quán ốc và hải sản kết hợp với trải nghiệm ẩm thực thực vật tại Hum Lounge."
+    },
+    {
+      "Id": 3,
+      "Code": "VK-TOUR-LAU-NUONG",
+      "DefaultLanguage": "vi",
+      "Version": 2,
+      "TranslationId": 3,
+      "TranslationVersion": 2,
+      "Name": "Món Việt và món nóng",
+      "Description": "Cơm tấm, bánh xèo, bún bò và lẩu Thái ở các khu vực trong thành phố."
+    }
+  ],
+  "languages": [
+    {
+      "Code": "vi",
+      "Name": "Vietnamese"
+    },
+    {
+      "Code": "en",
+      "Name": "English"
+    },
+    {
+      "Code": "zh",
+      "Name": "Chinese"
+    },
+    {
+      "Code": "ko",
+      "Name": "Korean"
+    },
+    {
+      "Code": "ja",
+      "Name": "Japanese"
+    },
+    {
+      "Code": "fr",
+      "Name": "French"
+    }
+  ]
+}
