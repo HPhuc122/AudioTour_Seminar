@@ -24,7 +24,7 @@ def require_schema(repo):
         raise HTTPException(503, 'Run scripts/migrate_narration_jobs.py before approving narration')
 
 
-def enqueue(repo, source, submission_id, reviewer, new_approval=True):
+def enqueue(repo, source, submission_id, reviewer, new_approval=True, source_name=None):
     require_schema(repo)
     # Serialize all approved narratives for a POI, including distinct draft ids.
     poi = repo.lock('pois', source['PoiId'])
@@ -48,7 +48,7 @@ def enqueue(repo, source, submission_id, reviewer, new_approval=True):
             (PoiId,NarrationId,SourceVersion,SubmissionId,ReviewerId,SourceLanguage,LanguageCode,SourceText,SourceName,SourceVoice)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
             (source['PoiId'], source['Id'], source['Version'], submission_id, reviewer,
-             source['LanguageCode'], code, source['TextContent'], poi['Name'], source.get('Voice')))
+             source['LanguageCode'], code, source['TextContent'], source_name or poi['Name'], source.get('Voice')))
 
 
 class NarrationJobs:
@@ -64,9 +64,11 @@ class NarrationJobs:
             LeaseToken=NULL, LeaseUntil=NULL, AvailableAt=SYSUTCDATETIME(), UpdatedAt=SYSUTCDATETIME()
             WHERE Status='Processing' AND LeaseUntil<=SYSUTCDATETIME()""")
 
-    def claim(self, poi_id=None):
+    def claim(self, poi_id=None, database_sync_only=False):
         token = str(uuid.uuid4())
         poi_filter = ' AND PoiId=%s' if poi_id is not None else ''
+        if database_sync_only:
+            poi_filter += " AND SubmissionId IN (SELECT Id FROM ContentSubmissions WHERE JSON_VALUE(CASE WHEN ISJSON(PayloadJson)=1 THEN PayloadJson ELSE N'{}' END,'$.origin')='database-description-sync')"
         with self.repo.transaction() as tx:
             return tx.fetchone(""";WITH candidate AS (
                 SELECT TOP 1 * FROM NarrationJobs WITH(UPDLOCK,READPAST,ROWLOCK)
@@ -76,15 +78,17 @@ class NarrationJobs:
                   LeaseToken=%s,LeaseUntil=DATEADD(minute,10,SYSUTCDATETIME()),UpdatedAt=SYSUTCDATETIME()
                 OUTPUT INSERTED.*""", ((poi_id,) if poi_id is not None else ()) + (token,))
 
-    def process_one(self, poi_id=None):
+    def process_one(self, poi_id=None, database_sync_only=False):
         self.recover()
-        job = self.claim(poi_id)
+        job = self.claim(poi_id, database_sync_only)
         if not job:
             return False
         token = actor.set({'id': job['ReviewerId'], 'role': 'Admin', 'username': 'narration-worker'})
         path = None
         publishing = False
         try:
+            from app.services.database_description_sync import metadata
+            job['_database_sync'] = bool(metadata(self.repo, job['SubmissionId']))
             text, name, audio, mime, extension = self.provider.render(job)
             relative = 'uploads/audio/' + uuid.uuid4().hex + extension
             path = (Path(settings.media_root) / relative).resolve()
@@ -143,6 +147,10 @@ class NarrationJobs:
             head = tx.fetchone('SELECT * FROM NarrationHeads WHERE PoiId=%s', (job['PoiId'],))
             valid = valid and head and (head['NarrationId'], head['SourceVersion']) == (job['NarrationId'], job['SourceVersion'])
             language = tx.scalar('SELECT COUNT(*) FROM Languages WHERE Code=%s AND IsActive=1', (job['LanguageCode'],))
+            from app.services.database_description_sync import metadata, inputs_unchanged
+            sync = metadata(tx, job['SubmissionId'])
+            if sync and poi:
+                valid = valid and inputs_unchanged(tx, sync, poi, job['LanguageCode'])
             if not valid or newer or not language:
                 tx.execute("UPDATE NarrationJobs SET Status='Superseded',LeaseToken=NULL,LeaseUntil=NULL,UpdatedAt=SYSUTCDATETIME() WHERE Id=%s", (job['Id'],))
                 return False
@@ -152,6 +160,11 @@ class NarrationJobs:
             translation = tx.fetchone('SELECT * FROM POITranslations WITH(UPDLOCK,HOLDLOCK) WHERE POIId=%s AND LanguageCode=%s', (job['PoiId'], job['LanguageCode']))
             payload = {'POIId': job['PoiId'], 'LanguageCode': job['LanguageCode'], 'Name': name,
                        'Description': text, 'ReviewStatus': 'Approved', 'RejectionReason': None}
+            if sync:
+                # Editing a description does not rename existing places.
+                name = translation['Name'] if translation else name
+                payload['Name'] = name
+                payload['ShortDescription'] = text.encode('utf-16-le')[:1000].decode('utf-16-le', errors='ignore')
             if translation:
                 tx.archive('poi-translations', translation, job['ReviewerId'])
                 payload['Version'] = translation['Version'] + 1
@@ -204,12 +217,19 @@ class NarrationWorker:
 
     def loop(self):
         jobs = NarrationJobs()
+        startup_checked = False
         while not self.stop_event.is_set():
             try:
                 if schema_ready(jobs.repo):
+                    from app.services.database_description_sync import enabled, reconcile_startup
+                    if not startup_checked:
+                        if enabled():
+                            reconcile_startup(jobs.repo)
+                        startup_checked = True
                     jobs.recover()
                     # Explicit opt-in. Missing adapters never trigger paid calls.
-                    if configuration()['automatic'] and jobs.process_one():
+                    automatic = configuration()['automatic']
+                    if (automatic or enabled()) and jobs.process_one(database_sync_only=not automatic):
                         continue
             except Exception:
                 logger.warning('Narration worker unavailable; check database/migration')

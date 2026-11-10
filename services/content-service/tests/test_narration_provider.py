@@ -8,6 +8,26 @@ from app.services.narration_provider import NarrationProvider, ProviderFailure
 
 
 class ProviderContractTests(unittest.TestCase):
+    def test_database_sync_can_render_without_enabling_normal_automation(self):
+        client_type = httpx.Client
+        request_paths = []
+        def handler(request):
+            request_paths.append(request.url.path)
+            return httpx.Response(200, content=b'RIFF0000WAVEtest', headers={'content-type': 'audio/wav'})
+        job = {'NarrationId': 1, 'SourceVersion': 3, 'LanguageCode': 'en', 'SourceLanguage': 'en',
+               'SourceText': 'Edited English description', 'SourceName': 'POI', 'SourceVoice': 'en',
+               '_database_sync': True}
+        env = {'ADMIN_AUTOMATION_ENABLED': 'false', 'NARRATION_DB_SYNC_ENABLED': 'true',
+               'ADMIN_TTS_URL': 'http://adapter.test/tts', 'ADMIN_PROVIDER_TOKEN_REQUIRED': 'false'}
+        with patch.dict(os.environ, env), patch('app.services.narration_provider.httpx.Client', side_effect=lambda **kwargs: client_type(transport=httpx.MockTransport(handler), **kwargs)):
+            result = NarrationProvider().render(job)
+            self.assertEqual(result[0], job['SourceText'])
+            self.assertEqual(request_paths, ['/tts'])
+            with self.assertRaises(ProviderFailure):
+                NarrationProvider().render({**job, '_database_sync': False})
+            with patch.dict(os.environ, {'NARRATION_DB_SYNC_ENABLED': 'false'}), self.assertRaises(ProviderFailure):
+                NarrationProvider().render(job)
+
     def test_translation_output_is_the_target_tts_input(self):
         requests = []
         def handler(request):

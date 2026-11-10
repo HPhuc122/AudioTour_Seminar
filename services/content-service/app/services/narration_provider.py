@@ -47,6 +47,10 @@ class NarrationProvider:
     def render(self, job):
         config = configuration()
         missing = [name for name in config['missingConfiguration'] if name != 'ADMIN_TRANSLATION_URL' or job['LanguageCode'] != job['SourceLanguage']]
+        if job.get('_database_sync'):
+            from app.services.database_description_sync import enabled
+            if enabled():
+                missing = [name for name in missing if name != 'ADMIN_AUTOMATION_ENABLED=true']
         if missing:
             raise ProviderFailure('MissingConfiguration', 'Missing: ' + ', '.join(missing), False)
         headers = {'Authorization': 'Bearer ' + os.environ['ADMIN_PROVIDER_TOKEN']} if os.getenv('ADMIN_PROVIDER_TOKEN') else {}
